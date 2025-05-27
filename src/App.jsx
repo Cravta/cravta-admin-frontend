@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
-import { addAuthInterceptor } from './api/';
+import { addAuthInterceptor } from './api/axiosInstance';
 import { AuthProvider } from './contexts/AuthContext';
 import { AppSettingsProvider } from './contexts/AppSettingsProvider';
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AppRouter from './routes';
 
 function App() {
   const navigate = useNavigate();

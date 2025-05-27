@@ -1,0 +1,178 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+import api from "../../api/axiosInstance.js";
+
+const PUBLIC_BLOG_URL = "https://cravta.com/api/v1/blogs";
+const PRIVATE_BLOG_URL = "https://cravta.com/api/v1/admin-blogs";
+
+// Helper to get token
+const getAuthToken = () => localStorage.getItem("token");
+
+// Fetch all blogs (public)
+export const fetchBlogs = createAsyncThunk(
+    "blogs/fetchBlogs",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get(PUBLIC_BLOG_URL);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || "Error fetching blogs");
+        }
+    }
+);
+
+// Fetch blog by ID (public)
+export const fetchBlogById = createAsyncThunk(
+    "blogs/fetchBlogById",
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`${PUBLIC_BLOG_URL}/${id}`);
+
+            return response.data.blog;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || "Error fetching blog");
+        }
+    }
+);
+
+// Create blog (admin/private)
+export const createBlog = createAsyncThunk(
+    "blogs/createBlog",
+    async (blogData, { rejectWithValue }) => {
+        try {
+            const token = getAuthToken();
+            const response = await api.post(PRIVATE_BLOG_URL, blogData, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || "Error creating blog");
+        }
+    }
+);
+
+// Update blog (admin/private)
+export const updateBlog = createAsyncThunk(
+    "blogs/updateBlog",
+    async ({ id, blogData }, { rejectWithValue }) => {
+        try {
+            console.log("received data", blogData)
+            const token = getAuthToken();
+            const response = await api.patch(`${PRIVATE_BLOG_URL}/${id}`, blogData, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || "Error updating blog");
+        }
+    }
+);
+
+// Delete blog (admin/private)
+export const deleteBlog = createAsyncThunk(
+    "blogs/deleteBlog",
+    async (id, { rejectWithValue }) => {
+        try {
+            const token = getAuthToken();
+            const response = await api.delete(`${PRIVATE_BLOG_URL}/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return { id, message: response.data.message };
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || "Error deleting blog");
+        }
+    }
+);
+
+// Blog Slice
+const blogSlice = createSlice({
+    name: "blogs",
+    initialState: {
+        blogs: [],
+        blogDetails: null,
+        loading: false,
+        error: null,
+        success: null,
+    },
+    reducers: {
+        clearBlogState: (state) => {
+            state.blogDetails = null;
+            state.success = null;
+            state.error = null;
+        },
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(fetchBlogs.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchBlogs.fulfilled, (state, action) => {
+                state.loading = false;
+                state.blogs = action.payload;
+            })
+            .addCase(fetchBlogs.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(fetchBlogById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchBlogById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.blogDetails = action.payload;
+            })
+            .addCase(fetchBlogById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(createBlog.pending, (state) => {
+                state.loading = true;
+                state.success = null;
+                state.error = null;
+            })
+            .addCase(createBlog.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = "Blog created successfully!";
+                state.blogs.body.unshift(action.payload.data); // Add to top
+            })
+            .addCase(createBlog.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(updateBlog.pending, (state) => {
+                state.loading = true;
+                state.success = null;
+                state.error = null;
+            })
+            .addCase(updateBlog.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = "Blog updated successfully!";
+
+                state.blogs.body = state.blogs.body.map((blog) =>
+                    blog.id === action.payload.data.id ? action.payload.data : blog
+                );
+            })
+            .addCase(updateBlog.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(deleteBlog.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(deleteBlog.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = "Blog deleted successfully!";
+                state.blogs.body = state.blogs.body.filter((blog) => blog.id !== action.payload.id);
+            })
+            .addCase(deleteBlog.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
+    },
+});
+
+export const { clearBlogState } = blogSlice.actions;
+export default blogSlice.reducer;
