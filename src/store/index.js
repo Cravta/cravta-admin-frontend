@@ -4,7 +4,11 @@ import { combineReducers } from "redux";
 import storage from "redux-persist/lib/storage";
 import authReducer from "./auth/authSlice";
 import userSlice from "./auth/userSlice";
-
+import adminUsersReducer from './admin/usersSlice';
+import adminClassesReducer from './admin/classesSlice';
+import adminContentReducer from './admin/contentSlice';
+import adminQuizReducer from './admin/quizSlice';
+import blogReducer from './admin/blogSlice';
 // Redux Persist Configuration
 const persistConfig = {
   key: "root",
@@ -14,8 +18,13 @@ const persistConfig = {
 
 // Combine All Reducers
 const rootReducer = combineReducers({
-    auth: authReducer,
-    user: userSlice,
+  auth: authReducer,
+  user: userSlice,
+  blogs:blogReducer,
+  adminUsers: adminUsersReducer,
+  adminClasses: adminClassesReducer,
+  adminContent: adminContentReducer,
+  adminQuiz: adminQuizReducer
 });
 
 // Apply Persist Reducer

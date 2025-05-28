@@ -1,13 +1,12 @@
+import { Route, Routes } from "react-router-dom";
 import AdminRoutes from "./AdminRoutes";
 import AuthRoutes from "./AuthRoutes";
 
 export default function AppRouter() {
   return (
-    <>
-      {/* Public and auth routes */}
-      <AuthRoutes />
-      {/* Protected admin routes */}
-      <AdminRoutes />
-    </>
+    <Routes>
+      {AuthRoutes()}
+      <Route path="/admin/*" element={<AdminRoutes />} />
+    </Routes>
   );
 }

@@ -10,8 +10,8 @@ const LoginPageWrapper = () => {
 };
 export default function AuthRoutes() {
   return (
-    <Routes>
+    <>
       <Route path="/login" element={<LoginPageWrapper />} />
-    </Routes>
+    </>
   );
 }

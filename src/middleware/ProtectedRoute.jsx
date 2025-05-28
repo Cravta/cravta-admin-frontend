@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import ScreenLoader from "../components/Loader/ScreenLoader";
 import {useSelector} from "react-redux";
 
-const ProtectedRoute = ({ element }) => {
+const ProtectedRoute = ({ children  }) => {
   const { authenticated, loading, tokenCheckComplete } = useAuth();
 
   const {isAuthenticated} = useSelector((state) => state.auth);
@@ -14,7 +14,10 @@ const ProtectedRoute = ({ element }) => {
     return <ScreenLoader />;
   }
 
-  return isAuthenticated ? element : <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return children ;
 };
 
 export default ProtectedRoute;

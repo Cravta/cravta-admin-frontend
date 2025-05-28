@@ -6,7 +6,7 @@ import { AppSettingsProvider } from './contexts/AppSettingsProvider';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AppRouter from './routes';
-
+import { ThemeProvider } from './contexts/ThemeContext';
 function App() {
   const navigate = useNavigate();
 
@@ -15,6 +15,7 @@ function App() {
   }, [navigate]);
   
   return (
+    <ThemeProvider>
       <AuthProvider>
         <AppSettingsProvider>
         <AppRouter />
@@ -31,6 +32,7 @@ function App() {
         />
         </AppSettingsProvider>
       </AuthProvider>
+      </ThemeProvider>
   );
 }
 

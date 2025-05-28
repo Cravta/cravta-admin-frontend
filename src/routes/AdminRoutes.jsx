@@ -25,7 +25,6 @@ export default function AdminRoutes() {
         <Route path="settings" element={<PlatformSettings />} />
         <Route path="audit"    element={<AuditLog />} />
       </Route>
-      <Route path="/*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
