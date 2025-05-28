@@ -48,7 +48,7 @@ const LoginPage = () => {
     const rememberedUser = async () => {
       try {
         const res = await api.post(
-          "https://cravta.com/api/v1/auth/refresh-token",
+          `${import.meta.env.VITE_API_BASE_URL}/auth/refresh-token`,
           {},
           {
             withCredentials: true,

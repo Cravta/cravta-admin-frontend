@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/axiosInstance";
 
-const BASE_URL = "https://cravta.com/api/v1/admin/quiz";
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/quiz`;
 
 export const fetchQuizzesAdmin = createAsyncThunk(
     "quiz/fetchQuizzesAdmin",

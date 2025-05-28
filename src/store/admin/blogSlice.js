@@ -2,8 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import api from "../../api/axiosInstance.js";
 
-const PUBLIC_BLOG_URL = "https://cravta.com/api/v1/blogs";
-const PRIVATE_BLOG_URL = "https://cravta.com/api/v1/admin-blogs";
+const PUBLIC_BLOG_URL = `${import.meta.env.VITE_API_BASE_URL}/blogs`;
+const PRIVATE_BLOG_URL = `${import.meta.env.VITE_API_BASE_URL}/admin-blogs`;
 
 // Helper to get token
 const getAuthToken = () => localStorage.getItem("token");

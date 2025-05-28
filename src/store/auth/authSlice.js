@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import api, { setAccessToken } from '/src/api/axiosInstance';
 
-const BASE_URL = 'https://cravta.com/api/v1';
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}`;
 
 // Signup thunk
 export const signup = createAsyncThunk(
