@@ -10,6 +10,7 @@ import BlogManagement    from "../pages/Admin/Blogs/BlogManagement";
 import ReportingAnalytics from "../pages/Admin/Reports/ReportingAnalytics";
 import PlatformSettings from "../pages/Admin/Settings/PlatformSettings";
 import AuditLog         from "../pages/Admin/Audit/AuditLog";
+import RoleManagement from "../pages/Admin/Roles/RoleManagement";
 
 export default function AdminRoutes() {
   return (
@@ -18,6 +19,7 @@ export default function AdminRoutes() {
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<OverviewDashboard />} />
         <Route path="users"    element={<UserManagement />} />
+        <Route path="roles"    element={<RoleManagement />} />
         <Route path="classes"  element={<ClassManagement />} />
         <Route path="content"  element={<ContentMonitoring />} />
         <Route path="blogs"    element={<BlogManagement />} />

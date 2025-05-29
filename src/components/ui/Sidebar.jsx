@@ -142,6 +142,26 @@ const Sidebar = ({
               </li>
               <li>
                 <button
+                  onClick={() => navigate("/admin/teams")}
+                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                  style={{
+                    backgroundColor:
+                    (pathname === "/admin/teams")
+                        ? colors.navActiveBg
+                        : "transparent",
+                    color:
+                    (pathname === "/admin/teams") ? colors.primary : colors.text,
+                  }}
+                >
+                  <Users
+                    className="w-5 h-5 mr-3"
+                    style={{ color: colors.primary }}
+                  />
+                  Team Management
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => navigate("/admin/users")}
                   className="flex items-center px-3 py-2.5 rounded w-full text-left"
                   style={{

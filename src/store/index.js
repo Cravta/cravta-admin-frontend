@@ -10,6 +10,8 @@ import adminContentReducer from './admin/contentSlice';
 import adminQuizReducer from './admin/quizSlice';
 import blogReducer from './admin/blogSlice';
 import adminAuthReducer from './auth/adminAuthSlice';
+import adminTeamReducer from './auth/adminUsersSlice';
+import roleReducer from './admin/roleSlice';
 // Redux Persist Configuration
 const persistConfig = {
   key: "root",
@@ -21,11 +23,13 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: adminAuthReducer,
   user: userSlice,
-  blogs:blogReducer,
+  blogs: blogReducer,
+  role: roleReducer,
+  team: adminTeamReducer,
   adminUsers: adminUsersReducer,
   adminClasses: adminClassesReducer,
   adminContent: adminContentReducer,
-  adminQuiz: adminQuizReducer
+  adminQuiz: adminQuizReducer,
 });
 
 // Apply Persist Reducer
