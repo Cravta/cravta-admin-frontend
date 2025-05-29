@@ -184,6 +184,28 @@ const Sidebar = ({
               </li>
               <li>
                 <button
+                  onClick={() => navigate("/admin/roles")}
+                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                  style={{
+                    backgroundColor:
+                    (pathname === "/admin/roles")
+                        ? colors.navActiveBg
+                        : "transparent",
+                    color:
+                    (pathname === "/admin/roles")
+                        ? colors.primary
+                        : colors.text,
+                  }}
+                >
+                  <BookOpen
+                    className="w-5 h-5 mr-3"
+                    style={{ color: colors.primary }}
+                  />
+                  Role Management
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => navigate("/admin/content")}
                   className="flex items-center px-3 py-2.5 rounded w-full text-left"
                   style={{

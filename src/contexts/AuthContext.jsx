@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { fetchUserData } from "../store/auth/userSlice";
+import { fetchUserData } from "../store/auth/adminAuthSlice";
 
 const AuthContext = createContext();
 
@@ -73,11 +73,12 @@ export const AuthProvider = ({ children }) => {
     const success = await verifyToken();
     if (success) {
       // Determine where to navigate based on user type
-      if (user && user.user_type === "teacher") {
-        navigate("/class");
-      } else {
-        navigate("/home");
-      }
+      // if (user && user.user_type === "teacher") {
+      //   navigate("/class");
+      // } else {
+      //   navigate("/home");
+      // }
+      navigate("/admin")
     }
   };
 

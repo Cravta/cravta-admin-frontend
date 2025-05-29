@@ -9,6 +9,7 @@ import adminClassesReducer from './admin/classesSlice';
 import adminContentReducer from './admin/contentSlice';
 import adminQuizReducer from './admin/quizSlice';
 import blogReducer from './admin/blogSlice';
+import adminAuthReducer from './auth/adminAuthSlice';
 // Redux Persist Configuration
 const persistConfig = {
   key: "root",
@@ -18,7 +19,7 @@ const persistConfig = {
 
 // Combine All Reducers
 const rootReducer = combineReducers({
-  auth: authReducer,
+  auth: adminAuthReducer,
   user: userSlice,
   blogs:blogReducer,
   adminUsers: adminUsersReducer,

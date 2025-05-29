@@ -13,7 +13,7 @@ import {
 import { useTheme } from "../../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../store/auth/userSlice";
-import { logOut, logoutAuth } from "../../store/auth/authSlice";
+import { logOut, logoutAuth } from "../../store/auth/adminAuthSlice";
 
 const Header = ({
   isSidebarOpen,

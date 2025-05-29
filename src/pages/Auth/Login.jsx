@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { clearError, login, selectAuthError } from "../../store/auth/authSlice.js";
+import { clearError, login, selectAuthError } from "../../store/auth/adminAuthSlice.js";
 import teach from "../../assets/login.png";
 import {
   AlertCircle,
@@ -151,7 +151,7 @@ const LoginPage = () => {
         console.log("Login succeeded:", data);
 
         // Extract user data from various possible locations
-        const userData = data?.data?.User || data?.User || data?.data || data;
+        const userData = data?.data?.admin || data?.admin || data?.data || data;
 
         console.log(userData);
         // Store user ID
@@ -167,17 +167,7 @@ const LoginPage = () => {
         }
 
         // Navigate based on user data completeness
-        if (!userData || !userData.name) {
-          navigate("/presign");
-        } else if (!userData.user_type) {
-          navigate("/iam");
-        } else if (userData?.user_type === "administrator") {
-          navigate("/admin");
-        } else if (!userData.organization) {
-          navigate("/newEnterprise");
-        } else {
-          navigate("/welcome");
-        }
+        navigate(`/admin/${userData.role.rights[0]}`);
       })
       .catch((error) => {
         // Handle errors
