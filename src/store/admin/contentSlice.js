@@ -27,6 +27,27 @@ export const fetchContentAdmin = createAsyncThunk(
         }
     }
 );
+export const createContent = createAsyncThunk(
+  "content/createContent",
+  async ({ userId,  contentData }, { rejectWithValue }) => {
+    try {
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
+
+      const token = localStorage.getItem("token");
+      const response = await api.post(
+        BASE_URL,
+        { ...contentData, userId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      return response.data; // Response contains the signed URL
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Error creating content");
+    }
+  }
+);
 export const deleteContentbyAdmin = createAsyncThunk(
     "content/deleteContentbyAdmin",
     async (contentId, { rejectWithValue }) => {
@@ -47,7 +68,7 @@ export const deleteContentbyAdmin = createAsyncThunk(
     }
 );
 const AdminContentsSlice = createSlice({
-    name: "aminContent",
+    name: "adminContent",
     initialState: {
         contentList: [],
         loading: false,
@@ -71,6 +92,9 @@ const AdminContentsSlice = createSlice({
             .addCase(fetchContentAdmin.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            .addCase(createContent.fulfilled, (state, action) => {
+                state.contentList.push(action.payload.data);
             })
             .addCase(deleteContentbyAdmin.fulfilled, (state, action) => {
                 state.contentList = state.contentList.filter(

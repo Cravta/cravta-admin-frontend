@@ -11,6 +11,7 @@ import ReportingAnalytics from "../pages/Admin/Reports/ReportingAnalytics";
 import PlatformSettings from "../pages/Admin/Settings/PlatformSettings";
 import AuditLog         from "../pages/Admin/Audit/AuditLog";
 import RoleManagement from "../pages/Admin/Roles/RoleManagement";
+import TeamManagement from "../pages/Admin/Teams/TeamManagement";
 
 export default function AdminRoutes() {
   return (
@@ -18,6 +19,7 @@ export default function AdminRoutes() {
       <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<OverviewDashboard />} />
+        <Route path="teams"    element={<TeamManagement />} />
         <Route path="users"    element={<UserManagement />} />
         <Route path="roles"    element={<RoleManagement />} />
         <Route path="classes"  element={<ClassManagement />} />

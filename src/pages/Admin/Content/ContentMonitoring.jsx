@@ -33,6 +33,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
 import { deleteContentbyAdmin, fetchContentAdmin } from "../../../store/admin/contentSlice";
 import { deleteQuizbyAdmin, fetchQuizzesAdmin } from "../../../store/admin/quizSlice";
+import ContentModal from "../../../components/modals/ContentModal";
 import { toast } from "react-toastify";
 // Dummy data for materials
 const materialsData = Array(30)
@@ -116,6 +117,7 @@ const ContentMonitoring = () => {
   const [visibilityFilter, setVisibilityFilter] = useState("all");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
+  const [showContentModal, setShowContentModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -878,7 +880,17 @@ const ContentMonitoring = () => {
               </div>
             </>
           )}
-
+          <button
+            className="flex items-center px-3 py-2 rounded-lg text-sm"
+            style={{
+              backgroundColor: colors.primary,
+              color: colors.lightText,
+            }}
+            onClick={()=>setShowContentModal(true)}
+          >
+            {/* <UserPlus className="w-4 h-4 mr-2" /> */}
+            Add New Content
+          </button>
           {/* Refresh button */}
           <button
             className="p-2 rounded-lg flex items-center justify-center"
@@ -1592,6 +1604,10 @@ const ContentMonitoring = () => {
           </div>
         )}
       </div>
+      <ContentModal
+        showModal={showContentModal}
+        setShowModal={setShowContentModal}
+      />
     </div>
   );
 };

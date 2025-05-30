@@ -19,6 +19,7 @@ import {useDispatch, useSelector} from "react-redux";
 import { deleteClassbyAdmin, fetchClassesAdmin } from "../../../store/admin/classesSlice";
 import { fetchRoles,deleteRole } from "../../../store/admin/roleSlice";
 import { toast } from "react-toastify";
+import CreateRoleModal from "../../../components/modals/RoleModal";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -34,6 +35,7 @@ const RoleManagement = () => {
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const dispatch = useDispatch();
   useEffect(() => {
           dispatch(fetchRoles({}));
@@ -91,14 +93,14 @@ const RoleManagement = () => {
   const handleRefresh = () => {
     dispatch(fetchRoles({}));
   };
-  const handleDeleteClass = (classId) => {
-    if (window.confirm("Are you sure you want to delete this class?")) {
+  const handleDeleteRole = (classId) => {
+    if (window.confirm("Are you sure you want to delete this role?")) {
       // setIsLoading(true);
 
-      dispatch(deleteClassbyAdmin(classId))
+      dispatch(deleteRole(classId))
         .unwrap()
         .then(() => {
-          toast.success("Class deleted successfully");
+          toast.success("role deleted successfully");
         })
         .catch((error) => {
           toast.error(
@@ -114,7 +116,7 @@ const RoleManagement = () => {
           className="text-xl font-medium mb-2"
           style={{ color: colors.primary }}
         >
-          Class Management
+          Role Management
         </h2>
         <p className="text-sm" style={{ color: colors.textMuted }}>
           View and manage all roles across the platform
@@ -169,7 +171,6 @@ const RoleManagement = () => {
               </span>
               <ChevronDown className="w-4 h-4 ml-2" />
             </button>
-
             {showStatusDropdown && (
               <div
                 className="absolute right-0 mt-2 w-40 rounded-lg shadow-lg z-10 overflow-hidden"
@@ -300,6 +301,17 @@ const RoleManagement = () => {
             )}
           </div>
 
+            <button
+              className="flex items-center px-3 py-2 rounded-lg text-sm"
+              style={{
+                backgroundColor: colors.primary,
+                color: colors.lightText,
+              }}
+              onClick={() => setShowRoleModal(true)}
+            >
+              {/* <UserPlus className="w-4 h-4 mr-2" /> */}
+              Add New Role
+            </button>
           {/* Refresh button */}
           <button
             className="p-2 rounded-lg flex items-center justify-center"
@@ -469,7 +481,7 @@ const RoleManagement = () => {
                           className="p-1 rounded"
                           style={{ color: colors.error }}
                           title="Delete Role"
-                          onClick={() => handleDeleteClass(cls.id)}
+                          onClick={() => handleDeleteRole(cls.id)}
                         >
                           <Trash className="w-4 h-4" />
                         </button>
@@ -568,6 +580,7 @@ const RoleManagement = () => {
           </div>
         )}
       </div>
+      <CreateRoleModal showModal={showRoleModal} setShowModal={setShowRoleModal} />
     </div>
   );
 };

@@ -1,18 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 import api from "../../api/axiosInstance";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/user`;
 const getAuthToken = () => localStorage.getItem("token");
 
-export const fetchTeam = createAsyncThunk(
-    "users/fetchUsersAdmin",
+export const fetchTeamUsers = createAsyncThunk(
+    "team/fetchTeamUsers",
     async (_, { rejectWithValue }) => {
         try {
             const token = getAuthToken();
             if (!token) throw new Error("No auth token found");
 
-            const response = await api.get(`${BASE_URL}`, {
+            const response = await api.get(`${BASE_URL}/all`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -31,7 +30,7 @@ export const fetchTeam = createAsyncThunk(
 );
 
 export const deleteUserbyAdmin = createAsyncThunk(
-    "users/deleteUserbyAdmin",
+    "team/deleteUserbyAdmin",
     async ( userId , { rejectWithValue }) => {
         try {
             if (!userId) {
@@ -50,10 +49,10 @@ export const deleteUserbyAdmin = createAsyncThunk(
     }
 );
 
-const AdminUsersSlice = createSlice({
+const AdminTeamSlice = createSlice({
     name: "aminUsers",
     initialState: {
-        usersList: [],
+        adminUsers: [],
         loading: false,
         error: null,
     },
@@ -64,20 +63,20 @@ const AdminUsersSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchUsersAdmin.pending, (state) => {
+            .addCase(fetchTeamUsers.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchUsersAdmin.fulfilled, (state, action) => {
+            .addCase(fetchTeamUsers.fulfilled, (state, action) => {
                 state.loading = false;
-                state.usersList = Array.isArray(action.payload) ? action.payload : [];
+                state.adminUsers = Array.isArray(action.payload) ? action.payload : [];
             })
-            .addCase(fetchUsersAdmin.rejected, (state, action) => {
+            .addCase(fetchTeamUsers.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
             .addCase(deleteUserbyAdmin.fulfilled, (state, action) => {
-                state.usersList = state.usersList.filter(
+                state.adminUsers = state.adminUsers.filter(
                     (user) => user.id !== action.payload
                 );
             });
@@ -85,4 +84,4 @@ const AdminUsersSlice = createSlice({
 });
 
 // export const { fetchUsersData } = AdminUsersSlice.actions;
-export default AdminUsersSlice.reducer;
+export default AdminTeamSlice.reducer;

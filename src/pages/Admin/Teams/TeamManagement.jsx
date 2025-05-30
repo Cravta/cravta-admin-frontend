@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import {
   Users,
   UserPlus,
@@ -19,6 +19,7 @@ import {
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
 import { deleteUserbyAdmin, fetchUsersAdmin } from "../../../store/admin/usersSlice";
+import { fetchTeamUsers } from "../../../store/auth/adminUsersSlice";
 import { toast } from "react-toastify";
 
 
@@ -37,29 +38,15 @@ const UserManagement = () => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   useEffect(() => {
-        dispatch(fetchUsersAdmin({}));
+        dispatch(fetchTeamUsers({}));
     }, [dispatch]);
-  const { usersList, loading } = useSelector((state) => state.adminUsers);
+  const { adminUsers, loading } = useSelector((state) => state.team);
   // Items per page
   const itemsPerPage = 10;
 
   // Get data based on active tab
   const getData = () => {
-    let data;
-
-    switch (activeTab) {
-      case "teachers":
-        data = usersList?.filter((user) => user.user_type === "teacher");
-        break;
-      case "students":
-        data = usersList?.filter((user) => user.user_type === "student");
-        break;
-      case "admins":
-        data = usersList?.filter((user) => user.user_type === "administrator");
-        break;
-      default:
-        data = [];
-    }
+    const data=adminUsers;
 
     // Apply search filter
     if (searchTerm) {
@@ -68,11 +55,6 @@ const UserManagement = () => {
           item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item?.email_address?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-
-    // Apply status filter
-    if (statusFilter !== "all") {
-      data = data.filter((item) => item.status === statusFilter);
     }
 
     return data;
@@ -102,7 +84,7 @@ const UserManagement = () => {
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchUsersAdmin({}));
+    dispatch(fetchTeamUsers({}));
   };
   const handleDeleteUser = (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
@@ -127,57 +109,11 @@ const UserManagement = () => {
           className="text-xl font-medium mb-2"
           style={{ color: colors.primary }}
         >
-          User Management
+          Team Management
         </h2>
         <p className="text-sm" style={{ color: colors.textMuted }}>
-          View, edit and manage all users on the platform
+          View, edit and manage all team members on the platform
         </p>
-      </div>
-
-      {/* Tabs */}
-      <div
-        className="flex border-b mb-6"
-        style={{ borderColor: colors.borderColor }}
-      >
-        <button
-          className={`px-4 py-2 font-medium relative ${
-            activeTab === "teachers" ? "" : ""
-          }`}
-          style={{
-            color: activeTab === "teachers" ? colors.primary : colors.text,
-            borderBottom:
-              activeTab === "teachers" ? `2px solid ${colors.primary}` : "none",
-          }}
-          onClick={() => setActiveTab("teachers")}
-        >
-          Teachers
-        </button>
-        <button
-          className={`px-4 py-2 font-medium relative ${
-            activeTab === "students" ? "" : ""
-          }`}
-          style={{
-            color: activeTab === "students" ? colors.primary : colors.text,
-            borderBottom:
-              activeTab === "students" ? `2px solid ${colors.primary}` : "none",
-          }}
-          onClick={() => setActiveTab("students")}
-        >
-          Students
-        </button>
-        <button
-          className={`px-4 py-2 font-medium relative ${
-            activeTab === "admins" ? "" : ""
-          }`}
-          style={{
-            color: activeTab === "admins" ? colors.primary : colors.text,
-            borderBottom:
-              activeTab === "admins" ? `2px solid ${colors.primary}` : "none",
-          }}
-          onClick={() => setActiveTab("admins")}
-        >
-          Administrators
-        </button>
       </div>
 
       {/* Action Bar */}
@@ -190,7 +126,7 @@ const UserManagement = () => {
           />
           <input
             type="text"
-            placeholder={`Search ${activeTab}...`}
+            placeholder={`Search members...`}
             value={searchTerm}
             onChange={handleSearch}
             className="pl-10 pr-4 py-2 w-full rounded-lg focus:outline-none"
@@ -319,12 +255,7 @@ const UserManagement = () => {
             }}
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Add New{" "}
-            {activeTab === "teachers"
-              ? "Teacher"
-              : activeTab === "students"
-              ? "Student"
-              : "Admin"}
+            Add New Member
           </button>
         </div>
       </div>
@@ -359,21 +290,12 @@ const UserManagement = () => {
                 >
                   Last Active
                 </th>
-                {activeTab !== "admins" ? (
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                    style={{ color: colors.textMuted }}
-                  >
-                    Classes
-                  </th>
-                ) : (
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                    style={{ color: colors.textMuted }}
-                  >
-                    Role
-                  </th>
-                )}
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Role
+                </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
@@ -406,7 +328,7 @@ const UserManagement = () => {
                     className="px-6 py-4 text-center"
                     style={{ color: colors.textMuted }}
                   >
-                    No {activeTab} found matching your criteria
+                    No member found matching your criteria
                   </td>
                 </tr>
               ) : (
@@ -428,8 +350,8 @@ const UserManagement = () => {
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3"
                           style={{
                             background:
-                              activeTab === "admins"
-                                ? `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentLight} 100%)`
+                              user?.role?.name?.toLowerCase()?.includes("admin") ?
+                                 `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentLight} 100%)`
                                 : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
                           }}
                         >
@@ -463,54 +385,37 @@ const UserManagement = () => {
                     >
                       {user.updatedAt?formatDate(user.updatedAt ):"-"}
                     </td>
-                    {activeTab !== "admins" ? (
-                      <td
-                        className="px-6 py-4 whitespace-nowrap"
-                        style={{ color: colors.text }}
+                    <td
+                      className="px-6 py-4 whitespace-nowrap"
+                      style={{ color: colors.text }}
+                    >
+                      <span
+                        className="px-2 py-1 text-xs rounded-full flex items-center w-min"
+                        style={{
+                          backgroundColor:
+                            user?.role?.name?.toLowerCase()?.includes("admin")
+                              ? `${colors.accent}20`
+                              : `${colors.primary}20`,
+                          color:
+                            user?.role?.name?.toLowerCase()?.includes("super admin")
+                              ? colors.accent
+                              : colors.primary,
+                        }}
                       >
-                        <span
-                          className="px-2 py-1 text-xs rounded-full"
-                          style={{
-                            backgroundColor: `${colors.primary}20`,
-                            color: colors.primary,
-                          }}
-                        >
-                          {user?.classCount||"-"}
-                        </span>
-                      </td>
-                    ) : (
-                      <td
-                        className="px-6 py-4 whitespace-nowrap"
-                        style={{ color: colors.text }}
-                      >
-                        <span
-                          className="px-2 py-1 text-xs rounded-full flex items-center w-min"
-                          style={{
-                            backgroundColor:
-                              user.role === "Super Admin"
-                                ? `${colors.accent}20`
-                                : `${colors.primary}20`,
-                            color:
-                              user.role === "Super Admin"
-                                ? colors.accent
-                                : colors.primary,
-                          }}
-                        >
-                          <Shield className="w-3 h-3 mr-1" />
-                          {user.user_type}
-                        </span>
-                      </td>
-                    )}
+                        <Shield className="w-3 h-3 mr-1" />
+                        {user?.role?.name || "-"}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className="px-2 py-1 text-xs rounded-full flex items-center w-min"
                         style={{
                           backgroundColor:
-                            user.status === "active"
+                            user?.role?.name?.toLowerCase()?.includes("admin")
                               ? `${colors.success}20`
                               : `${colors.error}20`,
                           color:
-                            user.status === "active"
+                            user?.role?.name?.toLowerCase()?.includes("admin")
                               ? colors.success
                               : colors.error,
                         }}
@@ -520,7 +425,7 @@ const UserManagement = () => {
                         ) : (
                           <XCircle className="w-3 h-3 mr-1" />
                         )}
-                        {user.status === "active" ? "Active" : "Inactive"}
+                        {user.status === "active" ? "Active" : user?.role?.name?.toLowerCase()?.includes("admin")?"Active":"Inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">

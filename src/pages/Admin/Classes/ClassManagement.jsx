@@ -13,11 +13,13 @@ import {
   ChevronDown,
   CheckCircle,
   XCircle,
+  Edit,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
 import { deleteClassbyAdmin, fetchClassesAdmin } from "../../../store/admin/classesSlice";
 import { toast } from "react-toastify";
+import CreateClassModal from "../../../components/modals/CreateClassModal";
 // Dummy data for classes
 const classesData = Array(30)
   .fill()
@@ -76,7 +78,9 @@ const ClassManagement = () => {
   const [fieldFilter, setFieldFilter] = useState("all");
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showClassModal, setShowClassModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [classInfo, setClassInfo] = useState(null);
   const dispatch = useDispatch();
   useEffect(() => {
           dispatch(fetchClassesAdmin({}));
@@ -190,7 +194,7 @@ const ClassManagement = () => {
         <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
           {/* Status filter */}
           <div className="relative">
-            <button
+            {/* <button
               className="flex items-center px-3 py-2 rounded-lg"
               style={{
                 backgroundColor:
@@ -211,7 +215,7 @@ const ClassManagement = () => {
                   : "Archived"}
               </span>
               <ChevronDown className="w-4 h-4 ml-2" />
-            </button>
+            </button> */}
 
             {showStatusDropdown && (
               <div
@@ -369,6 +373,17 @@ const ClassManagement = () => {
             }}
           >
             <Download className="w-4 h-4" />
+          </button>
+          <button
+            className="flex items-center px-3 py-2 rounded-lg text-sm"
+            style={{
+              backgroundColor: colors.primary,
+              color: colors.lightText,
+            }}
+            onClick={()=>setShowClassModal(true)}
+          >
+            {/* <UserPlus className="w-4 h-4 mr-2" /> */}
+            Add New Class
           </button>
         </div>
       </div>
@@ -562,7 +577,7 @@ const ClassManagement = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
+                        {/* <button
                           className="p-1 rounded"
                           style={{
                             color:
@@ -577,6 +592,14 @@ const ClassManagement = () => {
                           }
                         >
                           <Archive className="w-4 h-4" />
+                        </button> */}
+                        <button
+                          className="p-1 rounded"
+                          style={{ color: colors.accent }}
+                          title="Edit User"
+                          onClick={()=>{setClassInfo(cls);setShowClassModal(true)}}
+                        >
+                          <Edit className="w-4 h-4" />
                         </button>
                         <button
                           className="p-1 rounded"
@@ -681,6 +704,11 @@ const ClassManagement = () => {
           </div>
         )}
       </div>
+      <CreateClassModal
+          showModal={showClassModal}
+          setShowModal={setShowClassModal}
+          classInfo={classInfo}
+      />
     </div>
   );
 };

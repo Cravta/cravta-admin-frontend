@@ -55,7 +55,7 @@ const UserManagement = () => {
         data = usersList?.filter((user) => user.user_type === "student");
         break;
       case "admins":
-        data = usersList?.filter((user) => user.user_type === "administrator");
+        data = usersList?.filter((user) => user.user_type === "school");
         break;
       default:
         data = [];
@@ -176,7 +176,7 @@ const UserManagement = () => {
           }}
           onClick={() => setActiveTab("admins")}
         >
-          Administrators
+          Schools
         </button>
       </div>
 

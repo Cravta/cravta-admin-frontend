@@ -4,6 +4,13 @@ import api from "../../api/axiosInstance";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/classes`;
 
+const getAxiosConfig = (token) => ({
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+});
+
 export const fetchClassesAdmin = createAsyncThunk(
     "classes/fetchClassesAdmin",
     async (_, { rejectWithValue }) => {
@@ -27,6 +34,48 @@ export const fetchClassesAdmin = createAsyncThunk(
             );
         }
     }
+);
+export const createClass = createAsyncThunk(
+  "classes/createClass",
+  async (classData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        return rejectWithValue("Unauthorized: No token found. Please log in.");
+      }
+
+      console.log("📤 Sending payload:", classData);
+      const response = await api.post(`${BASE_URL}`, classData, getAxiosConfig(token));
+      console.log("✅ API Response:", response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ API Error:", error.response?.data || error.message);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to create class. Please try again."
+      );
+    }
+  }
+);
+export const updateClass = createAsyncThunk(
+  'classes/updateClass',
+  async ({ classId, userId, classData }, { rejectWithValue }) => {
+    if (!userId) return rejectWithValue('User ID is required');
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return rejectWithValue("Unauthorized: No token found. Please log in.");
+    }
+    try {
+      const response = await api.patch(
+        `${BASE_URL}/${classId}?userId=${userId}`,
+        classData,
+        getAxiosConfig(token)
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update class');
+    }
+  }
 );
 export const deleteClassbyAdmin = createAsyncThunk(
     "classes/deleteClassbyAdmin",
@@ -53,11 +102,13 @@ const AdminClassesSlice = createSlice({
         classList: [],
         loading: false,
         error: null,
+        status: 'idle',
     },
     reducers: {
-        // clearPdfUrl: (state) => {
-        //   state.pdfUrl = null; // Clears the PDF preview when closing modal
-        // },
+        resetStatus: (state) => {
+            state.status = 'idle';
+            state.error = null;
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -77,9 +128,36 @@ const AdminClassesSlice = createSlice({
                 state.classList = state.classList.filter(
                     (cls) => cls.id !== action.payload
                 );
-            });
+            })
+            .addCase(createClass.pending, (state) => {
+                state.status = 'loading';
+                state.error = null;
+            })
+            .addCase(createClass.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.classList.push(action.payload);
+            })
+            .addCase(createClass.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload || 'Failed to create class';
+            })
+            .addCase(updateClass.pending, (state) => {
+                state.status = 'loading';
+                state.error = null;
+            })
+            .addCase(updateClass.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                const index = state.classList.findIndex(c => c.id === action.payload.id);
+                if (index !== -1) {
+                state.classList[index] = action.payload;
+                }
+            })
+            .addCase(updateClass.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload || 'Failed to update class';
+            })
     },
 });
 
-// export const { fetchUsersData } = AdminUsersSlice.actions;
+export const { resetStatus } = AdminClassesSlice.actions;
 export default AdminClassesSlice.reducer;
