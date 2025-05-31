@@ -342,7 +342,7 @@ const LoginPage = () => {
               <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-0 group-hover:opacity-80 animate-ping"></div>
             </button>
 
-            <button
+            {/* <button
               onClick={() => navigate("/signup")}
               className="px-4 py-2  rounded-lg text-sm font-medium"
               style={{
@@ -351,7 +351,7 @@ const LoginPage = () => {
               }}
             >
               {t("signUp")}
-            </button>
+            </button> */}
           </div>
         </div>
       </header>
@@ -569,7 +569,7 @@ const LoginPage = () => {
                 )}
               </motion.button>
 
-              <motion.div
+              {/* <motion.div
                 className="text-center text-sm pt-2"
                 style={{ color: colors.textSecondary }}
                 variants={itemVariants}
@@ -583,7 +583,7 @@ const LoginPage = () => {
                 >
                   {t("signUp")}
                 </button>
-              </motion.div>
+              </motion.div> */}
             </motion.form>
           </motion.div>
 
