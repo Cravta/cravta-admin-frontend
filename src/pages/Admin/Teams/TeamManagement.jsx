@@ -48,7 +48,7 @@ const UserManagement = () => {
 
   // Get data based on active tab
   const getData = () => {
-    const data=adminUsers;
+    let data=adminUsers;
 
     // Apply search filter
     if (searchTerm) {

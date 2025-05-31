@@ -7,36 +7,36 @@
 
 /* src/index.css or src/styles.css */
 
-@font-face {
+/* @font-face {
   font-family: "Ibrand";
   src: url("./assets/fonts/Ibrand-Font/Ibrand.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
-}
+} */
 
 /* body {
   font-family: 'Ibrand', sans-serif;
 } */
-@font-face {
+/* @font-face {
   font-family: "Access";
   src: url("/assets/fonts/Access.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
-}
+} */
 
 /* Example: Font weight 400 (Regular) */
-@font-face {
+/* @font-face {
   font-family: "Proxima Nova";
   src: url("/src/assets/fonts/ProximaNova/ProximaNova-Regular.woff2")
       format("woff2"),
     url("/src/assets/fonts/ProximaNova/ProximaNova-Regular.woff") format("woff");
   font-style: normal;
   font-weight: 400;
-  font-display: swap; /* optional */
-}
+  font-display: swap; 
+} */
 
 /* Example: Font weight 700 (Bold) */
-@font-face {
+/* @font-face {
   font-family: "Proxima Nova";
   src: url("/src/assets/fonts/ProximaNova/ProximaNova-Alt-Bold.otf")
       format("woff"),
@@ -44,7 +44,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-}
+} */
 @keyframes slideBackground {
   0% {
     background-position: 0% 0%;
