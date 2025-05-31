@@ -118,7 +118,12 @@ const AdminRolesSlice = createSlice({
             })
             .addCase(createRole.fulfilled, (state, action) => {
                 state.roleList.push(action.payload);
-    })
+            })
+            .addCase(editRole.fulfilled, (state, action) => {
+                state.roleList = state.roleList.map((rl) =>
+                    rl.id === action.payload.id ? action.payload : rl
+                );
+            })
     },
 });
 

@@ -14,6 +14,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../store/auth/userSlice";
 import { logOut, logoutAuth } from "../../store/auth/adminAuthSlice";
+import { useDispatch } from "react-redux";
 
 const Header = ({
   isSidebarOpen,
@@ -23,6 +24,7 @@ const Header = ({
 }) => {
   const { colors, darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(true);

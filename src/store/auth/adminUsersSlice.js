@@ -28,6 +28,47 @@ export const fetchTeamUsers = createAsyncThunk(
         }
     }
 );
+export const createTeamUser = createAsyncThunk(
+  "team/createTeamUser",
+  async (userData, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      const response = await api.post(`${BASE_URL}/create`, userData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      return response.data; // Assuming the created user is returned
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Error creating user");
+    }
+  }
+);
+
+export const updateTeamUser = createAsyncThunk(
+  "team/updateTeamUser",
+  async ({ userId, userData }, { rejectWithValue }) => {
+    try {
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
+
+      const token = getAuthToken();
+      const response = await api.put(`${BASE_URL}/${userId}`, userData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      return response.data; // Assuming the updated user data is returned
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Error updating user");
+    }
+  }
+);
 
 export const deleteUserbyAdmin = createAsyncThunk(
     "team/deleteUserbyAdmin",
@@ -79,7 +120,23 @@ const AdminTeamSlice = createSlice({
                 state.adminUsers = state.adminUsers.filter(
                     (user) => user.id !== action.payload
                 );
-            });
+            })
+            .addCase(createTeamUser.fulfilled, (state, action) => {
+                state.createStatus = "succeeded";
+                state.adminUsers.push(action.payload.admin); // Append the newly created user
+            })
+            .addCase(updateTeamUser.pending, (state) => {
+                state.createStatus = 'loading';
+                state.error = null;
+            })
+            .addCase(updateTeamUser.fulfilled, (state, action) => {
+                state.createStatus = 'succeeded';
+                console.log(action.payload)
+                const index = state.adminUsers.findIndex(c => c.id == action.payload?.admin?.id);
+                if (index !== -1) {
+                    state.adminUsers[index] = action.payload?.admin;
+                }
+            })
     },
 });
 

@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, type ReactNode } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 // Light theme color palette
@@ -63,7 +63,7 @@ const AppSettingsContext = createContext({
   colors: {},
 });
 
-export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
+export const AppSettingsProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("theme");
     return (
@@ -78,7 +78,7 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
   const toggleLanguage = () => {
-    const newLang = i18n.language === "en" ? "ar" : "en";
+    const newLang = i18n.language === "en" ? "en" : "en";
     i18n.changeLanguage(newLang);
   };
 
@@ -102,7 +102,7 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     document.documentElement.setAttribute(
         "dir",
-        i18n.language === "ar" ? "rtl" : "ltr"
+        i18n.language === "ar" ? "ltr" : "ltr"
     );
   }, [i18n.language]);
 

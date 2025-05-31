@@ -3,9 +3,12 @@ import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { useAppSettings } from "../../context/AppSettingsProvider";
+import { useAppSettings } from "../../contexts/AppSettingsProvider";
+import { fetchRoles } from "../../store/admin/roleSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { createTeamUser, fetchTeamUsers, updateTeamUser } from "../../store/auth/adminUsersSlice";
 
-const CreateUserModal = ({ showModal, setShowModal }) => {
+const CreateUserModal = ({ showModal, setShowModal, editingUser,setEditingUser }) => {
   const { colors } = useAppSettings();
   const { t } = useTranslation();
 
@@ -13,24 +16,29 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [roleId, setRoleId] = useState("");
-  const [roles, setRoles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { roleList, loading } = useSelector((state) => state.role);
+  const dispatch = useDispatch();
   // Fetch roles from backend (adjust URL as needed)
   useEffect(() => {
     if (showModal) {
-      axios
-        .get("https://your-backend-api.com/api/v1/roles")
-        .then((res) => setRoles(res.data.data))
-        .catch((err) => toast.error("Failed to load roles."));
+      dispatch(fetchRoles({}))
     }
   }, [showModal]);
-
+  useEffect(() => {
+    if (editingUser?.id && roleList.length) {
+      setName(editingUser?.name || '');
+      setPassword('')
+      setEmailAddress(editingUser?.email_address || '');
+      setRoleId(editingUser?.role_id || '');
+    }
+  }, [editingUser?.id, roleList.length]);
   const resetForm = () => {
     setName("");
     setEmailAddress("");
     setPassword("");
     setRoleId("");
+    setEditingUser(null)
   };
 
   const handleSubmit = () => {
@@ -47,15 +55,27 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
     };
 
     setIsSubmitting(true);
-    axios
-      .post("https://your-backend-api.com/api/v1/users", userData)
-      .then(() => {
-        toast.success("User created successfully!");
+    if (editingUser?.id) {
+      dispatch(updateTeamUser({ userId: editingUser.id, userData })).unwrap().then(() => {
+        toast.success("User updated successfully!");
+        dispatch(fetchTeamUsers({}));
         resetForm();
         setShowModal(false);
       })
-      .catch(() => toast.error("Failed to create user."))
+      .catch((err) => console.log(err))
       .finally(() => setIsSubmitting(false));
+      return;
+    }
+    else {
+    dispatch(createTeamUser(userData)).unwrap().then(() => {
+        toast.success("User created successfully!");
+        dispatch(fetchTeamUsers({}));
+        resetForm();
+        setShowModal(false);
+    })
+    .catch((err) => console.log(err))
+    .finally(() => setIsSubmitting(false));
+    }
   };
 
   const handleCloseModal = () => {
@@ -64,7 +84,7 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
   };
 
   if (!showModal) return null;
-
+  console.log(roleId)
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50"
@@ -80,7 +100,7 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
           style={{ borderColor: colors.borderColor }}
         >
           <h3 className="text-lg font-medium" style={{ color: colors.primary }}>
-            {t("createUser")}
+            Create User
           </h3>
           <button
             onClick={handleCloseModal}
@@ -95,7 +115,7 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
         <div className="p-5 space-y-4">
           <div>
             <label className="block text-sm mb-1" style={{ color: colors.terColor }}>
-              {t("name")} *
+              Name *
             </label>
             <input
               value={name}
@@ -106,13 +126,13 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
                 border: `1px solid ${colors.borderColor}`,
                 color: colors.text,
               }}
-              placeholder={t("enterName")}
+              placeholder={t("Enter name")}
             />
           </div>
 
           <div>
             <label className="block text-sm mb-1" style={{ color: colors.terColor }}>
-              {t("emailAddress")} *
+              {t("Email Address")} *
             </label>
             <input
               type="email"
@@ -124,7 +144,7 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
                 border: `1px solid ${colors.borderColor}`,
                 color: colors.text,
               }}
-              placeholder={t("enterEmail")}
+              placeholder={t("enter email")}
             />
           </div>
 
@@ -142,13 +162,13 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
                 border: `1px solid ${colors.borderColor}`,
                 color: colors.text,
               }}
-              placeholder={t("enterPassword")}
+              placeholder={t("enter password")}
             />
           </div>
 
           <div>
             <label className="block text-sm mb-1" style={{ color: colors.terColor }}>
-              {t("role")} *
+              {t("Role")} *
             </label>
             <select
               value={roleId}
@@ -160,9 +180,9 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
                 color: colors.text,
               }}
             >
-              <option value="">{t("selectRole")}</option>
-              {roles.map((role) => (
-                <option key={role.id} value={role.id}>
+              <option value="">{t("select role")}</option>
+              {roleList.map((role) => (
+                <option key={role?.id} value={role?.id}>
                   {role.name}
                 </option>
               ))}
@@ -201,7 +221,8 @@ const CreateUserModal = ({ showModal, setShowModal }) => {
             }}
             type="button"
           >
-            {isSubmitting ? t("creating") : t("createUser")}
+            {isSubmitting ? t(editingUser?.id ? "Updating..." : "Creating...")
+            : t(editingUser?.id ? "Update User" : "Create User")}
           </button>
         </div>
       </div>

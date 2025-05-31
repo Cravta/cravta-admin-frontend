@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import { useAppSettings } from "../../contexts/AppSettingsProvider.jsx";
 import { useDispatch } from "react-redux";
-import { createRole } from "../../store/admin/roleSlice.js";
+import { createRole, editRole, fetchRoles } from "../../store/admin/roleSlice.js";
 
 const availableRights = [
   "overview",
@@ -19,7 +19,7 @@ const availableRights = [
   "teams",
 ];
 
-const CreateRoleModal = ({ showModal, setShowModal, onSubmit, roleInfo = {} }) => {
+const CreateRoleModal = ({ showModal, setShowModal, setRoleInfo, roleInfo = {} }) => {
   const { colors } = useAppSettings();
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -42,6 +42,7 @@ const CreateRoleModal = ({ showModal, setShowModal, onSubmit, roleInfo = {} }) =
 
   const handleClose = () => {
     resetForm();
+    setRoleInfo(null);
     setShowModal(false);
   };
 
@@ -71,10 +72,18 @@ const CreateRoleModal = ({ showModal, setShowModal, onSubmit, roleInfo = {} }) =
     };
 
     // if (onSubmit) onSubmit(roleData);
+    if(roleInfo?.id){
+    dispatch(editRole({roleId:roleInfo?.id,updatedData:roleData})).unwrap().then(() => {
+    toast.success(roleInfo?.id ? "Role updated successfully!" : "Role created successfully!");
+    handleClose();
+    })
+    }
+    else{
     dispatch(createRole(roleData)).unwrap().then(() => {
     toast.success(roleInfo?.id ? "Role updated successfully!" : "Role created successfully!");
     handleClose();
     })
+    }
   };
 
   if (!showModal) return null;

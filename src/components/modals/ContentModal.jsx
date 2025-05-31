@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { createContent } from "../../store/admin/contentSlice.js";
 import { toast } from "react-toastify";
 import axios from "axios";
-import {useAppSettings} from "../../contexts/AppSettingsProvider.js";
+import {useAppSettings} from "../../contexts/AppSettingsProvider.jsx";
 
 const UploadModal = ({ showModal, setShowModal, onSuccess }) => {
   const dispatch = useDispatch();

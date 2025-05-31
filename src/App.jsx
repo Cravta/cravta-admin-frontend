@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AppSettingsProvider } from './contexts/AppSettingsProvider';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "../i189";
 import AppRouter from './routes';
 import { ThemeProvider } from './contexts/ThemeContext';
 function App() {

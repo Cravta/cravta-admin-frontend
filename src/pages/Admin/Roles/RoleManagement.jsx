@@ -13,6 +13,7 @@ import {
   ChevronDown,
   CheckCircle,
   XCircle,
+  Edit,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
@@ -36,6 +37,7 @@ const RoleManagement = () => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [roleInfo, setRoleInfo] = useState(null);
   const dispatch = useDispatch();
   useEffect(() => {
           dispatch(fetchRoles({}));
@@ -461,7 +463,7 @@ const RoleManagement = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
+                        {/* <button
                           className="p-1 rounded"
                           style={{
                             color:
@@ -476,6 +478,17 @@ const RoleManagement = () => {
                           }
                         >
                           <Archive className="w-4 h-4" />
+                        </button> */}
+                        <button
+                          className="p-1 rounded"
+                          style={{ color: colors.accent }}
+                          title="Edit Role"
+                          onClick={() => {
+                            setRoleInfo(cls);
+                            setShowRoleModal(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
                         </button>
                         <button
                           className="p-1 rounded"
@@ -580,7 +593,11 @@ const RoleManagement = () => {
           </div>
         )}
       </div>
-      <CreateRoleModal showModal={showRoleModal} setShowModal={setShowRoleModal} />
+      <CreateRoleModal 
+      showModal={showRoleModal} 
+      setShowModal={setShowRoleModal} 
+      roleInfo={roleInfo}
+      setRoleInfo={setRoleInfo}/>
     </div>
   );
 };

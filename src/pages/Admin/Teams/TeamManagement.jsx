@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
-import { deleteUserbyAdmin, fetchUsersAdmin } from "../../../store/admin/usersSlice";
-import { fetchTeamUsers } from "../../../store/auth/adminUsersSlice";
+import { fetchTeamUsers,deleteUserbyAdmin } from "../../../store/auth/adminUsersSlice";
 import { toast } from "react-toastify";
+import TeamUserModal from "../../../components/modals/TeamUserModal";
 
 
 // Helper function to format date
@@ -37,9 +37,11 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   useEffect(() => {
         dispatch(fetchTeamUsers({}));
-    }, [dispatch]);
+    }, []);
   const { adminUsers, loading } = useSelector((state) => state.team);
   // Items per page
   const itemsPerPage = 10;
@@ -253,6 +255,7 @@ const UserManagement = () => {
               backgroundColor: colors.primary,
               color: colors.lightText,
             }}
+            onClick={()=>setShowModal(true)}
           >
             <UserPlus className="w-4 h-4 mr-2" />
             Add New Member
@@ -368,7 +371,7 @@ const UserManagement = () => {
                             className="text-sm"
                             style={{ color: colors.textMuted }}
                           >
-                            {user.email_address}
+                            {user?.email_address}
                           </div>
                         </div>
                       </div>
@@ -383,7 +386,7 @@ const UserManagement = () => {
                       className="px-6 py-4 whitespace-nowrap text-sm"
                       style={{ color: colors.text }}
                     >
-                      {user.updatedAt?formatDate(user.updatedAt ):"-"}
+                      {user?.updatedAt?formatDate(user?.updatedAt ):"-"}
                     </td>
                     <td
                       className="px-6 py-4 whitespace-nowrap"
@@ -420,12 +423,12 @@ const UserManagement = () => {
                               : colors.error,
                         }}
                       >
-                        {user.status === "active" ? (
+                        {user?.status === "active" ? (
                           <CheckCircle className="w-3 h-3 mr-1" />
                         ) : (
                           <XCircle className="w-3 h-3 mr-1" />
                         )}
-                        {user.status === "active" ? "Active" : user?.role?.name?.toLowerCase()?.includes("admin")?"Active":"Inactive"}
+                        {user?.status === "active" ? "Active" : user?.role?.name?.toLowerCase()?.includes("admin")?"Active":"Inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -441,6 +444,10 @@ const UserManagement = () => {
                           className="p-1 rounded"
                           style={{ color: colors.accent }}
                           title="Edit User"
+                          onClick={() => {
+                            setEditingUser(user);
+                            setShowModal(true);
+                          }}
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -455,6 +462,7 @@ const UserManagement = () => {
                           className="p-1 rounded"
                           style={{ color: colors.error }}
                           title="Delete User"
+                          disabled={user?.role?.name?.toLowerCase()?.includes("admin")}
                           onClick={() => handleDeleteUser(user?.id)}
                         >
                           <Trash className="w-4 h-4" />
@@ -554,6 +562,12 @@ const UserManagement = () => {
           </div>
         )}
       </div>
+      <TeamUserModal 
+        showModal={showModal} 
+        setShowModal={setShowModal}
+        editingUser={editingUser}
+        setEditingUser={setEditingUser}
+      />
     </div>
   );
 };
