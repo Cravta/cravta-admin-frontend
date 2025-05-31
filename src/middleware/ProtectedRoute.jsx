@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import ScreenLoader from "../components/Loader/ScreenLoader";
+import ScreenLoader from "../components/loader/ScreenLoader";
 import {useSelector} from "react-redux";
 
 const ProtectedRoute = ({ children  }) => {
