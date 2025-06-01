@@ -14,7 +14,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../store/auth/userSlice";
 import { logOut, logoutAuth } from "../../store/auth/adminAuthSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const Header = ({
   isSidebarOpen,
@@ -31,7 +31,7 @@ const Header = ({
   const [notificationCount, setNotificationCount] = useState(3);
   const dropdownRef = useRef(null);
   const notificationsRef = useRef(null);
-
+  const {user} = useSelector((state) => state.auth);
   // Notification data
   const notifications = [
     {
@@ -275,10 +275,10 @@ const Header = ({
             </div>
             <div className="hidden md:block text-left">
               <p className="text-sm font-medium" style={{ color: colors.text }}>
-                Admin User
+                {user?.name || "Admin User"}
               </p>
               <p className="text-xs" style={{ color: colors.textMuted }}>
-                Super Admin
+                {user?.role?.name||"-"}
               </p>
             </div>
             <ChevronDown
@@ -304,10 +304,10 @@ const Header = ({
                   className="text-sm font-medium"
                   style={{ color: colors.primary }}
                 >
-                  Admin User
+                  {user?.name || "Admin User"}
                 </p>
                 <p className="text-xs" style={{ color: colors.textMuted }}>
-                  admin@cravta.com
+                  {user?.email_address || "-"}
                 </p>
               </div>
               <div className="py-1">

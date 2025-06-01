@@ -17,6 +17,7 @@ import {
 import { useTheme } from "../../contexts/ThemeContext";
 import Logo1 from "../../assets/LOGO-01.png";
 import { NavLink, useLocation,useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 const Sidebar = ({
   activeSection,
   setActiveSection,
@@ -27,6 +28,7 @@ const Sidebar = ({
   const [alerts, setAlerts] = useState(2); // Number of system alerts
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const {user} = useSelector((state) => state.auth);
   useEffect(() => {
     console.log("Pathname changed:", pathname);
   },[pathname])
@@ -118,6 +120,7 @@ const Sidebar = ({
           {/* Navigation */}
           <nav>
             <ul className="space-y-1">
+              {user?.role?.rights?.includes("overview") &&
               <li>
                 <button
                   onClick={() =>  navigate("/admin/overview")}
@@ -140,6 +143,8 @@ const Sidebar = ({
                   Dashboard Overview
                 </button>
               </li>
+              }
+              {user?.role?.rights?.includes("teams") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/teams")}
@@ -160,6 +165,8 @@ const Sidebar = ({
                   Team Management
                 </button>
               </li>
+              }
+              {user?.role?.rights?.includes("users") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/users")}
@@ -180,6 +187,8 @@ const Sidebar = ({
                   User Management
                 </button>
               </li>
+              }
+              {user?.role?.rights?.includes("classes") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/classes")}
@@ -202,6 +211,8 @@ const Sidebar = ({
                   Class Management
                 </button>
               </li>
+              }
+              {user?.role?.rights?.includes("roles") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/roles")}
@@ -224,6 +235,8 @@ const Sidebar = ({
                   Role Management
                 </button>
               </li>
+              }
+              {user?.role?.rights?.includes("content") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/content")}
@@ -246,7 +259,9 @@ const Sidebar = ({
                   Content Monitoring
                 </button>
               </li>
+              }
               {/* Add the blog management navigation item */}
+              {user?.role?.rights?.includes("blogs") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/blogs")}
@@ -267,6 +282,8 @@ const Sidebar = ({
                   Blog Management
                 </button>
               </li>
+              }
+              {user?.role?.rights?.includes("reports") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/reports")}
@@ -289,6 +306,8 @@ const Sidebar = ({
                   Reports & Analytics
                 </button>
               </li>
+              }
+              {user?.role?.rights?.includes("settings") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/settings")}
@@ -311,6 +330,8 @@ const Sidebar = ({
                   Platform Settings
                 </button>
               </li>
+              }
+              {user?.role?.rights?.includes("audit") &&
               <li>
                 <button
                   onClick={() => navigate("/admin/audit")}
@@ -344,6 +365,7 @@ const Sidebar = ({
                   )}
                 </button>
               </li>
+              }
             </ul>
           </nav>
         </div>
