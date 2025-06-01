@@ -84,7 +84,6 @@ const CreateUserModal = ({ showModal, setShowModal, editingUser,setEditingUser }
   };
 
   if (!showModal) return null;
-  console.log(roleId)
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50"

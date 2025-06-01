@@ -20,6 +20,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
 import { deleteUserbyAdmin, fetchUsersAdmin } from "../../../store/admin/usersSlice";
 import { toast } from "react-toastify";
+import UserModal from "../../../components/modals/UserModal";
 
 
 // Helper function to format date
@@ -36,6 +37,8 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
   useEffect(() => {
         dispatch(fetchUsersAdmin({}));
     }, [dispatch]);
@@ -317,14 +320,15 @@ const UserManagement = () => {
               backgroundColor: colors.primary,
               color: colors.lightText,
             }}
+            onClick={() => setShowModal(true)}
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Add New{" "}
-            {activeTab === "teachers"
+            Add New User
+            {/* {activeTab === "teachers"
               ? "Teacher"
               : activeTab === "students"
               ? "Student"
-              : "Admin"}
+              : "Admin"} */}
           </button>
         </div>
       </div>
@@ -536,6 +540,7 @@ const UserManagement = () => {
                           className="p-1 rounded"
                           style={{ color: colors.accent }}
                           title="Edit User"
+                          onClick={() => {setUserInfo(user);setShowModal(true);}}
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -649,6 +654,12 @@ const UserManagement = () => {
           </div>
         )}
       </div>
+      <UserModal 
+        showModal={showModal} 
+        setShowModal={setShowModal}
+        userInfo={userInfo}
+        setUserInfo={setUserInfo}
+      />
     </div>
   );
 };

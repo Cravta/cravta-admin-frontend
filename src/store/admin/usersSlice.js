@@ -30,6 +30,40 @@ export const fetchUsersAdmin = createAsyncThunk(
     }
 );
 
+export const createUser = createAsyncThunk(
+  "users/createUser",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      const response = await api.post(`${BASE_URL}/`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data.data; // Assuming the created user is returned
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Error creating user");
+    }
+  }
+);
+export const updateUser = createAsyncThunk(
+  "users/updateUser",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken();
+      const response = await api.put(`${BASE_URL}/${payload.id}`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data.data; // Assuming the updated user is returned
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Error updating user");
+    }
+  }
+);
 export const deleteUserbyAdmin = createAsyncThunk(
     "users/deleteUserbyAdmin",
     async ( userId , { rejectWithValue }) => {
@@ -80,6 +114,9 @@ const AdminUsersSlice = createSlice({
                 state.usersList = state.usersList.filter(
                     (user) => user.id !== action.payload
                 );
+            })
+            .addCase(createUser.fulfilled, (state, action) => {
+                state.usersList.push(action.payload);
             });
     },
 });
