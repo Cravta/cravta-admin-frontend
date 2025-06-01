@@ -35,6 +35,7 @@ import { deleteContentbyAdmin, fetchContentAdmin } from "../../../store/admin/co
 import { deleteQuizbyAdmin, fetchQuizzesAdmin } from "../../../store/admin/quizSlice";
 import ContentModal from "../../../components/modals/ContentModal";
 import { toast } from "react-toastify";
+import CreateQuizModal from "../../../components/modals/CreateQuizModal";
 // Dummy data for materials
 const materialsData = Array(30)
   .fill()
@@ -118,6 +119,7 @@ const ContentMonitoring = () => {
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
+  const [showQuizModal, setShowQuizModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -158,9 +160,9 @@ const ContentMonitoring = () => {
       } else {
         data = data.filter(
           (item) =>
-            item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+            item?.quiz_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item?.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item?.createdBy?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
     }
@@ -880,6 +882,7 @@ const ContentMonitoring = () => {
               </div>
             </>
           )}
+          {activeTab === "materials" && (
           <button
             className="flex items-center px-3 py-2 rounded-lg text-sm"
             style={{
@@ -891,6 +894,20 @@ const ContentMonitoring = () => {
             {/* <UserPlus className="w-4 h-4 mr-2" /> */}
             Add New Content
           </button>
+          )}
+          {activeTab === "quizzes" && (
+          <button
+            className="flex items-center px-3 py-2 rounded-lg text-sm"
+            style={{
+              backgroundColor: colors.primary,
+              color: colors.lightText,
+            }}
+            onClick={()=>setShowQuizModal(true)}
+          >
+            {/* <UserPlus className="w-4 h-4 mr-2" /> */}
+            Add New Quiz
+          </button>
+          )}
           {/* Refresh button */}
           <button
             className="p-2 rounded-lg flex items-center justify-center"
@@ -1608,6 +1625,7 @@ const ContentMonitoring = () => {
         showModal={showContentModal}
         setShowModal={setShowContentModal}
       />
+      <CreateQuizModal showModal={showQuizModal} setShowModal={setShowQuizModal} />
     </div>
   );
 };

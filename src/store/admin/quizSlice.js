@@ -27,6 +27,49 @@ export const fetchQuizzesAdmin = createAsyncThunk(
         }
     }
 );
+export const manualCreateActivity = createAsyncThunk(
+  "quiz/manualCreateActivity",
+  async (activityData, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`${BASE_URL}/manual`, activityData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+// Create a new activity from template
+export const createActivityFromTemplate = createAsyncThunk(
+  "quiz/createActivityFromTemplate",
+  async (activityData, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`${BASE_URL}/template`, activityData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+// Create a new activity from prompt
+export const createActivityFromPromt = createAsyncThunk(
+  "quiz/createActivityFromPrompt",
+  async (activityData, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`${BASE_URL}/prompt`, activityData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
 export const deleteQuizbyAdmin = createAsyncThunk(
     "quiz/deleteQuizbyAdmin",
     async (quizId, { rejectWithValue }) => {

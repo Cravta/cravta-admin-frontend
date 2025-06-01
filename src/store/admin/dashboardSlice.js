@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/axiosInstance";
 
-const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/content`;
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/dashboard`;
 
-export const fetchContentAdmin = createAsyncThunk(
-    "content/fetchContentAdmin",
+export const fetchAdminDashboard = createAsyncThunk(
+    "dashboard/fetchAdminDashboard",
     async (_, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
@@ -17,8 +17,7 @@ export const fetchContentAdmin = createAsyncThunk(
                 },
             });
 
-
-            return response.data.data;
+            return response.data;
         } catch (error) {
             console.error("❌ API Error:", error.response?.data);
             return rejectWithValue(
@@ -27,29 +26,10 @@ export const fetchContentAdmin = createAsyncThunk(
         }
     }
 );
-export const deleteContentbyAdmin = createAsyncThunk(
-    "content/deleteContentbyAdmin",
-    async (contentId, { rejectWithValue }) => {
-        try {
-            if (!contentId) {
-                throw new Error("content is required");
-            }
-
-            const token = localStorage.getItem("token");
-            await api.delete(`${BASE_URL}/${contentId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            return contentId;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || "Error deleting content");
-        }
-    }
-);
-const AdminContentsSlice = createSlice({
-    name: "aminContent",
+const AdminDashboardSlice = createSlice({
+    name: "dashboard",
     initialState: {
-        contentList: [],
+        dashboardData: [],
         loading: false,
         error: null,
     },
@@ -60,25 +40,20 @@ const AdminContentsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchContentAdmin.pending, (state) => {
+            .addCase(fetchAdminDashboard.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchContentAdmin.fulfilled, (state, action) => {
+            .addCase(fetchAdminDashboard.fulfilled, (state, action) => {
                 state.loading = false;
-                state.contentList = Array.isArray(action.payload) ? action.payload : [];
+                state.dashboardData = action.payload;
             })
-            .addCase(fetchContentAdmin.rejected, (state, action) => {
+            .addCase(fetchAdminDashboard.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
-            .addCase(deleteContentbyAdmin.fulfilled, (state, action) => {
-                state.contentList = state.contentList.filter(
-                    (con) => con.id !== action.payload
-                );
-            });
     },
 });
 
 // export const { fetchUsersData } = AdminUsersSlice.actions;
-export default AdminContentsSlice.reducer;
+export default AdminDashboardSlice.reducer;

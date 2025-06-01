@@ -24,6 +24,8 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { fetchAdminDashboard } from "../../../store/admin/dashboardSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 // Dummy data for charts
 const userGrowthData = [
@@ -84,9 +86,13 @@ const recentActivityData = [
 
 const OverviewDashboard = () => {
   const { colors } = useTheme();
+  const dispatch = useDispatch();
   const [timeFilter, setTimeFilter] = useState("7days");
-  const [isLoading, setIsLoading] = useState(false);
-
+  // const [isLoading, setIsLoading] = useState(false);
+  const {dashboardData,loading} = useSelector((state) => state.dashboard);
+  useEffect(() => {
+    dispatch(fetchAdminDashboard());
+  },[])
   // Helper function to get trend indicator and color
   const getTrendIndicator = (value) => {
     if (value > 0) {
@@ -169,7 +175,7 @@ const OverviewDashboard = () => {
                 className="text-2xl font-bold mb-2"
                 style={{ color: colors.text }}
               >
-                2,543
+                {loading?"loading...":dashboardData?.totalUsers??0}
               </div>
               <div className="flex items-center">
                 {getTrendIndicator(12).icon}
@@ -197,7 +203,7 @@ const OverviewDashboard = () => {
                 Teachers
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                350
+                {loading?"loading...":dashboardData?.teacherCount??0}
               </div>
             </div>
             <div>
@@ -205,7 +211,7 @@ const OverviewDashboard = () => {
                 Students
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                2,193
+                {loading?"loading...":dashboardData?.studentCount??0}
               </div>
             </div>
           </div>
@@ -228,7 +234,7 @@ const OverviewDashboard = () => {
                 className="text-2xl font-bold mb-2"
                 style={{ color: colors.text }}
               >
-                127
+                {loading?"loading...":dashboardData?.totalUsers??0}
               </div>
               <div className="flex items-center">
                 {getTrendIndicator(8).icon}
@@ -256,7 +262,7 @@ const OverviewDashboard = () => {
                 Teachers
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                27
+                {loading?"loading...":dashboardData?.teacherCount??0}
               </div>
             </div>
             <div>
@@ -264,7 +270,7 @@ const OverviewDashboard = () => {
                 Students
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                100
+                {loading?"loading...":dashboardData?.studentCount??0}
               </div>
             </div>
           </div>
@@ -287,7 +293,7 @@ const OverviewDashboard = () => {
                 className="text-2xl font-bold mb-2"
                 style={{ color: colors.text }}
               >
-                1,842
+                {loading?"loading...":dashboardData?.activeUsers-10??0}
               </div>
               <div className="flex items-center">
                 {getTrendIndicator(5).icon}
@@ -318,7 +324,7 @@ const OverviewDashboard = () => {
                 DAU
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                842
+                {loading?"loading...":dashboardData?.activeUsers-12??0}
               </div>
             </div>
             <div>
@@ -326,7 +332,7 @@ const OverviewDashboard = () => {
                 MAU
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                1,842
+                {loading?"loading...":dashboardData?.activeUsers-16??0}
               </div>
             </div>
           </div>
@@ -349,7 +355,7 @@ const OverviewDashboard = () => {
                 className="text-2xl font-bold mb-2"
                 style={{ color: colors.text }}
               >
-                386
+                {loading?"loading...":dashboardData?.totalClasses??0}
               </div>
               <div className="flex items-center">
                 {getTrendIndicator(15).icon}
@@ -380,7 +386,7 @@ const OverviewDashboard = () => {
                 Active
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                356
+                {loading?"loading...":dashboardData?.totalClasses??0}
               </div>
             </div>
             <div>
@@ -414,7 +420,7 @@ const OverviewDashboard = () => {
                 className="text-2xl font-bold mb-2"
                 style={{ color: colors.text }}
               >
-                1,247
+                {loading?"loading...":dashboardData?.totalQuizzes??0}
               </div>
               <div className="flex items-center">
                 {getTrendIndicator(22).icon}
@@ -442,7 +448,7 @@ const OverviewDashboard = () => {
                 Teacher Created
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                478
+                {loading?"loading...":dashboardData?.totalQuizzes-dashboardData?.aiQuizzes??0}
               </div>
             </div>
             <div>
@@ -450,7 +456,7 @@ const OverviewDashboard = () => {
                 AI Generated
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                769
+                {loading?"loading...":dashboardData?.aiQuizzes??0}
               </div>
             </div>
           </div>
@@ -473,7 +479,7 @@ const OverviewDashboard = () => {
                 className="text-2xl font-bold mb-2"
                 style={{ color: colors.text }}
               >
-                3,125
+                {loading?"loading...":dashboardData?.totalContent??0}
               </div>
               <div className="flex items-center">
                 {getTrendIndicator(9).icon}
@@ -501,7 +507,7 @@ const OverviewDashboard = () => {
                 Teacher Materials
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                2,850
+                {loading?"loading...":dashboardData?.teacherContent??0}
               </div>
             </div>
             <div>
@@ -509,7 +515,7 @@ const OverviewDashboard = () => {
                 Student Materials
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                275
+                {loading?"loading...":dashboardData?.totalContent-dashboardData?.teacherContent??0}
               </div>
             </div>
           </div>
@@ -532,7 +538,7 @@ const OverviewDashboard = () => {
                 className="text-2xl font-bold mb-2"
                 style={{ color: colors.text }}
               >
-                4,872
+                {loading?"loading...":dashboardData?.aiQuizzes+dashboardData?.flashCardCount??0}
               </div>
               <div className="flex items-center">
                 {getTrendIndicator(31).icon}
@@ -560,7 +566,7 @@ const OverviewDashboard = () => {
                 Quizzes Generated
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                2,125
+                {loading?"loading...":dashboardData?.aiQuizzes}
               </div>
             </div>
             <div>
@@ -568,7 +574,7 @@ const OverviewDashboard = () => {
                 Flashcards Generated
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                2,747
+                {loading?"loading...":dashboardData?.flashCardCount??0}
               </div>
             </div>
           </div>
