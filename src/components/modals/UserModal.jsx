@@ -195,7 +195,7 @@ const UserModal = ({ showModal, setShowModal, userInfo, setUserInfo }) => {
             }}
             type="button"
           >
-            {isSubmitting ? t("Creating...") : t("Create User")}
+            {isSubmitting ? (userInfo?.id ? t("Updating...") : t("Creating...")) : (userInfo?.id ? t("Update User") : t("Create User"))}
           </button>
         </div>
       </div>
