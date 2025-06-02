@@ -208,7 +208,7 @@ const UserManagement = () => {
         {/* Right side: Actions */}
         <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
           {/* Filter dropdown */}
-          <div className="relative">
+          {/* <div className="relative">
             <button
               className="flex items-center px-3 py-2 rounded-lg"
               style={{
@@ -283,7 +283,7 @@ const UserManagement = () => {
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Refresh button */}
           <button
@@ -302,7 +302,7 @@ const UserManagement = () => {
           </button>
 
           {/* Export button */}
-          <button
+          {/* <button
             className="p-2 rounded-lg flex items-center justify-center"
             style={{
               backgroundColor: colors.inputBg,
@@ -311,7 +311,7 @@ const UserManagement = () => {
             }}
           >
             <Download className="w-4 h-4" />
-          </button>
+          </button> */}
 
           {/* Add new user button */}
           <button
@@ -529,13 +529,13 @@ const UserManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <div className="flex justify-end space-x-2">
-                        <button
+                        {/* <button
                           className="p-1 rounded"
                           style={{ color: colors.primary }}
                           title="View Profile"
                         >
                           <Eye className="w-4 h-4" />
-                        </button>
+                        </button> */}
                         <button
                           className="p-1 rounded"
                           style={{ color: colors.accent }}
@@ -544,13 +544,13 @@ const UserManagement = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button
+                        {/* <button
                           className="p-1 rounded"
                           style={{ color: colors.text }}
                           title="Email User"
                         >
                           <Mail className="w-4 h-4" />
-                        </button>
+                        </button> */}
                         <button
                           className="p-1 rounded"
                           style={{ color: colors.error }}

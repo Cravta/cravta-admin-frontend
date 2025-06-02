@@ -150,7 +150,7 @@ const RoleManagement = () => {
         {/* Right side: Actions */}
         <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
           {/* Status filter */}
-          <div className="relative">
+          {/* <div className="relative">
             <button
               className="flex items-center px-3 py-2 rounded-lg"
               style={{
@@ -233,7 +233,7 @@ const RoleManagement = () => {
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Field filter dropdown */}
           <div className="relative">
@@ -331,7 +331,7 @@ const RoleManagement = () => {
           </button>
 
           {/* Export button */}
-          <button
+          {/* <button
             className="p-2 rounded-lg flex items-center justify-center"
             style={{
               backgroundColor: colors.inputBg,
@@ -340,7 +340,7 @@ const RoleManagement = () => {
             }}
           >
             <Download className="w-4 h-4" />
-          </button>
+          </button> */}
         </div>
       </div>
 

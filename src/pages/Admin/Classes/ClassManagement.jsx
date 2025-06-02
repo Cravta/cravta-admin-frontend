@@ -364,7 +364,7 @@ const ClassManagement = () => {
           </button>
 
           {/* Export button */}
-          <button
+          {/* <button
             className="p-2 rounded-lg flex items-center justify-center"
             style={{
               backgroundColor: colors.inputBg,
@@ -373,7 +373,7 @@ const ClassManagement = () => {
             }}
           >
             <Download className="w-4 h-4" />
-          </button>
+          </button> */}
           <button
             className="flex items-center px-3 py-2 rounded-lg text-sm"
             style={{
@@ -406,11 +406,17 @@ const ClassManagement = () => {
                 >
                   Class Name
                 </th>
-                <th
+                {/* <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
                   Teacher
+                </th> */}
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Subject
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
@@ -430,12 +436,12 @@ const ClassManagement = () => {
                 >
                   Students
                 </th>
-                <th
+                {/* <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
                   Status
-                </th>
+                </th> */}
                 <th
                   className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
@@ -546,7 +552,7 @@ const ClassManagement = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {/* <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className="px-2 py-1 text-xs rounded-full flex items-center w-min"
                         style={{
@@ -567,16 +573,16 @@ const ClassManagement = () => {
                         )}
                         {cls.status === "active" ? "Active" : "Archived"}
                       </span>
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <div className="flex justify-end space-x-2">
-                        <button
+                        {/* <button
                           className="p-1 rounded"
                           style={{ color: colors.primary }}
                           title="View Class"
                         >
                           <Eye className="w-4 h-4" />
-                        </button>
+                        </button> */}
                         {/* <button
                           className="p-1 rounded"
                           style={{
