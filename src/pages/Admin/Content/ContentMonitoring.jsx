@@ -925,7 +925,7 @@ const ContentMonitoring = () => {
           </button>
 
           {/* Export button */}
-          <button
+          {/* <button
             className="p-2 rounded-lg flex items-center justify-center"
             style={{
               backgroundColor: colors.inputBg,
@@ -934,7 +934,7 @@ const ContentMonitoring = () => {
             }}
           >
             <Download className="w-4 h-4" />
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -1049,7 +1049,7 @@ const ContentMonitoring = () => {
                         className="px-6 py-4 whitespace-nowrap text-sm"
                         style={{ color: colors.text }}
                       >
-                        {material.uploadedBy || "user "+material.user_id}
+                        {material?.user?.name??"-"}
                       </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm"
@@ -1067,13 +1067,13 @@ const ContentMonitoring = () => {
                         className="px-6 py-4 whitespace-nowrap text-sm"
                         style={{ color: colors.text }}
                       >
-                        {material.size ||'-'}
+                        {material.page_count ||'-'}
                       </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm"
                         style={{ color: colors.text }}
                       >
-                        {material.class || "class "+material?.class_id}
+                        {material?.class?.course_name??"-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span
@@ -1083,16 +1083,16 @@ const ContentMonitoring = () => {
                               // material.visibility === "class"
                               material?.class_id
                                 ? `${colors.primary}20`
-                                : `${colors.secondary}20`,
+                                : `${colors.secondary}90`,
                             color:
                               material?.class_id
                                 ? colors.primary
-                                : colors.secondary,
+                                : 'seagreen',
                           }}
                         >
                           {material?.class_id
                             ? "Class"
-                            : "Personal"}
+                            : "Student"}
                         </span>
                       </td>
                       <td
@@ -1104,7 +1104,7 @@ const ContentMonitoring = () => {
                             className="w-3 h-3 mr-1"
                             style={{ color: colors.textMuted }}
                           />
-                          {material.downloads || material.page_count}
+                          {material.downloads}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -1116,13 +1116,13 @@ const ContentMonitoring = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
+                          {/* <button
                             className="p-1 rounded"
                             style={{ color: colors.warning }}
                             title="Flag Material"
                           >
                             <Flag className="w-4 h-4" />
-                          </button>
+                          </button> */}
                           <button
                             className="p-1 rounded"
                             style={{ color: colors.error }}
@@ -1243,7 +1243,7 @@ const ContentMonitoring = () => {
                         className="px-6 py-4 whitespace-nowrap text-sm"
                         style={{ color: colors.text }}
                       >
-                        {quiz?.createdBy || "user " + quiz?.user_id}
+                        {quiz?.creator?.name??"-"}
                       </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm"
@@ -1266,13 +1266,13 @@ const ContentMonitoring = () => {
                                 ? `${colors.accent}20`
                                 : quiz?.status === "Template"
                                 ? `${colors.primary}20`
-                                : `${colors.secondary}20`,
+                                : `${colors.secondary}90`,
                             color:
                               quiz?.status === "Prompt"
                                 ? colors.accent
                                 : quiz.status === "Template"
                                 ? colors.primary
-                                : colors.secondary,
+                                : 'seagreen',
                           }}
                         >
                           {quiz?.status==="Prompt"?"AI Generated":quiz?.status || "-"}
@@ -1293,7 +1293,7 @@ const ContentMonitoring = () => {
                             className="w-3 h-3 mr-1"
                             style={{ color: colors.textMuted }}
                           />
-                          {quiz.participants || (typeof quiz.difficulty === 'number' ? quiz.difficulty : "-")}
+                          {quiz?.participantCount?? "-"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -1305,13 +1305,13 @@ const ContentMonitoring = () => {
                             <div
                               className="h-full"
                               style={{
-                                width: `${quiz?.questions?.length}%`,
+                                width: `${quiz?.averageScore??0}%`,
                                 backgroundColor:
-                                  quiz?.questions?.length >= 80
+                                  quiz?.averageScore??0 >= 80
                                     ? colors.success
-                                    : quiz?.questions?.length >= 60
+                                    : quiz?.averageScore??0 >= 60
                                     ? colors.primary
-                                    : quiz?.questions?.length >= 40
+                                    : quiz?.averageScore??0 >= 40
                                     ? colors.warning
                                     : colors.error,
                               }}
@@ -1321,7 +1321,7 @@ const ContentMonitoring = () => {
                             className="text-xs"
                             style={{ color: colors.text }}
                           >
-                            {quiz?.questions?.length}%
+                            {quiz?.averageScore??0}%
                           </span>
                         </div>
                       </td>
@@ -1334,13 +1334,13 @@ const ContentMonitoring = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
+                          {/* <button
                             className="p-1 rounded"
                             style={{ color: colors.warning }}
                             title="Flag Quiz"
                           >
                             <Flag className="w-4 h-4" />
-                          </button>
+                          </button> */}
                           <button
                             className="p-1 rounded"
                             style={{ color: colors.error }}
