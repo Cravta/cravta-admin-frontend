@@ -31,11 +31,12 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
-import { deleteContentbyAdmin, fetchContentAdmin } from "../../../store/admin/contentSlice";
+import { deleteContentbyAdmin, downloadContent, fetchContentAdmin, fetchContentById } from "../../../store/admin/contentSlice";
 import { deleteQuizbyAdmin, fetchQuizzesAdmin } from "../../../store/admin/quizSlice";
 import ContentModal from "../../../components/modals/ContentModal";
 import { toast } from "react-toastify";
 import CreateQuizModal from "../../../components/modals/CreateQuizModal";
+import ContentViewModal from "../../../components/modals/ContentViewModal";
 // Dummy data for materials
 const materialsData = Array(30)
   .fill()
@@ -154,8 +155,8 @@ const ContentMonitoring = () => {
         data = data.filter(
           (item) =>
             item?.content_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item?.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item?.uploadedBy?.toLowerCase().includes(searchTerm.toLowerCase())
+            item?.class?.course_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       } else {
         data = data.filter(
@@ -251,6 +252,55 @@ const ContentMonitoring = () => {
       case "document":
       default:
         return <File className="w-4 h-4" style={{ color: colors.primary }} />;
+    }
+  };
+  const handlePreview = (id) => {
+    dispatch(fetchContentById({ contentId: id }));
+  };
+  const handleDownload = async (material) => {
+    // setIsDownloading(true);
+    const contentId = material.id;
+
+    try {
+      const res = await dispatch(downloadContent({ contentId })).unwrap();
+
+      // if (!res.ok) {
+      //   toast.error("Failed to fetch file.");
+      //   // setIsDownloading(false);
+      //   return;
+      // }
+      const fileUrl = res; // assuming this holds the file URL directly
+
+      if (!fileUrl) {
+        toast.error("No file URL found");
+        // setIsDownloading(false);
+        return;
+      }
+
+      const fileRes = await fetch(fileUrl);
+      console.log("FILE RES", fileRes);
+      if (!fileRes.ok) {
+        toast.error("Failed to download file");
+        // setIsDownloading(false);
+        return;
+      }
+
+      const blob = await fileRes.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = material.content_name || "document.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+
+      // setIsDownloading(false);
+    } catch (err) {
+      console.error("Download error:", err);
+      toast.error("Something went wrong during download");
+      // setIsDownloading(false);
     }
   };
   const handleDeleteQuiz = (quizId) => {
@@ -1101,8 +1151,9 @@ const ContentMonitoring = () => {
                       >
                         <div className="flex items-center">
                           <DownloadCloud
-                            className="w-3 h-3 mr-1"
+                            className="w-3 h-3 mr-1 cursor-pointer"
                             style={{ color: colors.textMuted }}
+                            onClick={() => handleDownload(material)}
                           />
                           {material.downloads}
                         </div>
@@ -1113,6 +1164,7 @@ const ContentMonitoring = () => {
                             className="p-1 rounded"
                             style={{ color: colors.primary }}
                             title="View Material"
+                            onClick={() => handlePreview(material?.id)}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -1625,6 +1677,7 @@ const ContentMonitoring = () => {
         showModal={showContentModal}
         setShowModal={setShowContentModal}
       />
+      <ContentViewModal/>
       <CreateQuizModal showModal={showQuizModal} setShowModal={setShowQuizModal} />
     </div>
   );

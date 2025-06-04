@@ -48,6 +48,47 @@ export const createContent = createAsyncThunk(
     }
   }
 );
+
+export const fetchContentById = createAsyncThunk(
+  "content/fetchContentById",
+  async ({ contentId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await api.get(`${BASE_URL}/${contentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log(response.data.data);
+
+      return response.data.data; // URL of the uploaded PDF
+    } catch (error) {
+
+      return rejectWithValue(
+        error.response?.data?.message || "Error fetching content by ID"
+      );
+    }
+  }
+);
+export const downloadContent = createAsyncThunk(
+  "content/downloadContent",
+  async ({ contentId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await api.get(`${BASE_URL}/${contentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log(response.data.data);
+
+      return response.data.data; // URL of the uploaded PDF
+    } catch (error) {
+
+      return rejectWithValue(
+        error.response?.data?.message || "Error fetching content by ID"
+      );
+    }
+  }
+);
 export const deleteContentbyAdmin = createAsyncThunk(
     "content/deleteContentbyAdmin",
     async (contentId, { rejectWithValue }) => {
@@ -73,11 +114,12 @@ const AdminContentsSlice = createSlice({
         contentList: [],
         loading: false,
         error: null,
+        pdfUrl: null,
     },
     reducers: {
-        // clearPdfUrl: (state) => {
-        //   state.pdfUrl = null; // Clears the PDF preview when closing modal
-        // },
+        clearPdfUrl: (state) => {
+          state.pdfUrl = null; 
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -93,6 +135,18 @@ const AdminContentsSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
+            .addCase(fetchContentById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchContentById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.pdfUrl = action.payload; // Stores the fetched PDF URL
+            })
+            .addCase(fetchContentById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
             .addCase(createContent.fulfilled, (state, action) => {
                 state.contentList.push(action.payload.data);
             })
@@ -104,5 +158,5 @@ const AdminContentsSlice = createSlice({
     },
 });
 
-// export const { fetchUsersData } = AdminUsersSlice.actions;
+export const { clearPdfUrl } = AdminContentsSlice.actions;
 export default AdminContentsSlice.reducer;
