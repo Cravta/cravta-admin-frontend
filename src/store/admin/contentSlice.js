@@ -5,12 +5,12 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/content`;
 
 export const fetchContentAdmin = createAsyncThunk(
     "content/fetchContentAdmin",
-    async (_, { rejectWithValue }) => {
+    async (page, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("No auth token found");
 
-            const response = await api.get(`${BASE_URL}`, {
+            const response = await api.get(`${BASE_URL}/?page=${page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -18,7 +18,7 @@ export const fetchContentAdmin = createAsyncThunk(
             });
 
 
-            return response.data.data;
+            return response.data;
         } catch (error) {
             console.error("❌ API Error:", error.response?.data);
             return rejectWithValue(
@@ -115,6 +115,9 @@ const AdminContentsSlice = createSlice({
         loading: false,
         error: null,
         pdfUrl: null,
+        currentPage: 1,
+        totalPages: 1,
+        totalContent: 0,
     },
     reducers: {
         clearPdfUrl: (state) => {
@@ -129,7 +132,10 @@ const AdminContentsSlice = createSlice({
             })
             .addCase(fetchContentAdmin.fulfilled, (state, action) => {
                 state.loading = false;
-                state.contentList = Array.isArray(action.payload) ? action.payload : [];
+                state.contentList = Array.isArray(action.payload?.data) ? action.payload?.data : [];
+                state.totalContent = action?.payload?.totalItems || 0;
+                state.currentPage = action.payload.currentPage;
+                state.totalPages = action.payload.totalPages;
             })
             .addCase(fetchContentAdmin.rejected, (state, action) => {
                 state.loading = false;
@@ -149,11 +155,13 @@ const AdminContentsSlice = createSlice({
             })
             .addCase(createContent.fulfilled, (state, action) => {
                 state.contentList.push(action.payload.data);
+                state.totalContent += 1;
             })
             .addCase(deleteContentbyAdmin.fulfilled, (state, action) => {
                 state.contentList = state.contentList.filter(
                     (con) => con.id !== action.payload
                 );
+                state.totalContent -= 1;
             });
     },
 });

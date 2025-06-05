@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { act, useEffect, useState } from "react";
 import {
   Search,
   Filter,
@@ -124,11 +124,11 @@ const ContentMonitoring = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(fetchContentAdmin({}));
-    dispatch(fetchQuizzesAdmin({}));
-  }, [dispatch]);
-  const {contentList, loading: contentLoading} = useSelector((state) => state.adminContent); 
-  const {quizList, loading: quizLoading} = useSelector((state) => state.adminQuiz);
+    dispatch(fetchContentAdmin(currentPage));
+    dispatch(fetchQuizzesAdmin(currentPage));
+  }, [dispatch,currentPage]);
+  const {contentList, loading: contentLoading, totalContent, totalPages: contentTotalPages} = useSelector((state) => state.adminContent); 
+  const {quizList, loading: quizLoading, totalQuizzes,totalPages:quizTotalPages} = useSelector((state) => state.adminQuiz);
   // Items per page
   const itemsPerPage = 10;
   // Get data based on active tab
@@ -184,9 +184,9 @@ const ContentMonitoring = () => {
   const filteredData = getData();
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredData?.length / itemsPerPage);
+  const totalPages = activeTab === "materials" ? contentTotalPages :activeTab === "quizzes" ? quizTotalPages: Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData?.slice(
+  const paginatedData = (activeTab === "materials" || activeTab === "quizzes") ? filteredData :filteredData?.slice(
     startIndex,
     startIndex + itemsPerPage
   );
@@ -199,7 +199,7 @@ const ContentMonitoring = () => {
     materialsData.filter((m) => m.uploadedBy.includes("Student")).length * 3;
 
   // Calculate quiz stats
-  const totalQuizzes = quizList.length;
+  // const totalQuizzes = quizList.length;
   const aiQuizzes = quizList.filter((q) => q.status === "Prompt").length;
   const templateQuizzes = quizList.filter(
     (q) => q.status === "Template"
@@ -214,8 +214,8 @@ const ContentMonitoring = () => {
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchContentAdmin({}));
-    dispatch(fetchQuizzesAdmin({}));
+    dispatch(fetchContentAdmin(currentPage));
+    dispatch(fetchQuizzesAdmin(currentPage));
   };
 
   const handleDeleteContent = (contentId) => {
@@ -361,7 +361,7 @@ const ContentMonitoring = () => {
                 Total Materials
               </span>
               <span className="font-bold" style={{ color: colors.text }}>
-                {contentList.length}
+                {totalContent||0}
               </span>
             </div>
             <div
@@ -425,7 +425,7 @@ const ContentMonitoring = () => {
               backgroundColor: `${colors.accent}20`,
               color: colors.accent,
             }}
-            onClick={() => setActiveTab("materials")}
+            onClick={() => {setActiveTab("materials");setCurrentPage(1);}}
           >
             View All Materials
           </button>
@@ -537,7 +537,7 @@ const ContentMonitoring = () => {
               backgroundColor: `${colors.primary}20`,
               color: colors.primary,
             }}
-            onClick={() => setActiveTab("quizzes")}
+            onClick={() => {setActiveTab("quizzes");setCurrentPage(1);}}
           >
             View All Quizzes
           </button>
@@ -622,7 +622,7 @@ const ContentMonitoring = () => {
               backgroundColor: `${colors.secondary}20`,
               color: colors.secondary,
             }}
-            onClick={() => setActiveTab("ai")}
+            onClick={() => {setActiveTab("ai");setCurrentPage(1);}}
           >
             View AI Usage Details
           </button>
@@ -645,7 +645,7 @@ const ContentMonitoring = () => {
                 ? `2px solid ${colors.primary}`
                 : "none",
           }}
-          onClick={() => setActiveTab("materials")}
+          onClick={() => {setActiveTab("materials");setCurrentPage(1);}}
         >
           Materials
         </button>
@@ -658,7 +658,7 @@ const ContentMonitoring = () => {
             borderBottom:
               activeTab === "quizzes" ? `2px solid ${colors.primary}` : "none",
           }}
-          onClick={() => setActiveTab("quizzes")}
+          onClick={() => {setActiveTab("quizzes");setCurrentPage(1);}}
         >
           Quizzes
         </button>
@@ -671,7 +671,7 @@ const ContentMonitoring = () => {
             borderBottom:
               activeTab === "ai" ? `2px solid ${colors.primary}` : "none",
           }}
-          onClick={() => setActiveTab("ai")}
+          onClick={() => {setActiveTab("ai");setCurrentPage(1);}}
         >
           AI Usage
         </button>
@@ -1594,9 +1594,9 @@ const ContentMonitoring = () => {
             style={{ borderColor: colors.borderColor }}
           >
             <div className="text-sm" style={{ color: colors.textMuted }}>
-              Showing {startIndex + 1} to{" "}
-              {Math.min(startIndex + itemsPerPage, filteredData.length)} of{" "}
-              {filteredData.length} entries
+              Showing {(currentPage - 1) * 10 + 1} to{" "}
+              {((currentPage - 1) * 10 + paginatedData.length)} of{" "}
+              {activeTab === "materials" ? totalContent : activeTab === "quizzes" ? totalQuizzes : filteredData.length} entries
             </div>
             <div className="flex space-x-1">
               <button

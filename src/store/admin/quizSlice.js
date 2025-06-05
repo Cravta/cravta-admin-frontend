@@ -5,12 +5,12 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/quiz`;
 
 export const fetchQuizzesAdmin = createAsyncThunk(
     "quiz/fetchQuizzesAdmin",
-    async (_, { rejectWithValue }) => {
+    async (page, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("No auth token found");
 
-            const response = await api.get(`${BASE_URL}`, {
+            const response = await api.get(`${BASE_URL}/?page=${page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -18,7 +18,7 @@ export const fetchQuizzesAdmin = createAsyncThunk(
             });
 
 
-            return response.data.data;
+            return response.data;
         } catch (error) {
             console.error("❌ API Error:", error.response?.data);
             return rejectWithValue(
@@ -95,6 +95,9 @@ const AdminQuizSlice = createSlice({
         quizList: [],
         loading: false,
         error: null,
+        currentPage: 1,
+        totalPages: 1,
+        totalQuizzes: 0,
     },
     reducers: {
         // clearPdfUrl: (state) => {
@@ -109,7 +112,10 @@ const AdminQuizSlice = createSlice({
             })
             .addCase(fetchQuizzesAdmin.fulfilled, (state, action) => {
                 state.loading = false;
-                state.quizList = Array.isArray(action.payload) ? action.payload : [];
+                state.quizList = Array.isArray(action.payload?.data) ? action.payload?.data : [];
+                state.totalQuizzes = action?.payload?.totalItems || 0;
+                state.currentPage = action.payload.currentPage;
+                state.totalPages = action.payload.totalPages;
             })
             .addCase(fetchQuizzesAdmin.rejected, (state, action) => {
                 state.loading = false;
@@ -119,6 +125,7 @@ const AdminQuizSlice = createSlice({
                 state.quizList = state.quizList.filter(
                     (quiz) => quiz.id !== action.payload
                 );
+                state.totalQuizzes -= 1;
             });
     },
 });

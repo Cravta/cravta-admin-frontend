@@ -83,9 +83,9 @@ const ClassManagement = () => {
   const [classInfo, setClassInfo] = useState(null);
   const dispatch = useDispatch();
   useEffect(() => {
-          dispatch(fetchClassesAdmin({}));
-      }, [dispatch]);
-  const { classList, loading } = useSelector((state) => state.adminClasses);
+  dispatch(fetchClassesAdmin(currentPage));
+  }, [dispatch, currentPage]);
+  const { classList, loading, totalPages, totalClasses, } = useSelector((state) => state.adminClasses);
   // Items per page
   const itemsPerPage = 10;
 
@@ -121,12 +121,9 @@ const ClassManagement = () => {
   const filteredData = getFilteredData();
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  // const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  // const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = filteredData
 
   // Handle search
   const handleSearch = (e) => {
@@ -136,7 +133,7 @@ const ClassManagement = () => {
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchClassesAdmin({}));
+    dispatch(fetchClassesAdmin(currentPage));
   };
   const handleDeleteClass = (classId) => {
     if (window.confirm("Are you sure you want to delete this class?")) {
@@ -631,9 +628,9 @@ const ClassManagement = () => {
             style={{ borderColor: colors.borderColor }}
           >
             <div className="text-sm" style={{ color: colors.textMuted }}>
-              Showing {startIndex + 1} to{" "}
-              {Math.min(startIndex + itemsPerPage, filteredData.length)} of{" "}
-              {filteredData.length} classes
+              Showing {(currentPage - 1) * 10 + 1} to{" "}
+              {(currentPage - 1) * 10 + paginatedData.length} of{" "}
+              {totalClasses} classes
             </div>
             <div className="flex space-x-1">
               <button

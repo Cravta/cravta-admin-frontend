@@ -13,20 +13,20 @@ const getAxiosConfig = (token) => ({
 
 export const fetchClassesAdmin = createAsyncThunk(
     "classes/fetchClassesAdmin",
-    async (_, { rejectWithValue }) => {
+    async (page, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("No auth token found");
 
-            const response = await api.get(`${BASE_URL}`, {
+            const response = await api.get(`${BASE_URL}?page=${page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
                 },
             });
 
-
-            return response.data.data;
+            console.log(response.data);
+            return response.data;
         } catch (error) {
             console.error("❌ API Error:", error.response?.data);
             return rejectWithValue(
@@ -45,9 +45,7 @@ export const createClass = createAsyncThunk(
         return rejectWithValue("Unauthorized: No token found. Please log in.");
       }
 
-      console.log("📤 Sending payload:", classData);
       const response = await api.post(`${BASE_URL}`, classData, getAxiosConfig(token));
-      console.log("✅ API Response:", response.data);
       return response.data.data;
     } catch (error) {
       console.error("❌ API Error:", error.response?.data || error.message);
@@ -103,6 +101,9 @@ const AdminClassesSlice = createSlice({
         loading: false,
         error: null,
         status: 'idle',
+        currentPage: 1,
+        totalPages: 1,
+        totalClasses: 0,
     },
     reducers: {
         resetStatus: (state) => {
@@ -118,7 +119,10 @@ const AdminClassesSlice = createSlice({
             })
             .addCase(fetchClassesAdmin.fulfilled, (state, action) => {
                 state.loading = false;
-                state.classList = Array.isArray(action.payload) ? action.payload : [];
+                state.classList = Array.isArray(action?.payload?.data) ? action?.payload?.data : [];
+                state.totalClasses = action?.payload?.totalItems || 0;
+                state.currentPage = action.payload.currentPage;
+                state.totalPages = action.payload.totalPages;
             })
             .addCase(fetchClassesAdmin.rejected, (state, action) => {
                 state.loading = false;
@@ -128,6 +132,7 @@ const AdminClassesSlice = createSlice({
                 state.classList = state.classList.filter(
                     (cls) => cls.id !== action.payload
                 );
+                state.totalClasses -= 1;
             })
             .addCase(createClass.pending, (state) => {
                 state.status = 'loading';
@@ -136,6 +141,7 @@ const AdminClassesSlice = createSlice({
             .addCase(createClass.fulfilled, (state, action) => {
                 state.status = 'succeeded';
                 state.classList.push(action.payload);
+                state.totalClasses += 1;
             })
             .addCase(createClass.rejected, (state, action) => {
                 state.status = 'failed';
