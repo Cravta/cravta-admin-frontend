@@ -17,6 +17,7 @@ const availableRights = [
   "audit",
   "roles",
   "teams",
+  "help",
 ];
 
 const CreateRoleModal = ({ showModal, setShowModal, setRoleInfo, roleInfo = {} }) => {

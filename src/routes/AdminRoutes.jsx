@@ -12,6 +12,7 @@ import PlatformSettings from "../pages/Admin/Settings/PlatformSettings";
 import AuditLog         from "../pages/Admin/Audit/AuditLog";
 import RoleManagement from "../pages/Admin/Roles/RoleManagement";
 import TeamManagement from "../pages/Admin/Teams/TeamManagement";
+import HelpCenter from "../pages/Admin/Help/HelpCenterManagement"
 
 export default function AdminRoutes() {
   return (
@@ -25,6 +26,7 @@ export default function AdminRoutes() {
         <Route path="classes"  element={<ClassManagement />} />
         <Route path="content"  element={<ContentMonitoring />} />
         <Route path="blogs"    element={<BlogManagement />} />
+        <Route path="help"     element={<HelpCenter />} />
         <Route path="reports"  element={<ReportingAnalytics />} />
         <Route path="settings" element={<PlatformSettings />} />
         <Route path="audit"    element={<AuditLog />} />

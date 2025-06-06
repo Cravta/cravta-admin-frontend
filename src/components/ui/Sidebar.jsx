@@ -283,6 +283,28 @@ const Sidebar = ({
                 </button>
               </li>
               }
+              {user?.role?.rights?.includes("help") &&
+              <li>
+                <button
+                  onClick={() => navigate("/admin/help")}
+                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                  style={{
+                    backgroundColor:
+                    (pathname === "/admin/help")
+                        ? colors.navActiveBg
+                        : "transparent",
+                    color:
+                    (pathname === "/admin/help") ? colors.primary : colors.text,
+                  }}
+                >
+                  <BookIcon
+                    className="w-5 h-5 mr-3"
+                    style={{ color: colors.primary }}
+                  />
+                  Help Center
+                </button>
+              </li>
+              }
               {user?.role?.rights?.includes("reports") &&
               <li>
                 <button

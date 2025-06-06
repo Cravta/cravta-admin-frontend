@@ -11,6 +11,7 @@ import adminQuizReducer from './admin/quizSlice';
 import blogReducer from './admin/blogSlice';
 import adminAuthReducer from './auth/adminAuthSlice';
 import adminTeamReducer from './auth/adminUsersSlice';
+import adminHelpReducer from './admin/helpSlice';
 import roleReducer from './admin/roleSlice';
 import dashboardReducer from './admin/dashboardSlice';
 // Redux Persist Configuration
@@ -31,6 +32,7 @@ const rootReducer = combineReducers({
   adminClasses: adminClassesReducer,
   adminContent: adminContentReducer,
   adminQuiz: adminQuizReducer,
+  help: adminHelpReducer,
   dashboard: dashboardReducer
 });
 

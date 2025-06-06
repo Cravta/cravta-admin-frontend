@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
-import { fetchRoles,deleteRole } from "../../../store/admin/roleSlice";
 import { toast } from "react-toastify";
-import CreateRoleModal from "../../../components/modals/RoleModal";
+import { fetchHelpQueries, deleteHelpQuery } from "../../../store/admin/helpSlice";
+import HelpQueryModal from "../../../components/modals/HelpQueryModal";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -27,37 +27,35 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
-const RoleManagement = () => {
+const HelpCenterManagement = () => {
   const { colors } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [fieldFilter, setFieldFilter] = useState("all");
-  const [showFieldDropdown, setShowFieldDropdown] = useState(false);
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [roleInfo, setRoleInfo] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [helpInfo, setHelpInfo] = useState(null);
   const dispatch = useDispatch();
   useEffect(() => {
-          dispatch(fetchRoles({}));
+          dispatch(fetchHelpQueries({}));
       }, [dispatch]);
-  const { roleList, loading } = useSelector((state) => state.role);
+  const { helpQueries, loading } = useSelector((state) => state.help);
   // Items per page
   const itemsPerPage = 10;
 
   // Get unique fields for filter
-  const uniqueFields = roleList?.find(val=>val.name=="Super Admin")?.rights;
+//   const uniqueFields = helpQueries?.find(val=>val.name=="Super Admin")?.rights;
   // Apply filters
   const getFilteredData = () => {
-    let data = roleList || [];
+    let data = helpQueries || [];
 
     // Apply search
     if (searchTerm) {
       data = data.filter(
         (rl) =>
           rl?.name.toLowerCase().includes(searchTerm.toLowerCase()) 
-        //     ||
-        //   rl?.rights.toLowerCase().includes(searchTerm.toLowerCase())
+            ||
+          rl?.email.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -73,7 +71,6 @@ const RoleManagement = () => {
 
     return data;
   };
-
   const filteredData = getFilteredData();
 
   // Calculate pagination
@@ -92,16 +89,16 @@ const RoleManagement = () => {
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchRoles({}));
+    dispatch(fetchHelpQueries({}));
   };
-  const handleDeleteRole = (classId) => {
-    if (window.confirm("Are you sure you want to delete this role?")) {
+  const handleDeleteQuery = (id) => {
+    if (window.confirm("Are you sure you want to delete this help query?")) {
       // setIsLoading(true);
 
-      dispatch(deleteRole(classId))
+      dispatch(deleteHelpQuery(id))
         .unwrap()
         .then(() => {
-          toast.success("role deleted successfully");
+          toast.success("help query deleted successfully");
         })
         .catch((error) => {
           toast.error(
@@ -117,10 +114,10 @@ const RoleManagement = () => {
           className="text-xl font-medium mb-2"
           style={{ color: colors.primary }}
         >
-          Role Management
+          Help Center Management
         </h2>
         <p className="text-sm" style={{ color: colors.textMuted }}>
-          View and manage all roles across the platform
+          View and manage all help queries across the platform
         </p>
       </div>
 
@@ -134,7 +131,7 @@ const RoleManagement = () => {
           />
           <input
             type="text"
-            placeholder="Search roles..."
+            placeholder="Search help queries..."
             value={searchTerm}
             onChange={handleSearch}
             className="pl-10 pr-4 py-2 w-full rounded-lg focus:outline-none"
@@ -235,7 +232,7 @@ const RoleManagement = () => {
           </div> */}
 
           {/* Field filter dropdown */}
-          <div className="relative">
+          {/* <div className="relative">
             <button
               className="flex items-center px-3 py-2 rounded-lg"
               style={{
@@ -300,19 +297,7 @@ const RoleManagement = () => {
                 </div>
               </div>
             )}
-          </div>
-
-            <button
-              className="flex items-center px-3 py-2 rounded-lg text-sm"
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.lightText,
-              }}
-              onClick={() => setShowRoleModal(true)}
-            >
-              {/* <UserPlus className="w-4 h-4 mr-2" /> */}
-              Add New Role
-            </button>
+          </div> */}
           {/* Refresh button */}
           <button
             className="p-2 rounded-lg flex items-center justify-center"
@@ -359,19 +344,25 @@ const RoleManagement = () => {
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Role Name
+                  Sender's Name
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Rights
+                  Subject
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Creation Date
+                  Sender's Email
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Created
                 </th>
                 <th
                   className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider"
@@ -399,7 +390,7 @@ const RoleManagement = () => {
                     className="px-6 py-4 text-center"
                     style={{ color: colors.textMuted }}
                   >
-                    No roles found matching your criteria
+                    No Help Queries found matching your criteria
                   </td>
                 </tr>
               ) : (
@@ -418,28 +409,24 @@ const RoleManagement = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div
-                          className="w-8 h-8 px-2 rounded-lg flex items-center justify-center text-white text-sm font-bold mr-3"
-                          style={{
-                            background: cls?.theme?.colour || getSubjectGradient(cls?.course_field),
-                          }}
-                        >
-                          {cls.icon? cls.icon :getSubjectIcon(cls.course_field)}
-                        </div>
-                        <div
                           className="font-medium"
                           style={{ color: colors.text }}
                         >
-                          {cls.name || cls.course_name}
+                          {cls?.name??"-"}
                         </div>
                       </div>
                     </td>
                     <td
-                      className="px-6 py-4 whitespace-nowrap text-sm"
-                      style={{ color: colors.text }}
-                    >
-                      {cls.rights.map((right, index) => (
-                        <div key={index}>{right},</div>
-                      ))}
+                       className="px-6 py-4 whitespace-nowrap text-sm"
+                       style={{ color: colors.text }}
+                     >
+                        {cls?.subject??"-"}
+                    </td>
+                    <td
+                       className="px-6 py-4 whitespace-nowrap text-sm"
+                       style={{ color: colors.text }}
+                     >
+                        {cls?.email??"-"}
                     </td>
                     <td
                       className="px-6 py-4 whitespace-nowrap text-sm"
@@ -450,7 +437,7 @@ const RoleManagement = () => {
                           className="w-3 h-3 mr-1"
                           style={{ color: colors.textMuted }}
                         />
-                        {formatDate(cls.creationDate??cls.createdAt)}
+                        {formatDate(cls.createdAt??"")}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -458,7 +445,11 @@ const RoleManagement = () => {
                         <button
                           className="p-1 rounded"
                           style={{ color: colors.primary }}
-                          title="View Role"
+                          title="View Query"
+                          onClick={() => {
+                            setHelpInfo(cls);
+                            setShowHelpModal(true);
+                          }}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -478,22 +469,22 @@ const RoleManagement = () => {
                         >
                           <Archive className="w-4 h-4" />
                         </button> */}
-                        <button
+                        {/* <button
                           className="p-1 rounded"
                           style={{ color: colors.accent }}
-                          title="Edit Role"
+                          title="Edit Query"
                           onClick={() => {
-                            setRoleInfo(cls);
-                            setShowRoleModal(true);
+                            setHelpInfo(cls);
+                            setShowHelpModal(true);
                           }}
                         >
                           <Edit className="w-4 h-4" />
-                        </button>
+                        </button> */}
                         <button
                           className="p-1 rounded"
                           style={{ color: colors.error }}
-                          title="Delete Role"
-                          onClick={() => handleDeleteRole(cls.id)}
+                          title="Delete Query"
+                          onClick={() => handleDeleteQuery(cls.id)}
                         >
                           <Trash className="w-4 h-4" />
                         </button>
@@ -515,7 +506,7 @@ const RoleManagement = () => {
             <div className="text-sm" style={{ color: colors.textMuted }}>
               Showing {startIndex + 1} to{" "}
               {Math.min(startIndex + itemsPerPage, filteredData.length)} of{" "}
-              {filteredData.length} roles
+              {filteredData.length} help queries
             </div>
             <div className="flex space-x-1">
               <button
@@ -592,31 +583,11 @@ const RoleManagement = () => {
           </div>
         )}
       </div>
-      <CreateRoleModal 
-      showModal={showRoleModal} 
-      setShowModal={setShowRoleModal} 
-      roleInfo={roleInfo}
-      setRoleInfo={setRoleInfo}/>
+      <HelpQueryModal 
+      showModal={showHelpModal} 
+      setShowModal={setShowHelpModal} 
+      query={helpInfo}/>
     </div>
-  );
-};
-
-// Helper function to get subject gradients
-const getSubjectGradient = (subject) => {
-  const gradients = {
-    Mathematics: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
-    Physics: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-    Chemistry: "linear-gradient(135deg, #f46b45 0%, #eea849 100%)",
-    Biology: "linear-gradient(135deg, #38ef7d 0%, #11998e 100%)",
-    "Computer Science": "linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)",
-    History: "linear-gradient(135deg, #ff8a00 0%, #e52e71 100%)",
-    Geography: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
-    Literature: "linear-gradient(135deg, #603813 0%, #b29f94 100%)",
-    Art: "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
-  };
-
-  return (
-    gradients[subject] || "linear-gradient(135deg, #434343 0%, #000000 100%)"
   );
 };
 
@@ -637,4 +608,4 @@ const getSubjectIcon = (subject) => {
   return icons[subject] || "📚";
 };
 
-export default RoleManagement;
+export default HelpCenterManagement;
