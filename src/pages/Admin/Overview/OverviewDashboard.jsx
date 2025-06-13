@@ -91,7 +91,7 @@ const OverviewDashboard = () => {
   // const [isLoading, setIsLoading] = useState(false);
   const {dashboardData,loading} = useSelector((state) => state.dashboard);
   useEffect(() => {
-    dispatch(fetchAdminDashboard());
+    dispatch(fetchAdminDashboard({filter:"7days"}));
   },[])
   // Helper function to get trend indicator and color
   const getTrendIndicator = (value) => {
@@ -119,7 +119,9 @@ const OverviewDashboard = () => {
       };
     }
   };
-
+  useEffect(() => {
+    dispatch(fetchAdminDashboard({filter:timeFilter}));
+  },[timeFilter])
   return (
     <div className="p-6 overflow-auto">
       {/* Time filter selector */}
@@ -293,7 +295,7 @@ const OverviewDashboard = () => {
                 className="text-2xl font-bold mb-2"
                 style={{ color: colors.text }}
               >
-                {loading?"loading...":dashboardData?.activeUsers-10??0}
+                {loading?"loading...":dashboardData?.activeUsers??0}
               </div>
               <div className="flex items-center">
                 {getTrendIndicator(5).icon}
@@ -324,7 +326,7 @@ const OverviewDashboard = () => {
                 DAU
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                {loading?"loading...":dashboardData?.activeUsers-12??0}
+                {loading?"loading...":dashboardData?.activeUsersToday??0}
               </div>
             </div>
             <div>
@@ -332,7 +334,7 @@ const OverviewDashboard = () => {
                 MAU
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                {loading?"loading...":dashboardData?.activeUsers-16??0}
+                {loading?"loading...":dashboardData?.activeUsersThisMonth??0}
               </div>
             </div>
           </div>
@@ -394,7 +396,7 @@ const OverviewDashboard = () => {
                 Average Size
               </div>
               <div className="font-semibold" style={{ color: colors.text }}>
-                24 students
+                2 students
               </div>
             </div>
           </div>

@@ -5,12 +5,12 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/dashboard`;
 
 export const fetchAdminDashboard = createAsyncThunk(
     "dashboard/fetchAdminDashboard",
-    async (_, { rejectWithValue }) => {
+    async ({filter}, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("No auth token found");
 
-            const response = await api.get(`${BASE_URL}`, {
+            const response = await api.get(`${BASE_URL}?filter=${filter}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
