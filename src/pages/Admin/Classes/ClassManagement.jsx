@@ -101,7 +101,8 @@ const ClassManagement = () => {
       data = data.filter(
         (cls) =>
           cls?.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          cls?.course_field.toLowerCase().includes(searchTerm.toLowerCase())
+          cls?.course_field.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          cls?.creater?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -425,7 +426,7 @@ const ClassManagement = () => {
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Last Activity
+                  Created By
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
@@ -522,11 +523,7 @@ const ClassManagement = () => {
                       style={{ color: colors.text }}
                     >
                       <div className="flex items-center">
-                        <Calendar
-                          className="w-3 h-3 mr-1"
-                          style={{ color: colors.textMuted }}
-                        />
-                        {formatDate(cls.lastActivity??cls.updatedAt)}
+                        {cls?.creator?.name??"-"}
                       </div>
                     </td>
                     <td

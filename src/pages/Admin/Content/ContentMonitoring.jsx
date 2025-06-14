@@ -37,6 +37,7 @@ import ContentModal from "../../../components/modals/ContentModal";
 import { toast } from "react-toastify";
 import CreateQuizModal from "../../../components/modals/CreateQuizModal";
 import ContentViewModal from "../../../components/modals/ContentViewModal";
+import ScreenLoader from "../../../components/loader/ScreenLoader";
 // Dummy data for materials
 const materialsData = Array(30)
   .fill()
@@ -121,6 +122,7 @@ const ContentMonitoring = () => {
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -258,7 +260,7 @@ const ContentMonitoring = () => {
     dispatch(fetchContentById({ contentId: id }));
   };
   const handleDownload = async (material) => {
-    // setIsDownloading(true);
+    setIsDownloading(true);
     const contentId = material.id;
 
     try {
@@ -273,7 +275,7 @@ const ContentMonitoring = () => {
 
       if (!fileUrl) {
         toast.error("No file URL found");
-        // setIsDownloading(false);
+        setIsDownloading(false);
         return;
       }
 
@@ -281,7 +283,7 @@ const ContentMonitoring = () => {
       console.log("FILE RES", fileRes);
       if (!fileRes.ok) {
         toast.error("Failed to download file");
-        // setIsDownloading(false);
+        setIsDownloading(false);
         return;
       }
 
@@ -296,11 +298,11 @@ const ContentMonitoring = () => {
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
 
-      // setIsDownloading(false);
+      setIsDownloading(false);
     } catch (err) {
       console.error("Download error:", err);
       toast.error("Something went wrong during download");
-      // setIsDownloading(false);
+      setIsDownloading(false);
     }
   };
   const handleDeleteQuiz = (quizId) => {
@@ -318,6 +320,9 @@ const ContentMonitoring = () => {
           );
         });
     }
+  }
+  if (isDownloading) {
+    return <ScreenLoader />;
   }
   return (
     <div className="p-6 overflow-auto">
