@@ -1,32 +1,35 @@
-name: Deploy Express App to Server
+name: Deploy Cravta Admin Frontend to Server
 
 on:
   pull_request:
     branches:
       - master
-    types: 
+    types:
       - closed
-  workflow_dispatch:
 
 jobs:
   deploy:
-    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3.5.2
 
-      - name: Set up SSH agent
+      - name: Set up SSH Agent
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.CRAVTA_ADMIN }}
 
-      - name: Deploy to server
+      - name: Deploy to Production Server
         run: |
-          ssh -o StrictHostKeyChecking=no root@8.213.27.213 '
-            cd /var/www/html/cravta-admin-frontend &&
-            git pull origin master &&
-            npm install &&
-            npm run build &&
-            pm2 restart 3'
+          ssh -o StrictHostKeyChecking=no root@8.213.27.213 << 'EOF'
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            cd /var/www/html/cravta-admin-frontend
+            git pull origin master
+            npm install
+            npm run build
+            pm2 restart 3
+          EOF
