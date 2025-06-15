@@ -5,11 +5,12 @@ on:
     branches:
       - master
     types: 
-      - closed  # Only trigger when PR is closed (usually via merge)
+      - closed
+  workflow_dispatch:
 
 jobs:
   deploy:
-    if: ${{ github.event.pull_request.merged == true }}  # Run only if PR is merged
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
 
     steps:
