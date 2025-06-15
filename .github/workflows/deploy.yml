@@ -24,7 +24,7 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no root@8.213.27.213 '
-            cd /var/www/html/time-web-backend &&
+            cd /var/www/html/cravta-admin-frontend &&
             git pull origin master &&
             npm install &&
             npm run build &&
