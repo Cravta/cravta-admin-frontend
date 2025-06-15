@@ -1,0 +1,31 @@
+name: Deploy Express App to Server
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: 
+      - closed  # Only trigger when PR is closed (usually via merge)
+
+jobs:
+  deploy:
+    if: ${{ github.event.pull_request.merged == true }}  # Run only if PR is merged
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3.5.2
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.CRAVTA_ADMIN }}
+
+      - name: Deploy to server
+        run: |
+          ssh -o StrictHostKeyChecking=no root@8.213.27.213 '
+            cd /var/www/html/time-web-backend &&
+            git pull origin master &&
+            npm install &&
+            npm run build &&
+            pm2 restart 3'
