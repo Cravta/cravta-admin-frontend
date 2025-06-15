@@ -45,6 +45,23 @@ export const deleteHelpQuery = createAsyncThunk(
         }
     }
 );
+export const replyHelpQuery = createAsyncThunk(
+    "help/replyHelpQuery",
+    async ({ id, replyMessage }, { rejectWithValue }) => {
+        try {
+            if (!id) {
+                throw new Error("id is required");
+            }
+            const token = localStorage.getItem("token");
+            const response = await api.put(`${BASE_URL}/${id}`, {replyMessage}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return response.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Failed to reply this query");
+        }
+    }
+)
 const AdminHelpSlice = createSlice({
     name: "help",
     initialState: {
@@ -76,6 +93,11 @@ const AdminHelpSlice = createSlice({
                     (rl) => rl.id !== action.payload
                 );
             })
+            .addCase(replyHelpQuery.fulfilled, (state, action) => {
+                state.helpQueries = state.helpQueries.map((rl) =>
+                    rl.id === action.payload.id ? action.payload : rl
+                );
+            });
     },
 });
 

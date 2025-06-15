@@ -13,6 +13,7 @@ import {
   Database,
   AlertTriangle,
   BookOpen as BookIcon,
+  User,
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import Logo1 from "../../assets/LOGO-01.png";
@@ -228,7 +229,7 @@ const Sidebar = ({
                         : colors.text,
                   }}
                 >
-                  <BookOpen
+                  <User
                     className="w-5 h-5 mr-3"
                     style={{ color: colors.primary }}
                   />

@@ -8,7 +8,7 @@ const HelpQueryModal = ({ showModal, setShowModal, query }) => {
   if (!showModal || !query) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50" style={{ backgroundColor: "rgba(0, 0, 0, 0.75)" }}>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-lg w-full p-6 relative">
         <button
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -36,6 +36,11 @@ const HelpQueryModal = ({ showModal, setShowModal, query }) => {
             <strong className="block text-gray-600 dark:text-gray-400">Message:</strong>
             <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{query.content ?? "-"}</p>
           </div>
+          {query?.replyMessage && <div>
+            <strong className="block text-gray-600 dark:text-gray-400">Reply:</strong>
+            <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{query.replyMessage ?? "-"}</p>
+          </div>
+          }
           <div>
             <strong className="block text-gray-600 dark:text-gray-400">Created:</strong>
             <span className="text-gray-800 dark:text-gray-200">

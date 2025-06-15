@@ -14,12 +14,14 @@ import {
   CheckCircle,
   XCircle,
   Edit,
+  MessageSquareReply,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
 import { toast } from "react-toastify";
 import { fetchHelpQueries, deleteHelpQuery } from "../../../store/admin/helpSlice";
 import HelpQueryModal from "../../../components/modals/HelpQueryModal";
+import ReplyHelpModal from "../../../components/modals/HelpMessageModal";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -34,6 +36,7 @@ const HelpCenterManagement = () => {
   const [fieldFilter, setFieldFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [helpMessageModal, setHelpMessageModal] = useState(false);
   const [helpInfo, setHelpInfo] = useState(null);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -365,6 +368,12 @@ const HelpCenterManagement = () => {
                   Created
                 </th>
                 <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Status
+                </th>
+                <th
                   className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
@@ -438,6 +447,34 @@ const HelpCenterManagement = () => {
                           style={{ color: colors.textMuted }}
                         />
                         {formatDate(cls.createdAt??"")}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex justify-start items-center space-x-2">
+                        {cls.status === "replied" ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span style={{ color: colors.success }}>Replied</span>
+                          </>
+                        ) : (
+                          <>
+                            {/* <XCircle className="w-4 h-4 text-red-500" /> */}
+                              <button
+                                className="flex items-center px-2 py-1.5 rounded-lg text-sm cursor-pointer"
+                                style={{
+                                  backgroundColor: colors.primary,
+                                  color: colors.lightText,
+                                }}
+                                onClick={() => {
+                                  setHelpInfo(cls);
+                                  setHelpMessageModal(true);
+                                }}
+                              >
+                                <MessageSquareReply className="w-4 h-4 mr-2" />
+                                Reply now
+                              </button>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -587,6 +624,11 @@ const HelpCenterManagement = () => {
       showModal={showHelpModal} 
       setShowModal={setShowHelpModal} 
       query={helpInfo}/>
+      <ReplyHelpModal
+        showModal={helpMessageModal}
+        setShowModal={setHelpMessageModal}
+        query={helpInfo}
+      />
     </div>
   );
 };
