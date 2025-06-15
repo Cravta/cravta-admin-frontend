@@ -23,13 +23,14 @@ jobs:
 
       - name: Deploy to Production Server
         run: |
-          ssh -o StrictHostKeyChecking=no root@8.213.27.213 << 'EOF'
+          ssh -o StrictHostKeyChecking=no root@8.213.27.213 '
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             cd /var/www/html/cravta-admin-frontend
             git pull origin master
+            echo "NPM Path: $(which npm)"
             npm install
             npm run build
-            pm2 restart 3
-          EOF
+            pm2 restart 3
+          '
