@@ -58,7 +58,7 @@ const ReplyHelpModal = ({ showModal, setShowModal, query }) => {
           style={{ borderColor: colors.borderColor }}
         >
           <h3 className="text-lg font-medium" style={{ color: colors.primary }}>
-            Reply to Help Query
+            Reply to Help Request
           </h3>
           <button
             onClick={handleClose}

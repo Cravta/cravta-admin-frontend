@@ -302,7 +302,7 @@ const Sidebar = ({
                     className="w-5 h-5 mr-3"
                     style={{ color: colors.primary }}
                   />
-                  Help center12
+                  Help Center
                 </button>
               </li>
               }
