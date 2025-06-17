@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   BookOpen as BookIcon,
   User,
+  Package,
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import Logo1 from "../../assets/LOGO-01.png";
@@ -281,6 +282,28 @@ const Sidebar = ({
                     style={{ color: colors.primary }}
                   />
                   Blog Management
+                </button>
+              </li>
+              }
+              {user?.role?.rights?.includes("packages") &&
+              <li>
+                <button
+                  onClick={() => navigate("/admin/package")}
+                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                  style={{
+                    backgroundColor:
+                    (pathname === "/admin/package")
+                        ? colors.navActiveBg
+                        : "transparent",
+                    color:
+                    (pathname === "/admin/package") ? colors.primary : colors.text,
+                  }}
+                >
+                  <Package
+                    className="w-5 h-5 mr-3"
+                    style={{ color: colors.primary }}
+                  />
+                  Package Management
                 </button>
               </li>
               }
