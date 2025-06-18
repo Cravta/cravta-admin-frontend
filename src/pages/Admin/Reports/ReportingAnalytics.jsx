@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Search,
   RefreshCw,
@@ -28,6 +28,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { fetchReportsDashboard } from "../../../store/admin/dashboardSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 // Dummy data for reports
 const reportsData = [
@@ -104,6 +106,7 @@ const formatDate = (dateString) => {
 
 const ReportingAnalytics = () => {
   const { colors } = useTheme();
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -112,7 +115,10 @@ const ReportingAnalytics = () => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  useEffect(() => {
+      dispatch(fetchReportsDashboard({filter:timeRange}));
+  },[timeRange])
+  const {reportLoading, dashboardReports} = useSelector((state) => state.dashboard);
   // Get filtered reports
   const getFilteredReports = () => {
     let data = [...reportsData];
@@ -187,7 +193,6 @@ const ReportingAnalytics = () => {
         return <BarChart className="w-4 h-4" style={{ color: colors.text }} />;
     }
   };
-
   return (
     <div className="p-6 overflow-auto">
       <div className="mb-6">
@@ -319,7 +324,7 @@ const ReportingAnalytics = () => {
                     className="text-2xl font-bold"
                     style={{ color: colors.text }}
                   >
-                    2,543
+                    {dashboardReports?.totalUsers}
                   </div>
                   <div
                     className="flex items-center text-xs"
@@ -387,7 +392,7 @@ const ReportingAnalytics = () => {
                     className="text-2xl font-bold"
                     style={{ color: colors.text }}
                   >
-                    1,842
+                    {dashboardReports?.activeUsers}
                   </div>
                   <div
                     className="flex items-center text-xs"
@@ -458,7 +463,7 @@ const ReportingAnalytics = () => {
                     className="text-2xl font-bold"
                     style={{ color: colors.text }}
                   >
-                    1,247
+                    {dashboardReports?.totalQuizzes}
                   </div>
                   <div
                     className="flex items-center text-xs"
@@ -529,7 +534,7 @@ const ReportingAnalytics = () => {
                     className="text-2xl font-bold"
                     style={{ color: colors.text }}
                   >
-                    4,872
+                    {dashboardReports?.aiQuizzes + dashboardReports?.flashCardCount}
                   </div>
                   <div
                     className="flex items-center text-xs"

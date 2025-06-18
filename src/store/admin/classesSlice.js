@@ -13,12 +13,12 @@ const getAxiosConfig = (token) => ({
 
 export const fetchClassesAdmin = createAsyncThunk(
     "classes/fetchClassesAdmin",
-    async (page, { rejectWithValue }) => {
+    async ({page,search}, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("No auth token found");
 
-            const response = await api.get(`${BASE_URL}?page=${page}`, {
+            const response = await api.get(`${BASE_URL}?page=${page}&searchTerm=${search??""}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",

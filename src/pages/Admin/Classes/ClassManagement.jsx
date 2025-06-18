@@ -81,10 +81,41 @@ const ClassManagement = () => {
   const [showClassModal, setShowClassModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [classInfo, setClassInfo] = useState(null);
+  const debounceRef = React.useRef(null);
+  const isFirstSearch = React.useRef(true);
   const dispatch = useDispatch();
   useEffect(() => {
-  dispatch(fetchClassesAdmin(currentPage));
-  }, [dispatch, currentPage]);
+  // If we're mid‑debounce on a search, skip this (so we don’t double‑fetch)
+  if (!debounceRef.current) {
+    dispatch(fetchClassesAdmin({ page: currentPage, search: searchTerm }));
+  }
+}, [dispatch, currentPage]);
+
+// 2️⃣ Debounced fetch when searchTerm changes (skip initial render)
+useEffect(() => {
+  if (isFirstSearch.current) {
+    if(!searchTerm) {
+    isFirstSearch.current = false;
+    return;
+    }
+  }
+
+  // Reset to page 1 for a new search
+  setCurrentPage(1);
+
+  // Clear any pending debounce
+  if (debounceRef.current) clearTimeout(debounceRef.current);
+
+  // Schedule a debounced fetch
+  debounceRef.current = setTimeout(() => {
+    dispatch(fetchClassesAdmin({ page: 1, search: searchTerm }));
+    debounceRef.current = null;
+  }, 500);
+
+  return () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+  };
+}, [dispatch, searchTerm]);
   const { classList, loading, totalPages, totalClasses, } = useSelector((state) => state.adminClasses);
   // Items per page
   const itemsPerPage = 10;
@@ -97,14 +128,14 @@ const ClassManagement = () => {
     let data = classList || [];
 
     // Apply search
-    if (searchTerm) {
-      data = data.filter(
-        (cls) =>
-          cls?.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          cls?.course_field.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          cls?.creater?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+    // if (searchTerm) {
+    //   data = data.filter(
+    //     (cls) =>
+    //       cls?.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //       cls?.course_field.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //       cls?.creater?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    //   );
+    // }
 
     // Apply status filter
     if (statusFilter !== "all") {
@@ -134,7 +165,7 @@ const ClassManagement = () => {
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchClassesAdmin(currentPage));
+    dispatch(fetchClassesAdmin(({ page:currentPage, search:searchTerm })));
   };
   const handleDeleteClass = (classId) => {
     if (window.confirm("Are you sure you want to delete this class?")) {

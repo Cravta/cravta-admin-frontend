@@ -18,6 +18,7 @@ const availableRights = [
   "roles",
   "teams",
   "help",
+  "packages"
 ];
 
 const CreateRoleModal = ({ showModal, setShowModal, setRoleInfo, roleInfo = {} }) => {
