@@ -288,15 +288,15 @@ const Sidebar = ({
               {user?.role?.rights?.includes("packages") &&
               <li>
                 <button
-                  onClick={() => navigate("/admin/package")}
+                  onClick={() => navigate("/admin/packages")}
                   className="flex items-center px-3 py-2.5 rounded w-full text-left"
                   style={{
                     backgroundColor:
-                    (pathname === "/admin/package")
+                    (pathname === "/admin/packages")
                         ? colors.navActiveBg
                         : "transparent",
                     color:
-                    (pathname === "/admin/package") ? colors.primary : colors.text,
+                    (pathname === "/admin/packages") ? colors.primary : colors.text,
                   }}
                 >
                   <Package

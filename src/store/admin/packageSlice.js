@@ -2,48 +2,48 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import api from "../../api/axiosInstance";
 
-const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/role`;
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/package`;
 
-export const createRole = createAsyncThunk(
-  "roles/createRole",
-  async (roleData, { rejectWithValue }) => {
+export const createPackage = createAsyncThunk(
+  "package/createPackage",
+  async (packageData, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await api.post(`${BASE_URL}`, roleData, {
+      const response = await api.post(`${BASE_URL}`, packageData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      return response.data.data; // Assuming the API returns the created role data
+      return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to create role");
+      return rejectWithValue(error.response?.data || "Failed to create package");
     }
   }
 );
 
-export const editRole = createAsyncThunk(
-  "roles/editRole",
-  async ({ roleId, updatedData }, { rejectWithValue }) => {
+export const editPackage = createAsyncThunk(
+  "package/editPackage",
+  async ({ packageId, updatedData }, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await api.put(`${BASE_URL}/${roleId}`, updatedData, {
+      const response = await api.put(`${BASE_URL}/${packageId}`, updatedData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      return response.data.data; // Assuming API returns the updated role
+      return response.data.data; // Assuming API returns the updated package
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to edit role");
+      return rejectWithValue(error.response?.data || "Failed to edit package");
     }
   }
 );
 
-export const fetchRoles = createAsyncThunk(
-    "roles/fetchRoles",
+export const fetchPackages = createAsyncThunk(
+    "package/fetchPackages",
     async (_, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
@@ -61,34 +61,34 @@ export const fetchRoles = createAsyncThunk(
         } catch (error) {
             console.error("❌ API Error:", error.response?.data);
             return rejectWithValue(
-                error.response?.data?.message || "Error fetching roles data"
+                error.response?.data?.message || "Error fetching packages data"
             );
         }
     }
 );
-export const deleteRole = createAsyncThunk(
-    "roles/deleteRole",
-    async (roleId, { rejectWithValue }) => {
+export const deletePackage = createAsyncThunk(
+    "packages/deletePackage",
+    async (packageId, { rejectWithValue }) => {
         try {
-            if (!roleId) {
-                throw new Error("roleId is required");
+            if (!packageId) {
+                throw new Error("packageId is required");
             }
 
             const token = localStorage.getItem("token");
-            await api.delete(`${BASE_URL}/${roleId}`, {
+            await api.delete(`${BASE_URL}/${packageId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            return roleId;
+            return packageId;
         } catch (error) {
-            return rejectWithValue(error.response?.data || "Failed to delete this role");
+            return rejectWithValue(error.response?.data || "Failed to delete this package");
         }
     }
 );
-const AdminRolesSlice = createSlice({
-    name: "aminRoles",
+const PackagesSlice = createSlice({
+    name: "Packages",
     initialState: {
-        roleList: [],
+        packageList: [],
         loading: false,
         error: null,
     },
@@ -99,28 +99,28 @@ const AdminRolesSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchRoles.pending, (state) => {
+            .addCase(fetchPackages.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchRoles.fulfilled, (state, action) => {
+            .addCase(fetchPackages.fulfilled, (state, action) => {
                 state.loading = false;
-                state.roleList = Array.isArray(action.payload) ? action.payload : [];
+                state.packageList = Array.isArray(action.payload) ? action.payload : [];
             })
-            .addCase(fetchRoles.rejected, (state, action) => {
+            .addCase(fetchPackages.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
-            .addCase(deleteRole.fulfilled, (state, action) => {
-                state.roleList = state.roleList.filter(
+            .addCase(deletePackage.fulfilled, (state, action) => {
+                state.packageList = state.packageList.filter(
                     (rl) => rl.id !== action.payload
                 );
             })
-            .addCase(createRole.fulfilled, (state, action) => {
-                state.roleList.push(action.payload);
+            .addCase(createPackage.fulfilled, (state, action) => {
+                state.packageList.push(action.payload);
             })
-            .addCase(editRole.fulfilled, (state, action) => {
-                state.roleList = state.roleList.map((rl) =>
+            .addCase(editPackage.fulfilled, (state, action) => {
+                state.packageList = state.packageList.map((rl) =>
                     rl.id === action.payload.id ? action.payload : rl
                 );
             })
@@ -128,4 +128,4 @@ const AdminRolesSlice = createSlice({
 });
 
 // export const { fetchUsersData } = AdminUsersSlice.actions;
-export default AdminRolesSlice.reducer;
+export default PackagesSlice.reducer;

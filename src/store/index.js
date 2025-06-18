@@ -14,6 +14,7 @@ import adminTeamReducer from './auth/adminUsersSlice';
 import adminHelpReducer from './admin/helpSlice';
 import roleReducer from './admin/roleSlice';
 import dashboardReducer from './admin/dashboardSlice';
+import packagesReducer from './admin/packageSlice'
 // Redux Persist Configuration
 const persistConfig = {
   key: "root",
@@ -33,7 +34,8 @@ const rootReducer = combineReducers({
   adminContent: adminContentReducer,
   adminQuiz: adminQuizReducer,
   help: adminHelpReducer,
-  dashboard: dashboardReducer
+  dashboard: dashboardReducer,
+  package: packagesReducer
 });
 
 // Apply Persist Reducer

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  UserPlus,
   Search,
   RefreshCw,
   Edit,
@@ -8,12 +7,13 @@ import {
   CheckCircle,
   XCircle,
   Shield,
+  Package,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
-import { deleteUserbyAdmin, fetchUsersAdmin } from "../../../store/admin/usersSlice";
+import { deletePackage, fetchPackages } from "../../../store/admin/packageSlice";
 import { toast } from "react-toastify";
-import UserModal from "../../../components/modals/UserModal";
+import PackageModal from "../../../components/modals/PackageModal";
 
 
 // Helper function to format date
@@ -22,7 +22,7 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
-const UserManagement = () => {
+const PackageManagement = () => {
   const dispatch = useDispatch();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState("teachers");
@@ -31,11 +31,11 @@ const UserManagement = () => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
+  const [packageInfo, setPackageInfo] = useState(null);
   useEffect(() => {
-        dispatch(fetchUsersAdmin({}));
+        dispatch(fetchPackages({}));
     }, [dispatch]);
-  const { usersList, loading } = useSelector((state) => state.adminUsers);
+  const { packageList, loading } = useSelector((state) => state.package);
   // Items per page
   const itemsPerPage = 10;
 
@@ -45,13 +45,13 @@ const UserManagement = () => {
 
     switch (activeTab) {
       case "teachers":
-        data = usersList?.filter((user) => user.user_type === "teacher");
+        data = packageList?.filter((user) => user.user_type === "teacher");
         break;
       case "students":
-        data = usersList?.filter((user) => user.user_type === "student");
+        data = packageList?.filter((user) => user.user_type === "student");
         break;
       case "schools":
-        data = usersList?.filter((user) => user.user_type === "school");
+        data = packageList?.filter((user) => user.user_type === "school");
         break;
       default:
         data = [];
@@ -98,20 +98,20 @@ const UserManagement = () => {
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchUsersAdmin({}));
+    dispatch(fetchPackages({}));
   };
-  const handleDeleteUser = (userId) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
+  const handleDeletePackage = (packageId) => {
+    if (window.confirm("Are you sure you want to delete this package?")) {
       // setIsLoading(true);
 
-      dispatch(deleteUserbyAdmin(userId))
+      dispatch(deletePackage(packageId))
         .unwrap()
         .then(() => {
-          toast.success("User deleted successfully");
+          toast.success("Package deleted successfully");
         })
         .catch((error) => {
           toast.error(
-            `Failed to delete User: ${error || "Unknown error"}`
+            `Failed to delete Package: ${error || "Unknown error"}`
           );
         });
     }
@@ -123,10 +123,10 @@ const UserManagement = () => {
           className="text-xl font-medium mb-2"
           style={{ color: colors.primary }}
         >
-          User Management
+          Package Management
         </h2>
         <p className="text-sm" style={{ color: colors.textMuted }}>
-          View, edit and manage all users on the platform
+          View, edit and manage all packages on the platform
         </p>
       </div>
 
@@ -306,7 +306,7 @@ const UserManagement = () => {
             <Download className="w-4 h-4" />
           </button> */}
 
-          {/* Add new user button */}
+          {/* Add new Package button */}
           <button
             className="flex items-center px-3 py-2 rounded-lg text-sm"
             style={{
@@ -315,8 +315,8 @@ const UserManagement = () => {
             }}
             onClick={() => setShowModal(true)}
           >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Add New User
+            <Package className="w-4 h-4 mr-2" />
+            Add New Package
             {/* {activeTab === "teachers"
               ? "Teacher"
               : activeTab === "students"
@@ -326,7 +326,7 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* User Table */}
+      {/* Package Table */}
       <div
         className="rounded-lg overflow-hidden"
         style={{
@@ -348,7 +348,7 @@ const UserManagement = () => {
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Tokens
+                  Spark Tokens
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
@@ -392,9 +392,9 @@ const UserManagement = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((user, index) => (
+                paginatedData.map((pckg, index) => (
                   <tr
-                    key={user?.id}
+                    key={pckg?.id}
                     style={{
                       borderTop:
                         index !== 0
@@ -415,20 +415,20 @@ const UserManagement = () => {
                                 : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
                           }}
                         >
-                          {user?.name?.charAt(0).toUpperCase()}
+                          {pckg?.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <div
                             className="font-medium"
                             style={{ color: colors.text }}
                           >
-                            {user?.name || "-"}
+                            {pckg?.name || "-"}
                           </div>
                           <div
                             className="text-sm"
                             style={{ color: colors.textMuted }}
                           >
-                            {user.email_address}
+                            SAR {Math.floor(pckg.price)}
                           </div>
                         </div>
                       </div>
@@ -437,13 +437,13 @@ const UserManagement = () => {
                       className="px-6 py-4 whitespace-nowrap text-sm"
                       style={{ color: colors.text }}
                     >
-                      {formatDate(user?.createdAt)}
+                      {pckg?.sparks??0}
                     </td>
                     <td
                       className="px-6 py-4 whitespace-nowrap text-sm"
                       style={{ color: colors.text }}
                     >
-                      {user.updatedAt?formatDate(user.updatedAt ):"-"}
+                      {pckg.discount??0}%
                     </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap"
@@ -453,17 +453,17 @@ const UserManagement = () => {
                           className="px-2 py-1 text-xs rounded-full flex items-center w-min"
                           style={{
                             backgroundColor:
-                              user.role === "Super Admin"
+                              pckg.package_type === "annual"
                                 ? `${colors.accent}20`
                                 : `${colors.primary}20`,
                             color:
-                              user.role === "Super Admin"
+                              pckg.package_type === "annual"
                                 ? colors.accent
                                 : colors.primary,
                           }}
                         >
                           <Shield className="w-3 h-3 mr-1" />
-                          {user.user_type}
+                          {pckg.package_type}
                         </span>
                       </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -478,23 +478,23 @@ const UserManagement = () => {
                         <button
                           className="p-1 rounded"
                           style={{ color: colors.accent }}
-                          title="Edit User"
-                          onClick={() => {setUserInfo(user);setShowModal(true);}}
+                          title="Edit Package"
+                          onClick={() => {setPackageInfo(pckg);setShowModal(true);}}
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         {/* <button
                           className="p-1 rounded"
                           style={{ color: colors.text }}
-                          title="Email User"
+                          title="Email Package"
                         >
                           <Mail className="w-4 h-4" />
                         </button> */}
                         <button
                           className="p-1 rounded"
                           style={{ color: colors.error }}
-                          title="Delete User"
-                          onClick={() => handleDeleteUser(user?.id)}
+                          title="Delete Package"
+                          onClick={() => handleDeletePackage(pckg?.id)}
                         >
                           <Trash className="w-4 h-4" />
                         </button>
@@ -593,14 +593,14 @@ const UserManagement = () => {
           </div>
         )}
       </div>
-      <UserModal 
+      <PackageModal 
         showModal={showModal} 
         setShowModal={setShowModal}
-        userInfo={userInfo}
-        setUserInfo={setUserInfo}
+        packageInfo={packageInfo}
+        setPackageInfo={setPackageInfo}
       />
     </div>
   );
 };
 
-export default UserManagement;
+export default PackageManagement;
