@@ -30,6 +30,169 @@ import {
 } from "../../../store/admin/blogSlice";
 import { useDispatch, useSelector } from "react-redux";
 
+export async function detectImageMimeTypeWithFallback(image, filename) {
+  // First try magic byte detection
+  const mimeType = await detectImageMimeType(image);
+  if (mimeType) {
+    return mimeType;
+  }
+
+  // Fallback to file extension if filename is provided
+  if (filename) {
+    const extension = filename.toLowerCase().split(".").pop();
+    const extensionMap = {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      gif: "image/gif",
+      bmp: "image/bmp",
+      webp: "image/webp",
+      svg: "image/svg+xml",
+      tiff: "image/tiff",
+      tif: "image/tiff",
+      ico: "image/x-icon",
+      avif: "image/avif",
+      heic: "image/heic",
+      heif: "image/heif",
+    };
+    return extensionMap[extension] || null;
+  }
+
+  return null;
+}
+
+export async function detectImageMimeType(image) {
+  try {
+    let bytes;
+
+    // Convert different input types to Uint8Array
+    if (image instanceof File || image instanceof Blob) {
+      const arrayBuffer = await image.arrayBuffer();
+      bytes = new Uint8Array(arrayBuffer);
+    } else if (image instanceof ArrayBuffer) {
+      bytes = new Uint8Array(image);
+    } else if (image instanceof Uint8Array) {
+      bytes = image;
+    } else if (Buffer && Buffer.isBuffer(image)) {
+      bytes = new Uint8Array(image);
+    } else {
+      throw new Error("Unsupported image input type");
+    }
+
+    // Ensure we have enough bytes to check signatures
+    if (bytes.length < 12) {
+      return null;
+    }
+
+    // Helper function to check if bytes match a signature
+    const checkSignature = (signature, offset = 0) => {
+      for (let i = 0; i < signature.length; i++) {
+        if (bytes[offset + i] !== signature[i]) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    // JPEG: FF D8 FF
+    if (checkSignature([0xff, 0xd8, 0xff])) {
+      return "image/jpeg";
+    }
+
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (checkSignature([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+      return "image/png";
+    }
+
+    // GIF87a or GIF89a: 47 49 46 38 [37|39] 61
+    if (
+      checkSignature([0x47, 0x49, 0x46, 0x38]) &&
+      (bytes[4] === 0x37 || bytes[4] === 0x39) &&
+      bytes[5] === 0x61
+    ) {
+      return "image/gif";
+    }
+
+    // WebP: 52 49 46 46 [4 bytes] 57 45 42 50
+    if (
+      checkSignature([0x52, 0x49, 0x46, 0x46]) &&
+      checkSignature([0x57, 0x45, 0x42, 0x50], 8)
+    ) {
+      return "image/webp";
+    }
+
+    // BMP: 42 4D
+    if (checkSignature([0x42, 0x4d])) {
+      return "image/bmp";
+    }
+
+    // TIFF (Little Endian): 49 49 2A 00
+    if (checkSignature([0x49, 0x49, 0x2a, 0x00])) {
+      return "image/tiff";
+    }
+
+    // TIFF (Big Endian): 4D 4D 00 2A
+    if (checkSignature([0x4d, 0x4d, 0x00, 0x2a])) {
+      return "image/tiff";
+    }
+
+    // ICO: 00 00 01 00
+    if (checkSignature([0x00, 0x00, 0x01, 0x00])) {
+      return "image/x-icon";
+    }
+
+    // AVIF: Check for 'ftyp' box with AVIF brand
+    if (
+      bytes.length >= 12 &&
+      checkSignature([0x66, 0x74, 0x79, 0x70], 4) && // 'ftyp'
+      (checkSignature([0x61, 0x76, 0x69, 0x66], 8) || // 'avif'
+        checkSignature([0x61, 0x76, 0x69, 0x73], 8))
+    ) {
+      // 'avis'
+      return "image/avif";
+    }
+
+    // SVG: Check for XML declaration or <svg tag
+    const textDecoder = new TextDecoder("utf-8");
+    const firstChars = textDecoder.decode(
+      bytes.slice(0, Math.min(100, bytes.length))
+    );
+    if (
+      firstChars.includes("<svg") ||
+      (firstChars.includes("<?xml") && firstChars.includes("svg"))
+    ) {
+      return "image/svg+xml";
+    }
+
+    // HEIC/HEIF: Check for 'ftyp' box with HEIC/HEIF brand
+    if (bytes.length >= 12 && checkSignature([0x66, 0x74, 0x79, 0x70], 4)) {
+      // 'ftyp'
+      const brand = textDecoder.decode(bytes.slice(8, 12));
+      if (
+        brand === "heic" ||
+        brand === "heix" ||
+        brand === "hevc" ||
+        brand === "hevx" ||
+        brand === "heim" ||
+        brand === "heis" ||
+        brand === "hevm" ||
+        brand === "hevs" ||
+        brand === "mif1"
+      ) {
+        return "image/heic";
+      }
+      if (brand === "heif" || brand === "heif") {
+        return "image/heif";
+      }
+    }
+
+    return null; // Unknown image format
+  } catch (error) {
+    console.error("Error detecting image MIME type:", error);
+    return null;
+  }
+}
+
 const BlogForm = ({ blog = null, onCancel, onSaved }) => {
   const dispatch = useDispatch();
   const { blogDetails, loading } = useSelector((state) => state.blogs);
@@ -39,6 +202,7 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
   const featuredImageInputRef = useRef(null);
+  const [uploadProgress, setUploadProgress] = useState({});
 
   const [formData, setFormData] = useState({
     title: "",
@@ -72,6 +236,66 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
     quote: { icon: Quote, label: "Quote" },
     image: { icon: Image, label: "Image" },
     closing: { icon: FileText, label: "Closing" },
+  };
+
+  // New function to get signed URL from API
+  const getSignedImageUploadUrl = async (file) => {
+    try {
+      // Detect MIME type from the file
+      const mimeType = await detectImageMimeTypeWithFallback(file, file.name);
+
+      if (!mimeType) {
+        throw new Error("Could not determine image MIME type");
+      }
+
+      // Get auth token from localStorage or your auth mechanism
+      const token = localStorage.getItem("token");
+
+      // Make API call to get signed URL
+      const response = await fetch(
+        "http://localhost:4000/api/v1/admin-blogs/images",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ mimeType }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to get upload URL: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error("Error getting signed URL:", error);
+      throw error;
+    }
+  };
+
+  // New function to upload to S3
+  const uploadImageToS3 = async (file, uploadUrl) => {
+    try {
+      const response = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to upload to S3: ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error uploading to S3:", error);
+      throw error;
+    }
   };
 
   const shallowCompareSubset = (subset, fullObj) => {
@@ -225,30 +449,95 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
     }
   };
 
-  const handleImageUpload = (index, file) => {
-    // In a real implementation, you would upload to a server
-    // For now, we'll create a local object URL
-    const imageUrl = URL.createObjectURL(file);
+  const handleImageUpload = async (index, file) => {
+    try {
+      // Update UI to show loading state
+      const uploadId = `content-${index}`;
+      setUploadProgress({
+        ...uploadProgress,
+        [uploadId]: { status: "loading", progress: 0 },
+      });
 
-    const newContent = {
-      ...formData.content[index].content,
-      url: imageUrl,
-      file: file, // Store the file for future reference
-    };
+      // Get signed URL
+      const imageData = await getSignedImageUploadUrl(file);
 
-    updateContentSection(index, newContent);
-  };
+      setUploadProgress({
+        ...uploadProgress,
+        [uploadId]: { status: "loading", progress: 50 },
+      });
 
-  const handleFeaturedImageUpload = (file) => {
-    const imageUrl = URL.createObjectURL(file);
+      // Upload to S3
+      await uploadImageToS3(file, imageData.uploadImageURL);
 
-    setFormData({
-      ...formData,
-      featuredImage: {
+      // Create URL for preview
+      const imageUrl = URL.createObjectURL(file);
+
+      // Update content with ID and URL
+      const newContent = {
+        ...formData.content[index].content,
         url: imageUrl,
         file: file,
-      },
-    });
+        imageId: imageData.id.id,
+      };
+
+      updateContentSection(index, newContent);
+
+      setUploadProgress({
+        ...uploadProgress,
+        [uploadId]: { status: "success", progress: 100 },
+      });
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+      setUploadProgress({
+        ...uploadProgress,
+        [uploadId]: { status: "error", error: error.message },
+      });
+    }
+  };
+
+  const handleFeaturedImageUpload = async (file) => {
+    try {
+      // Update UI to show loading state
+      setUploadProgress({
+        ...uploadProgress,
+        featured: { status: "loading", progress: 0 },
+      });
+
+      // Get signed URL
+      const imageData = await getSignedImageUploadUrl(file);
+
+      setUploadProgress({
+        ...uploadProgress,
+        featured: { status: "loading", progress: 50 },
+      });
+
+      // Upload to S3
+      await uploadImageToS3(file, imageData.uploadImageURL);
+
+      // Create URL for preview
+      const imageUrl = URL.createObjectURL(file);
+
+      // Update with ID and URL
+      setFormData({
+        ...formData,
+        featuredImage: {
+          url: imageUrl,
+          file: file,
+          imageId: imageData.id.id,
+        },
+      });
+
+      setUploadProgress({
+        ...uploadProgress,
+        featured: { status: "success", progress: 100 },
+      });
+    } catch (error) {
+      console.error("Failed to upload featured image:", error);
+      setUploadProgress({
+        ...uploadProgress,
+        featured: { status: "error", error: error.message },
+      });
+    }
   };
 
   const renderContentEditor = (section, index) => {
@@ -556,6 +845,7 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                         ...content,
                         url: "",
                         file: null,
+                        imageId: null,
                       });
                     }}
                     className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
@@ -577,7 +867,6 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                       className="font-medium"
                       style={{ color: colors.primary }}
                       onClick={() => {
-                        // Create a unique ref for this specific image section
                         if (fileInputRef.current) {
                           fileInputRef.current.click();
                         }
@@ -593,7 +882,6 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
                           handleImageUpload(index, e.target.files[0]);
-                          // Reset the input
                           e.target.value = "";
                         }
                       }}
@@ -606,6 +894,25 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                     Recommended size: 1200x800px, max 2MB
                   </p>
                 </>
+              )}
+
+              {/* Upload progress indicator */}
+              {uploadProgress[`content-${index}`]?.status === "loading" && (
+                <div className="text-center mt-2">
+                  <p style={{ color: colors.textMuted }}>
+                    Uploading image...{" "}
+                    {uploadProgress[`content-${index}`].progress}%
+                  </p>
+                </div>
+              )}
+
+              {uploadProgress[`content-${index}`]?.status === "error" && (
+                <div className="text-center mt-2">
+                  <p style={{ color: colors.error }}>
+                    {uploadProgress[`content-${index}`].error ||
+                      "Upload failed"}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -626,7 +933,8 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                       updateContentSection(index, {
                         ...content,
                         url: e.target.value,
-                        file: null, // Clear file reference if URL is manually changed
+                        file: null,
+                        imageId: null,
                       });
                     }}
                     placeholder="Image URL..."
@@ -691,6 +999,28 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                   }}
                 />
               </div>
+
+              {content.imageId && (
+                <div>
+                  <label
+                    className="block text-xs mb-1"
+                    style={{ color: colors.textMuted }}
+                  >
+                    Image ID
+                  </label>
+                  <input
+                    type="text"
+                    value={content.imageId || ""}
+                    readOnly
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none bg-gray-100"
+                    style={{
+                      backgroundColor: `${colors.inputBg}80`,
+                      border: `1px solid ${colors.borderColor}`,
+                      color: colors.textMuted,
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );
@@ -706,14 +1036,31 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
     setError(null);
 
     try {
-      // In a real implementation, you would upload all images here
-      // before sending the form data to the server
+      // Prepare the data with image IDs
+      const preparedData = {
+        ...formData,
+        featuredImageId: formData.featuredImage?.imageId,
+        // Map through content to extract imageIds from image sections
+        content: formData.content.map((section) => {
+          if (section.type === "image" && section.content.imageId) {
+            // Keep the imageId for the API
+            return {
+              ...section,
+              content: {
+                ...section.content,
+                imageId: section.content.imageId,
+              },
+            };
+          }
+          return section;
+        }),
+      };
 
       if (blog) {
-        dispatch(updateBlog({ id: blog.id, blogData: formData }));
+        dispatch(updateBlog({ id: blog.id, blogData: preparedData }));
         onSaved();
       } else {
-        dispatch(createBlog(formData));
+        dispatch(createBlog(preparedData));
         onSaved();
       }
     } catch (err) {
@@ -1038,7 +1385,6 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                             onChange={(e) => {
                               if (e.target.files && e.target.files[0]) {
                                 handleFeaturedImageUpload(e.target.files[0]);
-                                // Reset the input
                                 e.target.value = "";
                               }
                             }}
@@ -1052,6 +1398,35 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                     >
                       Recommended size: 1200x630px, max 2MB
                     </p>
+
+                    {/* Upload progress indicator */}
+                    {uploadProgress["featured"]?.status === "loading" && (
+                      <div className="text-center mt-2">
+                        <p style={{ color: colors.textMuted }}>
+                          Uploading image...{" "}
+                          {uploadProgress["featured"].progress}%
+                        </p>
+                      </div>
+                    )}
+
+                    {uploadProgress["featured"]?.status === "error" && (
+                      <div className="text-center mt-2">
+                        <p style={{ color: colors.error }}>
+                          {uploadProgress["featured"].error || "Upload failed"}
+                        </p>
+                      </div>
+                    )}
+
+                    {formData.featuredImage?.imageId && (
+                      <div className="text-center mt-2">
+                        <p
+                          className="text-xs"
+                          style={{ color: colors.textMuted }}
+                        >
+                          Image ID: {formData.featuredImage.imageId}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
