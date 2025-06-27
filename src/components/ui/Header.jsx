@@ -9,6 +9,7 @@ import {
   User,
   ChevronDown,
   MessageCircle,
+  Search,
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +20,8 @@ import { useDispatch, useSelector } from "react-redux";
 const Header = ({
   isSidebarOpen,
   setIsSidebarOpen,
+  headerTitle,
+  isMarketplace,
   activeSection,
   setActiveSection,
 }) => {
@@ -106,6 +109,24 @@ const Header = ({
       </div>
 
       <div className="flex items-center">
+        {isMarketplace &&
+          <div className="relative mr-2" style={{ width: "300px" }}>
+              <input
+                type="text"
+                placeholder="Search for content..."
+                className="w-full py-2 pl-10 pr-4 rounded-lg"
+                style={{
+                  backgroundColor: colors.inputBg,
+                  color: colors.text,
+                  border: `1px solid ${colors.borderColor}`,
+                }}
+              />
+              <Search
+                className="absolute left-3 top-2.5 w-5 h-5"
+                style={{ color: "rgba(224, 224, 224, 0.5)" }}
+              />
+          </div>
+          }
         {/* System alerts indicator */}
         <div className="relative" ref={notificationsRef}>
           <button
@@ -133,7 +154,6 @@ const Header = ({
               </span>
             )}
           </button>
-
           {/* Notifications dropdown */}
           {isNotificationsOpen && (
             <div

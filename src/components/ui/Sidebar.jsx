@@ -15,6 +15,7 @@ import {
   BookOpen as BookIcon,
   User,
   Package,
+  CircleDollarSign,
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import Logo1 from "../../assets/LOGO-01.png";
@@ -285,6 +286,26 @@ const Sidebar = ({
                 </button>
               </li>
               }
+              <li>
+                <button
+                  onClick={() => navigate("/market")}
+                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                  style={{
+                    backgroundColor:
+                    (pathname === "/market")
+                        ? colors.navActiveBg
+                        : "transparent",
+                    color:
+                    (pathname === "/market") ? colors.primary : colors.text,
+                  }}
+                >
+                  <CircleDollarSign
+                    className="w-5 h-5 mr-3"
+                    style={{ color: colors.primary }}
+                  />
+                  MarketPlace
+                </button>
+              </li>
               {user?.role?.rights?.includes("packages") &&
               <li>
                 <button
