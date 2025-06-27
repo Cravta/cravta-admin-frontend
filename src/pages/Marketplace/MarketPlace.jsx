@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bell,
   Search,
@@ -20,13 +20,19 @@ import {
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
 import { useNavigate } from "react-router-dom";
+import { fetchAllMarketProducts } from "../../store/admin/market/productSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const Marketplace = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [darkMode, setDarkMode] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
   const [filterOpen, setFilterOpen] = useState(false);
-
+  const {products} = useSelector((state)=> state.product)
+  useEffect(() => {
+    dispatch(fetchAllMarketProducts());
+  },[])
   // Colors for dark mode
   const colors = {
     primary: "#bb86fc",
@@ -45,80 +51,80 @@ const Marketplace = () => {
     inputBg: "#2d2d2d",
   };
 
-  const products = [
-    {
-      id: 1,
-      title: "Advanced Algebra Workbook",
-      author: "Dr. Smith",
-      price: 250,
-      type: "Workbook",
-      subject: "Mathematics",
-      class: "Grade 10",
-      featured: true,
-      rating: 4.8,
-      image: "algebra_cover.jpg",
-    },
-    {
-      id: 2,
-      title: "Chemistry Lab Experiments",
-      author: "Prof. Johnson",
-      price: 320,
-      type: "Lab Manual",
-      subject: "Chemistry",
-      class: "Grade 11",
-      featured: true,
-      rating: 4.5,
-      image: "chemistry_cover.jpg",
-    },
-    {
-      id: 3,
-      title: "World History: Modern Era",
-      author: "Dr. Davis",
-      price: 280,
-      type: "Textbook",
-      subject: "History",
-      class: "Grade 9",
-      featured: false,
-      rating: 4.2,
-      image: "history_cover.jpg",
-    },
-    {
-      id: 4,
-      title: "English Literature Analysis",
-      author: "Sarah Williams",
-      price: 190,
-      type: "Study Guide",
-      subject: "English",
-      class: "Grade 12",
-      featured: false,
-      rating: 4.7,
-      image: "english_cover.jpg",
-    },
-    {
-      id: 5,
-      title: "Physics Problem Solving",
-      author: "Dr. Miller",
-      price: 300,
-      type: "Practice Book",
-      subject: "Physics",
-      class: "Grade 11",
-      featured: false,
-      rating: 4.6,
-      image: "physics_cover.jpg",
-    },
-    {
-      id: 6,
-      title: "Biology Illustrated Guide",
-      author: "Jennifer Adams",
-      price: 350,
-      type: "Reference",
-      subject: "Biology",
-      class: "Grade 10",
-      featured: true,
-      rating: 4.9,
-      image: "biology_cover.jpg",
-    },
-  ];
+  // const products = [
+  //   {
+  //     id: 1,
+  //     title: "Advanced Algebra Workbook",
+  //     author: "Dr. Smith",
+  //     price: 250,
+  //     type: "Workbook",
+  //     subject: "Mathematics",
+  //     class: "Grade 10",
+  //     featured: true,
+  //     rating: 4.8,
+  //     image: "algebra_cover.jpg",
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Chemistry Lab Experiments",
+  //     author: "Prof. Johnson",
+  //     price: 320,
+  //     type: "Lab Manual",
+  //     subject: "Chemistry",
+  //     class: "Grade 11",
+  //     featured: true,
+  //     rating: 4.5,
+  //     image: "chemistry_cover.jpg",
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "World History: Modern Era",
+  //     author: "Dr. Davis",
+  //     price: 280,
+  //     type: "Textbook",
+  //     subject: "History",
+  //     class: "Grade 9",
+  //     featured: false,
+  //     rating: 4.2,
+  //     image: "history_cover.jpg",
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "English Literature Analysis",
+  //     author: "Sarah Williams",
+  //     price: 190,
+  //     type: "Study Guide",
+  //     subject: "English",
+  //     class: "Grade 12",
+  //     featured: false,
+  //     rating: 4.7,
+  //     image: "english_cover.jpg",
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "Physics Problem Solving",
+  //     author: "Dr. Miller",
+  //     price: 300,
+  //     type: "Practice Book",
+  //     subject: "Physics",
+  //     class: "Grade 11",
+  //     featured: false,
+  //     rating: 4.6,
+  //     image: "physics_cover.jpg",
+  //   },
+  //   {
+  //     id: 6,
+  //     title: "Biology Illustrated Guide",
+  //     author: "Jennifer Adams",
+  //     price: 350,
+  //     type: "Reference",
+  //     subject: "Biology",
+  //     class: "Grade 10",
+  //     featured: true,
+  //     rating: 4.9,
+  //     image: "biology_cover.jpg",
+  //   },
+  // ];
 
   return (
     <div
@@ -636,6 +642,22 @@ const Marketplace = () => {
                     </div>
                   </div>
                 ))}
+              {products.filter((product) => product.featured).length === 0 && (
+                <div className="p-4 text-start">
+                  <h4
+                    className="font-medium mb-2"
+                    style={{ color: colors.lightText }}
+                  >
+                    No Products Found
+                  </h4>
+                  {/* <p
+                    className="text-sm"
+                    style={{ color: "rgba(224, 224, 224, 0.7)" }}
+                  >
+                    We couldn't find any products matching your search criteria.
+                  </p> */}
+                </div>
+              )}
             </div>
           </div>
 
@@ -658,6 +680,7 @@ const Marketplace = () => {
                       backgroundColor: colors.cardBgAlt,
                       border: `1px solid ${colors.borderColor}`,
                     }}
+                    onClick={() => navigate(`/market/marketplace/product/${product.id}`)}
                   >
                     <div
                       className="h-40 bg-cover bg-center"
@@ -690,7 +713,7 @@ const Marketplace = () => {
                         className="text-sm mb-2"
                         style={{ color: "rgba(224, 224, 224, 0.7)" }}
                       >
-                        by {product.author}
+                        by {product.author || product.description}
                       </p>
 
                       <div className="flex items-center text-sm mb-3">
@@ -699,7 +722,7 @@ const Marketplace = () => {
                           style={{ color: colors.accent }}
                         />
                         <span style={{ color: colors.text }}>
-                          {product.rating}
+                          {product.rating??"-"}
                         </span>
                       </div>
 
@@ -720,7 +743,7 @@ const Marketplace = () => {
                             color: colors.primary,
                           }}
                         >
-                          {product.class}
+                          {product.class || product.grade}
                         </span>
                         <span
                           className="px-2 py-1 rounded-full text-xs"
@@ -729,7 +752,7 @@ const Marketplace = () => {
                             color: colors.primary,
                           }}
                         >
-                          {product.type}
+                          {product.content_type}
                         </span>
                       </div>
 
@@ -741,7 +764,7 @@ const Marketplace = () => {
                           border: `1px solid ${colors.primary}`,
                         }}
                       >
-                        Add to Cart
+                        Product Detail
                       </button>
                     </div>
                   </div>

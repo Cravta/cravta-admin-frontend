@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bell,
   Book,
@@ -19,11 +19,51 @@ import {
   Sparkles,
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
+import { useDispatch, useSelector } from "react-redux";
+import { createProduct, clearError, clearSuccess } from "../../store/admin/market/productSlice";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const ContentUpload = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(true);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [scheduleLater, setScheduleLater] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    subject: "",
+    grade: "",
+    content_type: "",
+    price: "",
+  });
+
+  // Get loading and error states from Redux
+  const { loading, error, success } = useSelector((state) => state.product);
+
+  // Clear errors and success messages on component mount
+  useEffect(() => {
+    dispatch(clearError());
+    dispatch(clearSuccess());
+  }, [dispatch]);
+
+  // Show success toast when product is created
+  useEffect(() => {
+    if (success==="Product created successfully!") {
+      toast.success(success);
+    }
+  }, [success]);
+
+  // Show error toast when there's an error
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   // Colors for dark mode
   const colors = {
@@ -43,78 +83,146 @@ const ContentUpload = () => {
     inputBg: "#2d2d2d",
   };
 
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   // Handle file upload
   const handleFileUpload = (e) => {
-    if (e.target.files[0]) {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (50MB limit)
+      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+      if (file.size > maxSize) {
+        toast.error('File size must be less than 50MB');
+        return;
+      }
+
+      // Check file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+        'application/zip',
+        'application/x-zip-compressed'
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a PDF, DOCX, PPTX, or ZIP file');
+        return;
+      }
+
       setUploadedFile({
-        name: e.target.files[0].name,
-        size: (e.target.files[0].size / 1024 / 1024).toFixed(2) + " MB",
-        type: e.target.files[0].type,
+        name: file.name,
+        size: (file.size / 1024 / 1024).toFixed(2) + " MB",
+        type: file.type,
+        file: file, // Store the actual file
       });
     }
   };
 
+  // Handle drag and drop
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      // Create a synthetic event to reuse the existing file upload logic
+      const syntheticEvent = {
+        target: {
+          files: [file]
+        }
+      };
+      handleFileUpload(syntheticEvent);
+    }
+  };
+
+  // Validate form data
+  const validateForm = () => {
+    const requiredFields = ['title', 'description', 'subject', 'grade', 'content_type', 'price'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      return false;
+    }
+
+    if (!uploadedFile) {
+      toast.error('Please upload a content file');
+      return false;
+    }
+
+    if (isNaN(formData.price) || parseFloat(formData.price) <= 0) {
+      toast.error('Please enter a valid price');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (isDraft = false) => {
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Create FormData for file upload
+      const submitFormData = new FormData();
+      
+      // Add the file
+      if (uploadedFile && uploadedFile.file) {
+        submitFormData.append('file', uploadedFile.file);
+      }
+      
+      // Add other form data
+      submitFormData.append('title', formData.title);
+      submitFormData.append('price', parseFloat(formData.price));
+      submitFormData.append('description', formData.description);
+      submitFormData.append('grade', formData.grade);
+      submitFormData.append('subject', formData.subject);
+      submitFormData.append('content_type', formData.content_type);
+
+      const result = await dispatch(createProduct(formData));
+      
+      if (createProduct.fulfilled.match(result)) {
+        // Navigate to marketplace after successful creation
+        navigate('/market/marketplace');
+      }
+    } catch (error) {
+      console.error('Error creating product:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle publish now button
+  const handlePublishNow = () => {
+    handleSubmit(false);
+  };
+
+  // Handle save as draft button
+  const handleSaveDraft = () => {
+    handleSubmit(true);
+  };
+
   return (
     <div
-      className="flex h-screen"
+      className="flex"
       style={{ backgroundColor: colors.background }}
     >
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navigation - similar to previous components */}
-        {/* <header
-          className="flex items-center justify-between p-4 shadow-md"
-          style={{ backgroundColor: colors.cardBgAlt }}
-        > */}
-          {/* <div className="flex items-center">
-            <h2
-              className="text-xl font-medium"
-              style={{ color: colors.primary }}
-            >
-              Upload New Content
-            </h2>
-          </div> */}
-
-          {/* <div className="flex items-center space-x-4">
-            <button
-              className="p-2 rounded-full hover:bg-opacity-20"
-              style={{ backgroundColor: "rgba(187, 134, 252, 0.05)" }}
-            >
-              <Settings className="w-5 h-5" style={{ color: colors.primary }} />
-            </button>
-
-            <button
-              className="p-2 rounded-full hover:bg-opacity-20"
-              style={{ backgroundColor: "rgba(187, 134, 252, 0.05)" }}
-              onClick={() => setDarkMode(!darkMode)}
-            >
-              {darkMode ? (
-                <Sun className="w-5 h-5" style={{ color: colors.accent }} />
-              ) : (
-                <Moon className="w-5 h-5" style={{ color: colors.primary }} />
-              )}
-            </button>
-
-            <button
-              className="p-2 rounded-full hover:bg-opacity-20 relative"
-              style={{ backgroundColor: "rgba(187, 134, 252, 0.05)" }}
-            >
-              <Bell className="w-5 h-5" style={{ color: colors.primary }} />
-              <span
-                className="absolute top-0 right-0 w-2 h-2 rounded-full"
-                style={{ backgroundColor: colors.accentSecondary }}
-              ></span>
-            </button>
-
-            <div
-              className="w-8 h-8 rounded overflow-hidden"
-              style={{
-                background: "linear-gradient(135deg, #bb86fc 0%, #3700b3 100%)",
-              }}
-            ></div>
-          </div> */}
-        {/* </header> */}
 
         {/* Upload Content Form */}
         <div
@@ -144,10 +252,13 @@ const ContentUpload = () => {
                     className="block mb-2 font-medium"
                     style={{ color: colors.text }}
                   >
-                    Title
+                    Title *
                   </label>
                   <input
                     type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
                     placeholder="Enter content title"
                     className="w-full p-3 rounded-lg"
                     style={{
@@ -164,9 +275,12 @@ const ContentUpload = () => {
                     className="block mb-2 font-medium"
                     style={{ color: colors.text }}
                   >
-                    Description
+                    Description *
                   </label>
                   <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
                     placeholder="Enter detailed description of your content"
                     rows="4"
                     className="w-full p-3 rounded-lg"
@@ -185,9 +299,12 @@ const ContentUpload = () => {
                       className="block mb-2 font-medium"
                       style={{ color: colors.text }}
                     >
-                      Subject
+                      Subject *
                     </label>
                     <select
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleInputChange}
                       className="w-full p-3 rounded-lg appearance-none"
                       style={{
                         backgroundColor: colors.inputBg,
@@ -195,13 +312,13 @@ const ContentUpload = () => {
                         border: `1px solid ${colors.borderColor}`,
                       }}
                     >
-                      <option>Select Subject</option>
-                      <option>Mathematics</option>
-                      <option>Science</option>
-                      <option>English</option>
-                      <option>History</option>
-                      <option>Geography</option>
-                      <option>Computer Science</option>
+                      <option value="">Select Subject</option>
+                      <option value="Mathematics">Mathematics</option>
+                      <option value="Science">Science</option>
+                      <option value="English">English</option>
+                      <option value="History">History</option>
+                      <option value="Geography">Geography</option>
+                      <option value="Computer Science">Computer Science</option>
                     </select>
                   </div>
                   <div>
@@ -209,9 +326,12 @@ const ContentUpload = () => {
                       className="block mb-2 font-medium"
                       style={{ color: colors.text }}
                     >
-                      Class/Grade Level
+                      Class/Grade Level *
                     </label>
                     <select
+                      name="grade"
+                      value={formData.grade}
+                      onChange={handleInputChange}
                       className="w-full p-3 rounded-lg appearance-none"
                       style={{
                         backgroundColor: colors.inputBg,
@@ -219,13 +339,13 @@ const ContentUpload = () => {
                         border: `1px solid ${colors.borderColor}`,
                       }}
                     >
-                      <option>Select Grade Level</option>
-                      <option>Grade 7</option>
-                      <option>Grade 8</option>
-                      <option>Grade 9</option>
-                      <option>Grade 10</option>
-                      <option>Grade 11</option>
-                      <option>Grade 12</option>
+                      <option value="">Select Grade Level</option>
+                      <option value="7">Grade 7</option>
+                      <option value="8">Grade 8</option>
+                      <option value="9">Grade 9</option>
+                      <option value="10">Grade 10</option>
+                      <option value="11">Grade 11</option>
+                      <option value="12">Grade 12</option>
                     </select>
                   </div>
                 </div>
@@ -237,9 +357,12 @@ const ContentUpload = () => {
                       className="block mb-2 font-medium"
                       style={{ color: colors.text }}
                     >
-                      Content Type
+                      Content Type *
                     </label>
                     <select
+                      name="content_type"
+                      value={formData.content_type}
+                      onChange={handleInputChange}
                       className="w-full p-3 rounded-lg appearance-none"
                       style={{
                         backgroundColor: colors.inputBg,
@@ -247,13 +370,13 @@ const ContentUpload = () => {
                         border: `1px solid ${colors.borderColor}`,
                       }}
                     >
-                      <option>Select Content Type</option>
-                      <option>Textbook</option>
-                      <option>Workbook</option>
-                      <option>Study Guide</option>
-                      <option>Practice Test</option>
-                      <option>Lecture Notes</option>
-                      <option>Reference Material</option>
+                      <option value="">Select Content Type</option>
+                      <option value="Textbook">Textbook</option>
+                      <option value="Workbook">Workbook</option>
+                      <option value="Study Guide">Study Guide</option>
+                      <option value="Practice Test">Practice Test</option>
+                      <option value="Lecture Notes">Lecture Notes</option>
+                      <option value="Reference Material">Reference Material</option>
                     </select>
                   </div>
                   <div>
@@ -261,11 +384,14 @@ const ContentUpload = () => {
                       className="block mb-2 font-medium"
                       style={{ color: colors.text }}
                     >
-                      Price (Sparks)
+                      Price (Sparks) *
                     </label>
                     <div className="relative">
                       <input
                         type="number"
+                        name="price"
+                        value={formData.price}
+                        onChange={handleInputChange}
                         placeholder="Enter price in Sparks"
                         className="w-full p-3 pl-10 rounded-lg"
                         style={{
@@ -434,26 +560,37 @@ const ContentUpload = () => {
                 {/* Submit Buttons */}
                 <div className="flex justify-end space-x-3">
                   <button
-                    className="px-6 py-2 rounded-lg"
+                    onClick={handleSaveDraft}
+                    disabled={isSubmitting || loading}
+                    className="px-6 py-2 rounded-lg disabled:opacity-50"
                     style={{
                       backgroundColor: "transparent",
                       color: colors.text,
                       border: `1px solid ${colors.borderColor}`,
                     }}
                   >
-                    Save as Draft
+                    {isSubmitting ? "Saving..." : "Save as Draft"}
                   </button>
 
                   <button
-                    className="px-6 py-2 rounded-lg font-medium"
+                    onClick={handlePublishNow}
+                    disabled={isSubmitting || loading}
+                    className="px-6 py-2 rounded-lg font-medium disabled:opacity-50"
                     style={{
                       backgroundColor: colors.primary,
                       color: "#000",
                     }}
                   >
-                    {scheduleLater ? "Schedule Upload" : "Publish Now"}
+                    {isSubmitting ? "Publishing..." : (scheduleLater ? "Schedule Upload" : "Publish Now")}
                   </button>
                 </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: "rgba(207, 102, 121, 0.1)" }}>
+                    <p style={{ color: colors.accentSecondary }}>{error}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -471,7 +608,7 @@ const ContentUpload = () => {
                   className="text-lg font-medium mb-4"
                   style={{ color: colors.primary }}
                 >
-                  Upload Content File
+                  Upload Content File *
                 </h3>
 
                 <div
@@ -484,6 +621,8 @@ const ContentUpload = () => {
                       ? "rgba(187, 134, 252, 0.05)"
                       : "transparent",
                   }}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
                 >
                   {!uploadedFile ? (
                     <>

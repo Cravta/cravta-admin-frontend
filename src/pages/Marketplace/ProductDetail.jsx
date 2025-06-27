@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bell,
   ChevronLeft,
@@ -18,11 +18,23 @@ import {
   Minus,
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
+import {useNavigate, useParams} from "react-router-dom";
+import { use } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {fetchAllMarketProducts, fetchProductById} from "../../store/admin/market/productSlice";
+import {toast} from "react-toastify";
 
 const ProductDetail = () => {
+  const dispatch = useDispatch();
   const [darkMode, setDarkMode] = useState(true);
   const [quantity, setQuantity] = useState(1);
-
+  const { id } = useParams();
+  const navigate=useNavigate();
+  useEffect(() => {
+    dispatch(fetchProductById(id));
+    dispatch(fetchAllMarketProducts());
+  }, [id]);
+  const {product, products:relatedProducts} = useSelector((state)=> state.product)
   // Colors for dark mode
   const colors = {
     primary: "#bb86fc",
@@ -41,50 +53,52 @@ const ProductDetail = () => {
     inputBg: "#2d2d2d",
   };
 
-  const product = {
-    id: 1,
-    title: "Advanced Algebra Workbook",
-    author: "Dr. Smith",
-    price: 250,
-    type: "Workbook",
-    subject: "Mathematics",
-    class: "Grade 10",
-    featured: true,
-    rating: 4.8,
-    ratings: 124,
-    description:
-      "A comprehensive workbook for advanced algebra concepts. Includes practice problems, step-by-step solutions, and chapter tests. Perfect for Grade 10 students looking to master algebraic concepts.",
-    pages: 180,
-    publishDate: "June 15, 2023",
-    format: "PDF",
-    fileSize: "12.4 MB",
-    image: "algebra_cover.jpg",
-    preview: ["preview1.jpg", "preview2.jpg", "preview3.jpg"],
-  };
+  // const product = {
+  //   id: 1,
+  //   title: "Advanced Algebra Workbook",
+  //   author: "Dr. Smith",
+  //   price: 250,
+  //   type: "Workbook",
+  //   subject: "Mathematics",
+  //   class: "Grade 10",
+  //   featured: true,
+  //   rating: 4.8,
+  //   ratings: 124,
+  //   description:
+  //     "A comprehensive workbook for advanced algebra concepts. Includes practice problems, step-by-step solutions, and chapter tests. Perfect for Grade 10 students looking to master algebraic concepts.",
+  //   pages: 180,
+  //   publishDate: "June 15, 2023",
+  //   format: "PDF",
+  //   fileSize: "12.4 MB",
+  //   image: "algebra_cover.jpg",
+  //   preview: ["preview1.jpg", "preview2.jpg", "preview3.jpg"],
+  // };
 
-  const relatedProducts = [
-    {
-      id: 7,
-      title: "Geometry Fundamentals",
-      author: "Dr. Smith",
-      price: 220,
-      image: "geometry_cover.jpg",
-    },
-    {
-      id: 8,
-      title: "Trigonometry Made Easy",
-      author: "Prof. Johnson",
-      price: 280,
-      image: "trigonometry_cover.jpg",
-    },
-    {
-      id: 9,
-      title: "Pre-Calculus Guide",
-      author: "Dr. Davis",
-      price: 300,
-      image: "precalc_cover.jpg",
-    },
-  ];
+  // const relatedProducts = [
+  //   {
+  //     id: 7,
+  //     title: "Geometry Fundamentals",
+  //     author: "Dr. Smith",
+  //     price: 220,
+  //     image: "geometry_cover.jpg",
+  //   },
+  //   {
+  //     id: 8,
+  //     title: "Trigonometry Made Easy",
+  //     author: "Prof. Johnson",
+  //     price: 280,
+  //     image: "trigonometry_cover.jpg",
+  //   },
+  //   {
+  //     id: 9,
+  //     title: "Pre-Calculus Guide",
+  //     author: "Dr. Davis",
+  //     price: 300,
+  //     image: "precalc_cover.jpg",
+  //   },
+  // ];
+
+
 
   return (
     <div
@@ -184,7 +198,7 @@ const ProductDetail = () => {
                 <div
                   className="h-72 bg-cover bg-center"
                   style={{
-                    backgroundImage: `url(${product.image})`,
+                    backgroundImage: `url(${product?.image})`,
                     backgroundColor: colors.cardBg,
                   }}
                 />
@@ -192,7 +206,7 @@ const ProductDetail = () => {
 
               {/* Preview thumbnails */}
               <div className="grid grid-cols-3 gap-2">
-                {product.preview.map((img, index) => (
+                {product?.preview?.map((img, index) => (
                   <div
                     key={index}
                     className="rounded-lg overflow-hidden shadow-md"
@@ -226,14 +240,14 @@ const ProductDetail = () => {
                   className="text-2xl font-medium mb-2"
                   style={{ color: colors.lightText }}
                 >
-                  {product.title}
+                  {product?.title}
                 </h1>
 
                 <p
                   className="text-sm mb-3"
                   style={{ color: "rgba(224, 224, 224, 0.7)" }}
                 >
-                  by {product.author}
+                  by {product?.author || product?.description}
                 </p>
 
                 <div className="flex items-center mb-4">
@@ -242,10 +256,10 @@ const ProductDetail = () => {
                       className="w-5 h-5 mr-1"
                       style={{ color: colors.accent }}
                     />
-                    <span style={{ color: colors.text }}>{product.rating}</span>
+                    <span style={{ color: colors.text }}>{product?.rating??'-'}</span>
                   </div>
                   <span style={{ color: "rgba(224, 224, 224, 0.5)" }}>
-                    ({product.ratings} ratings)
+                    ({product?.ratings??0} ratings)
                   </span>
                 </div>
 
@@ -257,7 +271,7 @@ const ProductDetail = () => {
                       color: colors.primary,
                     }}
                   >
-                    {product.subject}
+                    {product?.subject}
                   </span>
                   <span
                     className="px-3 py-1 rounded-full text-sm"
@@ -266,7 +280,7 @@ const ProductDetail = () => {
                       color: colors.primary,
                     }}
                   >
-                    {product.class}
+                    {product?.class || product?.grade}
                   </span>
                   <span
                     className="px-3 py-1 rounded-full text-sm"
@@ -275,12 +289,12 @@ const ProductDetail = () => {
                       color: colors.primary,
                     }}
                   >
-                    {product.type}
+                    {product?.type||product?.content_type}
                   </span>
                 </div>
 
                 <p className="mb-6" style={{ color: colors.text }}>
-                  {product.description}
+                  {product?.description}
                 </p>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
@@ -291,7 +305,7 @@ const ProductDetail = () => {
                     >
                       Pages
                     </p>
-                    <p style={{ color: colors.text }}>{product.pages}</p>
+                    <p style={{ color: colors.text }}>{product?.pages??"-"}</p>
                   </div>
                   <div>
                     <p
@@ -300,7 +314,7 @@ const ProductDetail = () => {
                     >
                       Published
                     </p>
-                    <p style={{ color: colors.text }}>{product.publishDate}</p>
+                    <p style={{ color: colors.text }}>{product?.publishDate || product?.createdAt.substr(0, 10)}</p>
                   </div>
                   <div>
                     <p
@@ -309,7 +323,7 @@ const ProductDetail = () => {
                     >
                       Format
                     </p>
-                    <p style={{ color: colors.text }}>{product.format}</p>
+                    <p style={{ color: colors.text }}>{product?.format??"-"}</p>
                   </div>
                   <div>
                     <p
@@ -318,7 +332,7 @@ const ProductDetail = () => {
                     >
                       File Size
                     </p>
-                    <p style={{ color: colors.text }}>{product.fileSize}</p>
+                    <p style={{ color: colors.text }}>{product?.fileSize??"-"}</p>
                   </div>
                 </div>
 
@@ -367,7 +381,7 @@ const ProductDetail = () => {
                       className="text-2xl font-bold"
                       style={{ color: colors.primary }}
                     >
-                      {product.price}
+                      {product?.price}
                     </span>
                   </div>
                   <span style={{ color: "rgba(224, 224, 224, 0.7)" }}>
@@ -375,7 +389,7 @@ const ProductDetail = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between mb-5">
+                {/* <div className="flex items-center justify-between mb-5">
                   <span style={{ color: colors.text }}>Quantity:</span>
                   <div className="flex items-center">
                     <button
@@ -416,9 +430,9 @@ const ProductDetail = () => {
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
+                </div> */}
 
-                <div
+                {/* <div
                   className="p-3 rounded-lg mb-5 flex items-center"
                   style={{
                     backgroundColor: colors.navActiveBg,
@@ -436,12 +450,12 @@ const ProductDetail = () => {
                       className="font-bold"
                       style={{ color: colors.primary }}
                     >
-                      {product.price * quantity}
+                      {product?.price * quantity}
                     </span>
                   </div>
-                </div>
+                </div> */}
 
-                <button
+                {/* <button
                   className="w-full py-3 rounded-lg font-medium mb-3"
                   style={{
                     backgroundColor: colors.primary,
@@ -449,17 +463,18 @@ const ProductDetail = () => {
                   }}
                 >
                   Add to Cart
-                </button>
+                </button> */}
 
-                <button
+                {/* <button
                   className="w-full py-3 rounded-lg font-medium"
                   style={{
                     backgroundColor: colors.accent,
                     color: "#000",
                   }}
+                  onClick={()=> navigate('/market/cart')}
                 >
                   Buy Now
-                </button>
+                </button> */}
               </div>
 
               {/* Related Products */}
@@ -478,7 +493,7 @@ const ProductDetail = () => {
                 </h3>
 
                 <div className="space-y-4">
-                  {relatedProducts.map((item) => (
+                  {relatedProducts?.map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center p-2 rounded-lg hover:bg-opacity-50 cursor-pointer"
@@ -505,7 +520,7 @@ const ProductDetail = () => {
                           className="text-xs"
                           style={{ color: "rgba(224, 224, 224, 0.7)" }}
                         >
-                          by {item.author}
+                           {item.author || item.description}
                         </p>
                       </div>
 
