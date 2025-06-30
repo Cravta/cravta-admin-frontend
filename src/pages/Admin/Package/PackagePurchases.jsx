@@ -17,9 +17,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
-import { fetchRoles,deleteRole } from "../../../store/admin/roleSlice";
 import { toast } from "react-toastify";
-import CreateRoleModal from "../../../components/modals/RoleModal";
 import { fetchPackageTransactions } from "../../../store/admin/packageSlice";
 
 // Helper function to format date
@@ -36,32 +34,28 @@ const PackagePurchases = () => {
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [roleInfo, setRoleInfo] = useState(null);
   const dispatch = useDispatch();
   useEffect(() => {
-          dispatch(fetchRoles({}));
           dispatch(fetchPackageTransactions({}));
       }, [dispatch]);
-  const { roleList, loading } = useSelector((state) => state.role);
-  const { transactionList, transactionLoading } = useSelector((state) => state.role);
+  const { transactionList, transactionLoading } = useSelector((state) => state.package);
   console.log(transactionList);
   // Items per page
   const itemsPerPage = 10;
 
   // Get unique fields for filter
-  const uniqueFields = roleList?.find(val=>val.name=="Super Admin")?.rights;
+  const uniqueFields = Array.from(new Set(transactionList?.map((val) => val?.package?.name))).filter(Boolean);
   // Apply filters
   const getFilteredData = () => {
-    let data = roleList || [];
+    let data = transactionList || [];
 
     // Apply search
     if (searchTerm) {
       data = data.filter(
         (rl) =>
-          rl?.name.toLowerCase().includes(searchTerm.toLowerCase()) 
-        //     ||
-        //   rl?.rights.toLowerCase().includes(searchTerm.toLowerCase())
+          rl?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) 
+            ||
+          rl?.package?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -72,14 +66,14 @@ const PackagePurchases = () => {
 
     // Apply field filter
     if (fieldFilter !== "all") {
-      data = data.filter((cls) => cls?.rights?.includes(fieldFilter));
+      data = data.filter((cls) => cls?.package?.name === fieldFilter);
     }
 
     return data;
   };
 
   const filteredData = getFilteredData();
-
+  console.log(filteredData);
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -96,24 +90,8 @@ const PackagePurchases = () => {
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchRoles({}));
+    dispatch(fetchPackageTransactions({}));
   };
-  const handleDeleteRole = (classId) => {
-    if (window.confirm("Are you sure you want to delete this role?")) {
-      // setIsLoading(true);
-
-      dispatch(deleteRole(classId))
-        .unwrap()
-        .then(() => {
-          toast.success("role deleted successfully");
-        })
-        .catch((error) => {
-          toast.error(
-            `Failed to delete Class: ${error || "Unknown error"}`
-          );
-        });
-    }
-  }
   return (
     <div className="p-6 overflow-auto">
       <div className="mb-6">
@@ -152,91 +130,6 @@ const PackagePurchases = () => {
 
         {/* Right side: Actions */}
         <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
-          {/* Status filter */}
-          {/* <div className="relative">
-            <button
-              className="flex items-center px-3 py-2 rounded-lg"
-              style={{
-                backgroundColor:
-                  statusFilter !== "all"
-                    ? `${colors.primary}20`
-                    : colors.inputBg,
-                color: statusFilter !== "all" ? colors.primary : colors.text,
-                border: `1px solid ${colors.borderColor}`,
-              }}
-              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              <span>
-                {statusFilter === "all"
-                  ? "All Status"
-                  : statusFilter === "active"
-                  ? "Active"
-                  : "Archived"}
-              </span>
-              <ChevronDown className="w-4 h-4 ml-2" />
-            </button>
-            {showStatusDropdown && (
-              <div
-                className="absolute right-0 mt-2 w-40 rounded-lg shadow-lg z-10 overflow-hidden"
-                style={{
-                  backgroundColor: colors.cardBg,
-                  border: `1px solid ${colors.borderColor}`,
-                }}
-              >
-                <div className="py-1">
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm"
-                    style={{
-                      backgroundColor:
-                        statusFilter === "all"
-                          ? `${colors.primary}20`
-                          : "transparent",
-                      color: colors.text,
-                    }}
-                    onClick={() => {
-                      setStatusFilter("all");
-                      setShowStatusDropdown(false);
-                    }}
-                  >
-                    All Status
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm"
-                    style={{
-                      backgroundColor:
-                        statusFilter === "active"
-                          ? `${colors.primary}20`
-                          : "transparent",
-                      color: colors.text,
-                    }}
-                    onClick={() => {
-                      setStatusFilter("active");
-                      setShowStatusDropdown(false);
-                    }}
-                  >
-                    Active
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm"
-                    style={{
-                      backgroundColor:
-                        statusFilter === "archived"
-                          ? `${colors.primary}20`
-                          : "transparent",
-                      color: colors.text,
-                    }}
-                    onClick={() => {
-                      setStatusFilter("archived");
-                      setShowStatusDropdown(false);
-                    }}
-                  >
-                    Archived
-                  </button>
-                </div>
-              </div>
-            )}
-          </div> */}
 
           {/* Field filter dropdown */}
           <div className="relative">
@@ -252,7 +145,7 @@ const PackagePurchases = () => {
               }}
               onClick={() => setShowFieldDropdown(!showFieldDropdown)}
             >
-              <span>{fieldFilter === "all" ? "All Fields" : fieldFilter}</span>
+              <span>{fieldFilter === "all" ? "All Packages" : fieldFilter}</span>
               <ChevronDown className="w-4 h-4 ml-2" />
             </button>
 
@@ -279,7 +172,7 @@ const PackagePurchases = () => {
                       setShowFieldDropdown(false);
                     }}
                   >
-                    All Fields
+                    All Packages
                   </button>
 
                   {uniqueFields.map((field) => (
@@ -305,18 +198,6 @@ const PackagePurchases = () => {
               </div>
             )}
           </div>
-
-            <button
-              className="flex items-center px-3 py-2 rounded-lg text-sm"
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.lightText,
-              }}
-              onClick={() => setShowRoleModal(true)}
-            >
-              {/* <UserPlus className="w-4 h-4 mr-2" /> */}
-              Add New Role
-            </button>
           {/* Refresh button */}
           <button
             className="p-2 rounded-lg flex items-center justify-center"
@@ -325,11 +206,11 @@ const PackagePurchases = () => {
               border: `1px solid ${colors.borderColor}`,
               color: colors.text,
             }}
-            disabled={loading}
+            disabled={transactionLoading}
             onClick={handleRefresh}
           >
             <RefreshCw
-              className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+              className={`w-4 h-4 ${transactionLoading ? "animate-spin" : ""}`}
             />
           </button>
 
@@ -363,30 +244,48 @@ const PackagePurchases = () => {
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Role Name
+                  Name / Email
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Rights
+                  User Type
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Creation Date
+                  Package Name
                 </th>
                 <th
-                  className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Actions
+                  Package Type
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Purchased At
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Sparks
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Amount (SAR)
                 </th>
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {transactionLoading ? (
                 <tr>
                   <td
                     colSpan="7"
@@ -407,9 +306,9 @@ const PackagePurchases = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedData?.map((cls, index) => (
+                paginatedData?.map((trnsct, index) => (
                   <tr
-                    key={cls.id}
+                    key={trnsct.id}
                     style={{
                       borderTop:
                         index !== 0
@@ -422,18 +321,26 @@ const PackagePurchases = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div
-                          className="w-8 h-8 px-2 rounded-lg flex items-center justify-center text-white text-sm font-bold mr-3"
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3"
                           style={{
-                            background: cls?.theme?.colour || getSubjectGradient(cls?.course_field),
+                            background:`linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
                           }}
                         >
-                          {cls.icon? cls.icon :getSubjectIcon(cls.course_field)}
+                          {trnsct?.user?.name?.charAt(0).toUpperCase()}
                         </div>
-                        <div
-                          className="font-medium"
-                          style={{ color: colors.text }}
-                        >
-                          {cls.name || cls.course_name}
+                        <div>
+                          <div
+                            className="font-medium"
+                            style={{ color: colors.text }}
+                          >
+                            {trnsct?.user?.name || "-"}
+                          </div>
+                          <div
+                            className="text-sm"
+                            style={{ color: colors.textMuted }}
+                          >
+                            {trnsct?.user?.email_address}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -441,9 +348,19 @@ const PackagePurchases = () => {
                       className="px-6 py-4 whitespace-nowrap text-sm"
                       style={{ color: colors.text }}
                     >
-                      {cls.rights.map((right, index) => (
-                        <div key={index}>{right},</div>
-                      ))}
+                      {trnsct?.user?.user_type}
+                    </td>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm"
+                      style={{ color: colors.text }}
+                    >
+                      {trnsct?.package?.name}
+                    </td>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm"
+                      style={{ color: colors.text }}
+                    >
+                      {trnsct?.package?.package_type}
                     </td>
                     <td
                       className="px-6 py-4 whitespace-nowrap text-sm"
@@ -454,54 +371,14 @@ const PackagePurchases = () => {
                           className="w-3 h-3 mr-1"
                           style={{ color: colors.textMuted }}
                         />
-                        {formatDate(cls.creationDate??cls.createdAt)}
+                        {formatDate(trnsct?.created_at)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          className="p-1 rounded"
-                          style={{ color: colors.primary }}
-                          title="View Role"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {/* <button
-                          className="p-1 rounded"
-                          style={{
-                            color:
-                              cls.status === "active"
-                                ? colors.textMuted
-                                : colors.success,
-                          }}
-                          title={
-                            cls.status === "active"
-                              ? "Archive Role"
-                              : "Restore Role"
-                          }
-                        >
-                          <Archive className="w-4 h-4" />
-                        </button> */}
-                        <button
-                          className="p-1 rounded"
-                          style={{ color: colors.accent }}
-                          title="Edit Role"
-                          onClick={() => {
-                            setRoleInfo(cls);
-                            setShowRoleModal(true);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="p-1 rounded"
-                          style={{ color: colors.error }}
-                          title="Delete Role"
-                          onClick={() => handleDeleteRole(cls.id)}
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
+                      {trnsct?.spark_amount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
+                      {trnsct?.amount}
                     </td>
                   </tr>
                 ))
@@ -519,7 +396,7 @@ const PackagePurchases = () => {
             <div className="text-sm" style={{ color: colors.textMuted }}>
               Showing {startIndex + 1} to{" "}
               {Math.min(startIndex + itemsPerPage, filteredData.length)} of{" "}
-              {filteredData.length} roles
+              {filteredData.length} purchases
             </div>
             <div className="flex space-x-1">
               <button
@@ -596,11 +473,6 @@ const PackagePurchases = () => {
           </div>
         )}
       </div>
-      <CreateRoleModal 
-      showModal={showRoleModal} 
-      setShowModal={setShowRoleModal} 
-      roleInfo={roleInfo}
-      setRoleInfo={setRoleInfo}/>
     </div>
   );
 };
