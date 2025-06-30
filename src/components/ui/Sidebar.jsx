@@ -328,6 +328,28 @@ const Sidebar = ({
                 </button>
               </li>
               }
+              {user?.role?.rights?.includes("packages") &&
+              <li>
+                <button
+                  onClick={() => navigate("/admin/packages-purchases")}
+                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                  style={{
+                    backgroundColor:
+                    (pathname === "/admin/packages-purchases")
+                        ? colors.navActiveBg
+                        : "transparent",
+                    color:
+                    (pathname === "/admin/packages-purchases") ? colors.primary : colors.text,
+                  }}
+                >
+                  <Package
+                    className="w-5 h-5 mr-3"
+                    style={{ color: colors.primary }}
+                  />
+                  Package Purchases
+                </button>
+              </li>
+              }
               {user?.role?.rights?.includes("help") &&
               <li>
                 <button

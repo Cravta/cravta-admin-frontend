@@ -14,6 +14,7 @@ import RoleManagement from "../pages/Admin/Roles/RoleManagement";
 import TeamManagement from "../pages/Admin/Teams/TeamManagement";
 import HelpCenter from "../pages/Admin/Help/HelpCenterManagement"
 import PackageManagement from "../pages/Admin/Package/PackageManagement";
+import PackagePurchases from "../pages/Admin/Package/PackagePurchases"
 
 export default function AdminRoutes() {
   return (
@@ -28,6 +29,7 @@ export default function AdminRoutes() {
         <Route path="content"  element={<ContentMonitoring />} />
         <Route path="blogs"    element={<BlogManagement />} />
         <Route path="packages" element={<PackageManagement />} />
+        <Route path="packages-purchases" element={<PackagePurchases />} />
         <Route path="help"     element={<HelpCenter />} />
         <Route path="reports"  element={<ReportingAnalytics />} />
         <Route path="settings" element={<PlatformSettings />} />
