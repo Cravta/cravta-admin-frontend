@@ -253,7 +253,7 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
 
       // Make API call to get signed URL
       const response = await fetch(
-        "http://localhost:4000/api/v1/admin-blogs/images",
+        "https://cravta.com/api/v1/admin-blogs/images",
         {
           method: "POST",
           headers: {
