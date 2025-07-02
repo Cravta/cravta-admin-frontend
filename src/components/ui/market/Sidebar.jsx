@@ -249,7 +249,7 @@ const Sidebar = ({
                                     Sales Analytics
                                 </button>
                             </li>
-                            <li>
+                            {/* <li>
                                 <button
                                     onClick={() => navigate("/market/currency")}
                                     className="flex items-center px-3 py-2.5 rounded w-full text-left"
@@ -268,7 +268,7 @@ const Sidebar = ({
                                     />
                                     Exchange Currency
                                 </button>
-                            </li>
+                            </li> */}
                         </ul>
                     </nav>
                 </div>

@@ -21,13 +21,14 @@ import Logo1 from "../../assets/LOGO-01.png";
 import {useNavigate, useParams} from "react-router-dom";
 import { use } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {fetchAllMarketProducts, fetchProductById} from "../../store/admin/market/productSlice";
+import {fetchAllMarketProducts, fetchProductById, downloadProductById} from "../../store/admin/market/productSlice";
 import {toast} from "react-toastify";
 
 const ProductDetail = () => {
   const dispatch = useDispatch();
   const [darkMode, setDarkMode] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(false);
   const { id } = useParams();
   const navigate=useNavigate();
   useEffect(() => {
@@ -35,6 +36,52 @@ const ProductDetail = () => {
     dispatch(fetchAllMarketProducts());
   }, [id]);
   const {product, products:relatedProducts} = useSelector((state)=> state.product)
+  
+  // Handle preview download
+  const handlePreviewDownload = async () => {
+    setLoading(true);
+    if (!id || !product?.product_id) {
+      toast.error('Product ID not found');
+      return;
+    }
+
+    try {
+      const res = await dispatch(downloadProductById(product?.product_id)).unwrap();
+      console.log(res);
+      const fileUrl = res.uploadDocURL; // assuming this holds the file URL directly
+
+      if (!fileUrl) {
+        toast.error('No file URL found');
+        return;
+      }
+
+      const fileRes = await fetch(fileUrl);
+      console.log("FILE RES", fileRes);
+      if (!fileRes.ok) {
+        toast.error('Failed to download file');
+        return;
+      }
+
+      const blob = await fileRes.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = product?.title || "product-sample.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+
+      toast.success('Sample downloaded successfully!');
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      console.error("Download error:", err);
+      toast.error('Something went wrong during download');
+    }
+  };
+
   // Colors for dark mode
   const colors = {
     primary: "#bb86fc",
@@ -342,10 +389,14 @@ const ProductDetail = () => {
                     backgroundColor: "rgba(3, 218, 198, 0.2)",
                     color: colors.accent,
                     border: `1px solid ${colors.accent}`,
+                    opacity: loading ? 0.6 : 1,
+                    cursor: loading ? "not-allowed" : "pointer",
                   }}
+                  onClick={handlePreviewDownload}
+                  disabled={loading}
                 >
-                  <Download className="w-5 h-5 mr-2" />
-                  Preview Sample
+                  <Download className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Downloading...' : 'Preview Sample'}
                 </button>
 
                 <button

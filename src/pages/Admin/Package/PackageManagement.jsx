@@ -350,12 +350,12 @@ const PackageManagement = () => {
                 >
                   Spark Tokens
                 </th>
-                <th
+                {/* <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
                   Discount
-                </th>
+                </th> */}
                 <th
                 className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                 style={{ color: colors.textMuted }}
@@ -439,12 +439,12 @@ const PackageManagement = () => {
                     >
                       {pckg?.sparks??0}
                     </td>
-                    <td
+                    {/* <td
                       className="px-6 py-4 whitespace-nowrap text-sm"
                       style={{ color: colors.text }}
                     >
                       {pckg.discount??0}%
-                    </td>
+                    </td> */}
                       <td
                         className="px-6 py-4 whitespace-nowrap"
                         style={{ color: colors.text }}

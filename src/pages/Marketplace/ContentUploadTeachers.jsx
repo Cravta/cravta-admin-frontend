@@ -178,7 +178,64 @@ const ContentUpload = () => {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Create the product first (without file)
+      let productId = null;
+
+      // Step 1: Get signed URL and product_id first (if file is uploaded)
+      if (uploadedFile && uploadedFile.file) {
+        const signedUrlData = {
+          file_name: uploadedFile.file.name,
+          mimeType: uploadedFile.file.type,
+          file_size: uploadedFile.file.size,
+        };
+
+        console.log('Requesting signed URL with data:', signedUrlData);
+        const signedUrlResult = await dispatch(createProductSignedUrl(signedUrlData));
+        console.log('Signed URL Result:', signedUrlResult);
+        
+        if (createProductSignedUrl.fulfilled.match(signedUrlResult)) {
+          // Extract product_id from the signed URL response
+          const responseData = signedUrlResult.payload;
+          productId = responseData.id.id || responseData.productId;
+          
+          if (!productId) {
+            toast.error('failed to upload product');
+            console.error('Signed URL response:', responseData);
+            return;
+          }
+
+          console.log('Received product ID:', productId);
+
+          // Step 2: Upload file to the signed URL
+          const signedUrl = responseData.uploadDocURL || responseData.signedUrl || responseData.url;
+          
+          if (!signedUrl) {
+            toast.error('Invalid signed URL response - missing signed URL');
+            console.error('Signed URL response:', responseData);
+            return;
+          }
+
+          console.log('Received signed URL:', signedUrl);
+          
+          try {
+            console.log('Uploading file to signed URL...');
+            await uploadFileToSignedUrl(signedUrl, uploadedFile.file);
+            console.log('File uploaded successfully to signed URL');
+          } catch (uploadError) {
+            toast.error('Failed to upload file to storage');
+            console.error('File upload error:', uploadError);
+            return;
+          }
+        } else {
+          const errorMessage = signedUrlResult.payload || 'Failed to get signed URL for file upload';
+          toast.error(errorMessage);
+          console.error('Signed URL creation failed:', signedUrlResult);
+          return;
+        }
+      } else {
+        console.log('No file uploaded, proceeding without file upload');
+      }
+
+      // Step 3: Create the product with the product_id (if we have one)
       const productData = {
         title: formData.title,
         price: parseFloat(formData.price),
@@ -187,53 +244,20 @@ const ContentUpload = () => {
         subject: formData.subject,
         content_type: formData.content_type,
         status: isDraft ? 'draft' : 'published',
+        ...(productId && { product_id: productId }), // Include product_id if we have it
       };
 
+      console.log('Creating product with data:', productData);
       const productResult = await dispatch(createProduct(productData));
-      console.log(productResult);
+      console.log('Product Result:', productResult);
+      
       if (createProduct.fulfilled.match(productResult)) {
-        // Step 2: Get the product ID from the response
-        const productId = productResult.payload.id || productResult.payload._id;
-        
-        if (uploadedFile && uploadedFile.file) {
-          // Step 3: Get signed URL for file upload
-          const signedUrlData = {
-            product_id: productId,
-            file_name: uploadedFile.file.name,
-            mimeType: uploadedFile.file.type,
-            file_size: uploadedFile.file.size,
-          };
-
-          const signedUrlResult = await dispatch(createProductSignedUrl(signedUrlData));
-          console.log(signedUrlResult);
-          if (createProductSignedUrl.fulfilled.match(signedUrlResult)) {
-            // Step 4: Upload file to the signed URL
-            const responseData = signedUrlResult.payload;
-            const signedUrl = responseData.signed_url || responseData.signedUrl || responseData.url;
-            
-            if (!signedUrl) {
-              toast.error('Invalid signed URL response');
-              console.error('Signed URL response:', responseData);
-              return;
-            }
-            
-            try {
-              await uploadFileToSignedUrl(signedUrl, uploadedFile.file);
-              toast.success('Product and file uploaded successfully!');
-              // Navigate to marketplace after successful creation and upload
-              navigate('/market/marketplace');
-            } catch (uploadError) {
-              toast.error('Failed to upload file to storage');
-              console.error('File upload error:', uploadError);
-            }
-          } else {
-            toast.error(signedUrlResult.payload || 'Failed to get signed URL for file upload');
-          }
-        } else {
-          // No file to upload, just navigate
-          toast.success('Product created successfully!');
-          navigate('/market/marketplace');
-        }
+        const successMessage = uploadedFile && uploadedFile.file 
+          ? 'Product and file uploaded successfully!' 
+          : 'Product created successfully!';
+        toast.success(successMessage);
+        // Navigate to marketplace after successful creation
+        navigate('/market/marketplace');
       } else {
         toast.error(productResult.payload || 'Failed to create product');
       }

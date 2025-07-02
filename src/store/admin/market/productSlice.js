@@ -54,15 +54,29 @@ export const createProductSignedUrl = createAsyncThunk(
     async (data, { rejectWithValue }) => {
         try {
             const token = getAuthToken();
-            const response = await axios.post(`${API_BASE_URL}/content-upload/${data.product_id}`, data, {
+            const response = await axios.post(`${API_BASE_URL}/content-upload`, data, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             return response.data.data;
         } catch (error) {
-            return rejectWithValue(error.response?.data?.message || "Error creating product");
+            return rejectWithValue(error.response?.data?.message || "Error creating signed URL");
         }
     }
 )
+export const downloadProductById = createAsyncThunk(
+    "market/downloadProductById",
+    async (id, { rejectWithValue }) => {
+        try {
+            const token = getAuthToken();
+            const response = await axios.get(`${API_BASE_URL}/download/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return response.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || "Error fetching product");
+        }
+    }
+);
 const productSlice = createSlice({
     name: "products",
     initialState: {
@@ -141,9 +155,24 @@ const productSlice = createSlice({
                 state.success = "Signed URL generated successfully!";
                 state.error = null;
                 // Store the product ID for reference
-                state.productId = action.payload.product_id;
+                const responseData = action.payload;
+                state.productId = responseData.id.id || responseData.productId;
             })
             .addCase(createProductSignedUrl.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+                state.success = null;
+            })
+            .addCase(downloadProductById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadProductById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = "Download URL generated successfully!";
+                state.error = null;
+            })
+            .addCase(downloadProductById.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
                 state.success = null;

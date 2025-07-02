@@ -73,7 +73,6 @@ const PackagePurchases = () => {
   };
 
   const filteredData = getFilteredData();
-  console.log(filteredData);
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
