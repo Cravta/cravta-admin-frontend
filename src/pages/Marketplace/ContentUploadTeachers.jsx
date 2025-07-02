@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
 import { useDispatch, useSelector } from "react-redux";
-import { createProduct, clearError, clearSuccess } from "../../store/admin/market/productSlice";
+import { createProduct, createProductSignedUrl, clearError, clearSuccess } from "../../store/admin/market/productSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
@@ -53,8 +53,10 @@ const ContentUpload = () => {
 
   // Show success toast when product is created
   useEffect(() => {
-    if (success==="Product created successfully!") {
-      toast.success(success);
+    if (success && success.includes("successfully")) {
+      // Only show toast for specific success messages, not all
+      // We handle success messages manually in handleSubmit
+      console.log('Success:', success);
     }
   }, [success]);
 
@@ -176,32 +178,121 @@ const ContentUpload = () => {
     setIsSubmitting(true);
 
     try {
-      // Create FormData for file upload
-      const submitFormData = new FormData();
-      
-      // Add the file
-      if (uploadedFile && uploadedFile.file) {
-        submitFormData.append('file', uploadedFile.file);
-      }
-      
-      // Add other form data
-      submitFormData.append('title', formData.title);
-      submitFormData.append('price', parseFloat(formData.price));
-      submitFormData.append('description', formData.description);
-      submitFormData.append('grade', formData.grade);
-      submitFormData.append('subject', formData.subject);
-      submitFormData.append('content_type', formData.content_type);
+      let productId = null;
 
-      const result = await dispatch(createProduct(formData));
+      // Step 1: Get signed URL and product_id first (if file is uploaded)
+      if (uploadedFile && uploadedFile.file) {
+        const signedUrlData = {
+          file_name: uploadedFile.file.name,
+          mimeType: uploadedFile.file.type,
+          file_size: uploadedFile.file.size,
+        };
+
+        console.log('Requesting signed URL with data:', signedUrlData);
+        const signedUrlResult = await dispatch(createProductSignedUrl(signedUrlData));
+        console.log('Signed URL Result:', signedUrlResult);
+        
+        if (createProductSignedUrl.fulfilled.match(signedUrlResult)) {
+          // Extract product_id from the signed URL response
+          const responseData = signedUrlResult.payload;
+          productId = responseData.id.id || responseData.productId;
+          
+          if (!productId) {
+            toast.error('failed to upload product');
+            console.error('Signed URL response:', responseData);
+            return;
+          }
+
+          console.log('Received product ID:', productId);
+
+          // Step 2: Upload file to the signed URL
+          const signedUrl = responseData.uploadDocURL || responseData.signedUrl || responseData.url;
+          
+          if (!signedUrl) {
+            toast.error('Invalid signed URL response - missing signed URL');
+            console.error('Signed URL response:', responseData);
+            return;
+          }
+
+          console.log('Received signed URL:', signedUrl);
+          
+          try {
+            console.log('Uploading file to signed URL...');
+            await uploadFileToSignedUrl(signedUrl, uploadedFile.file);
+            console.log('File uploaded successfully to signed URL');
+          } catch (uploadError) {
+            toast.error('Failed to upload file to storage');
+            console.error('File upload error:', uploadError);
+            return;
+          }
+        } else {
+          const errorMessage = signedUrlResult.payload || 'Failed to get signed URL for file upload';
+          toast.error(errorMessage);
+          console.error('Signed URL creation failed:', signedUrlResult);
+          return;
+        }
+      } else {
+        console.log('No file uploaded, proceeding without file upload');
+      }
+
+      // Step 3: Create the product with the product_id (if we have one)
+      const productData = {
+        title: formData.title,
+        price: parseFloat(formData.price),
+        description: formData.description,
+        grade: formData.grade,
+        subject: formData.subject,
+        content_type: formData.content_type,
+        status: isDraft ? 'draft' : 'published',
+        ...(productId && { product_id: productId }), // Include product_id if we have it
+      };
+
+      console.log('Creating product with data:', productData);
+      const productResult = await dispatch(createProduct(productData));
+      console.log('Product Result:', productResult);
       
-      if (createProduct.fulfilled.match(result)) {
+      if (createProduct.fulfilled.match(productResult)) {
+        const successMessage = uploadedFile && uploadedFile.file 
+          ? 'Product and file uploaded successfully!' 
+          : 'Product created successfully!';
+        toast.success(successMessage);
         // Navigate to marketplace after successful creation
         navigate('/market/marketplace');
+      } else {
+        toast.error(productResult.payload || 'Failed to create product');
       }
     } catch (error) {
       console.error('Error creating product:', error);
+      toast.error('Failed to create product');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Helper function to upload file to signed URL
+  const uploadFileToSignedUrl = async (signedUrl, file) => {
+    try {
+      if (!signedUrl || !file) {
+        throw new Error('Missing signed URL or file');
+      }
+
+      const response = await fetch(signedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to upload file: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
     }
   };
 

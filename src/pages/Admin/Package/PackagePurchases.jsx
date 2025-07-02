@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from "react";
 import {
+  BookOpen,
   Search,
+  Filter,
   RefreshCw,
-  Edit,
+  Calendar,
+  Users,
+  Eye,
+  Archive,
   Trash,
+  Download,
+  ChevronDown,
   CheckCircle,
   XCircle,
-  Shield,
-  Package,
+  Edit,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {useDispatch, useSelector} from "react-redux";
-import { deletePackage, fetchPackages } from "../../../store/admin/packageSlice";
 import { toast } from "react-toastify";
-import PackageModal from "../../../components/modals/PackageModal";
-
+import { fetchPackageTransactions } from "../../../store/admin/packageSlice";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -22,60 +26,53 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
-const PackageManagement = () => {
-  const dispatch = useDispatch();
+const PackagePurchases = () => {
   const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState("teachers");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [fieldFilter, setFieldFilter] = useState("all");
+  const [showFieldDropdown, setShowFieldDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
-  const [packageInfo, setPackageInfo] = useState(null);
+  const dispatch = useDispatch();
   useEffect(() => {
-        dispatch(fetchPackages({}));
-    }, [dispatch]);
-  const { packageList, loading } = useSelector((state) => state.package);
+          dispatch(fetchPackageTransactions({}));
+      }, [dispatch]);
+  const { transactionList, transactionLoading } = useSelector((state) => state.package);
+  console.log(transactionList);
   // Items per page
   const itemsPerPage = 10;
 
-  // Get data based on active tab
-  const getData = () => {
-    let data;
+  // Get unique fields for filter
+  const uniqueFields = Array.from(new Set(transactionList?.map((val) => val?.package?.name))).filter(Boolean);
+  // Apply filters
+  const getFilteredData = () => {
+    let data = transactionList || [];
 
-    switch (activeTab) {
-      case "teachers":
-        data = packageList?.filter((user) => user.user_type === "teacher");
-        break;
-      case "students":
-        data = packageList?.filter((user) => user.user_type === "student");
-        break;
-      case "schools":
-        data = packageList?.filter((user) => user.user_type === "school");
-        break;
-      default:
-        data = [];
-    }
-
-    // Apply search filter
+    // Apply search
     if (searchTerm) {
       data = data.filter(
-        (item) =>
-          item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item?.email_address?.toLowerCase().includes(searchTerm.toLowerCase())
+        (rl) =>
+          rl?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) 
+            ||
+          rl?.package?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply status filter
     if (statusFilter !== "all") {
-      data = data.filter((item) => item.status === statusFilter);
+      data = data.filter((rl) => rl.status === statusFilter);
+    }
+
+    // Apply field filter
+    if (fieldFilter !== "all") {
+      data = data.filter((cls) => cls?.package?.name === fieldFilter);
     }
 
     return data;
   };
 
-  const filteredData = getData();
-
+  const filteredData = getFilteredData();
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -83,39 +80,17 @@ const PackageManagement = () => {
     startIndex,
     startIndex + itemsPerPage
   );
+
   // Handle search
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page on search
-  };
-
-  // Handle status filter change
-  const handleStatusFilter = (status) => {
-    setStatusFilter(status);
-    setCurrentPage(1); // Reset to first page on filter change
-    setShowStatusDropdown(false);
+    setCurrentPage(1);
   };
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchPackages({}));
+    dispatch(fetchPackageTransactions({}));
   };
-  const handleDeletePackage = (packageId) => {
-    if (window.confirm("Are you sure you want to delete this package?")) {
-      // setIsLoading(true);
-
-      dispatch(deletePackage(packageId))
-        .unwrap()
-        .then(() => {
-          toast.success("Package deleted successfully");
-        })
-        .catch((error) => {
-          toast.error(
-            `Failed to delete Package: ${error || "Unknown error"}`
-          );
-        });
-    }
-  }
   return (
     <div className="p-6 overflow-auto">
       <div className="mb-6">
@@ -123,57 +98,11 @@ const PackageManagement = () => {
           className="text-xl font-medium mb-2"
           style={{ color: colors.primary }}
         >
-          Package Management
+          Package Purchases
         </h2>
         <p className="text-sm" style={{ color: colors.textMuted }}>
-          View, edit and manage all packages on the platform
+          View and manage all package purchases
         </p>
-      </div>
-
-      {/* Tabs */}
-      <div
-        className="flex border-b mb-6"
-        style={{ borderColor: colors.borderColor }}
-      >
-        <button
-          className={`px-4 py-2 font-medium relative ${
-            activeTab === "teachers" ? "" : ""
-          }`}
-          style={{
-            color: activeTab === "teachers" ? colors.primary : colors.text,
-            borderBottom:
-              activeTab === "teachers" ? `2px solid ${colors.primary}` : "none",
-          }}
-          onClick={() => setActiveTab("teachers")}
-        >
-          Teachers
-        </button>
-        <button
-          className={`px-4 py-2 font-medium relative ${
-            activeTab === "students" ? "" : ""
-          }`}
-          style={{
-            color: activeTab === "students" ? colors.primary : colors.text,
-            borderBottom:
-              activeTab === "students" ? `2px solid ${colors.primary}` : "none",
-          }}
-          onClick={() => setActiveTab("students")}
-        >
-          Students
-        </button>
-        <button
-          className={`px-4 py-2 font-medium relative ${
-            activeTab === "schools" ? "" : ""
-          }`}
-          style={{
-            color: activeTab === "schools" ? colors.primary : colors.text,
-            borderBottom:
-              activeTab === "schools" ? `2px solid ${colors.primary}` : "none",
-          }}
-          onClick={() => setActiveTab("schools")}
-        >
-          Schools
-        </button>
       </div>
 
       {/* Action Bar */}
@@ -186,7 +115,7 @@ const PackageManagement = () => {
           />
           <input
             type="text"
-            placeholder={`Search ${activeTab}...`}
+            placeholder="Search purchases..."
             value={searchTerm}
             onChange={handleSearch}
             className="pl-10 pr-4 py-2 w-full rounded-lg focus:outline-none"
@@ -200,34 +129,28 @@ const PackageManagement = () => {
 
         {/* Right side: Actions */}
         <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
-          {/* Filter dropdown */}
-          {/* <div className="relative">
+
+          {/* Field filter dropdown */}
+          <div className="relative">
             <button
               className="flex items-center px-3 py-2 rounded-lg"
               style={{
                 backgroundColor:
-                  statusFilter !== "all"
+                  fieldFilter !== "all"
                     ? `${colors.primary}20`
                     : colors.inputBg,
-                color: statusFilter !== "all" ? colors.primary : colors.text,
+                color: fieldFilter !== "all" ? colors.primary : colors.text,
                 border: `1px solid ${colors.borderColor}`,
               }}
-              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+              onClick={() => setShowFieldDropdown(!showFieldDropdown)}
             >
-              <Filter className="w-4 h-4 mr-2" />
-              <span>
-                {statusFilter === "all"
-                  ? "All Status"
-                  : statusFilter === "active"
-                  ? "Active"
-                  : "Inactive"}
-              </span>
+              <span>{fieldFilter === "all" ? "All Packages" : fieldFilter}</span>
               <ChevronDown className="w-4 h-4 ml-2" />
             </button>
 
-            {showStatusDropdown && (
+            {showFieldDropdown && (
               <div
-                className="absolute right-0 mt-2 w-40 rounded-md shadow-lg z-10 overflow-hidden"
+                className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-10 overflow-hidden max-h-60 overflow-y-auto"
                 style={{
                   backgroundColor: colors.cardBg,
                   border: `1px solid ${colors.borderColor}`,
@@ -238,46 +161,42 @@ const PackageManagement = () => {
                     className="w-full text-left px-4 py-2 text-sm"
                     style={{
                       backgroundColor:
-                        statusFilter === "all"
+                        fieldFilter === "all"
                           ? `${colors.primary}20`
                           : "transparent",
                       color: colors.text,
                     }}
-                    onClick={() => handleStatusFilter("all")}
-                  >
-                    All Status
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm"
-                    style={{
-                      backgroundColor:
-                        statusFilter === "active"
-                          ? `${colors.primary}20`
-                          : "transparent",
-                      color: colors.text,
+                    onClick={() => {
+                      setFieldFilter("all");
+                      setShowFieldDropdown(false);
                     }}
-                    onClick={() => handleStatusFilter("active")}
                   >
-                    Active
+                    All Packages
                   </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm"
-                    style={{
-                      backgroundColor:
-                        statusFilter === "inactive"
-                          ? `${colors.primary}20`
-                          : "transparent",
-                      color: colors.text,
-                    }}
-                    onClick={() => handleStatusFilter("inactive")}
-                  >
-                    Inactive
-                  </button>
+
+                  {uniqueFields.map((field) => (
+                    <button
+                      key={field}
+                      className="w-full text-left px-4 py-2 text-sm"
+                      style={{
+                        backgroundColor:
+                          fieldFilter === field
+                            ? `${colors.primary}20`
+                            : "transparent",
+                        color: colors.text,
+                      }}
+                      onClick={() => {
+                        setFieldFilter(field);
+                        setShowFieldDropdown(false);
+                      }}
+                    >
+                      {field}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
-          </div> */}
-
+          </div>
           {/* Refresh button */}
           <button
             className="p-2 rounded-lg flex items-center justify-center"
@@ -286,11 +205,11 @@ const PackageManagement = () => {
               border: `1px solid ${colors.borderColor}`,
               color: colors.text,
             }}
-            disabled={loading}
+            disabled={transactionLoading}
             onClick={handleRefresh}
           >
             <RefreshCw
-              className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+              className={`w-4 h-4 ${transactionLoading ? "animate-spin" : ""}`}
             />
           </button>
 
@@ -305,28 +224,10 @@ const PackageManagement = () => {
           >
             <Download className="w-4 h-4" />
           </button> */}
-
-          {/* Add new Package button */}
-          <button
-            className="flex items-center px-3 py-2 rounded-lg text-sm"
-            style={{
-              backgroundColor: colors.primary,
-              color: colors.lightText,
-            }}
-            onClick={() => setShowModal(true)}
-          >
-            <Package className="w-4 h-4 mr-2" />
-            Add New Package
-            {/* {activeTab === "teachers"
-              ? "Teacher"
-              : activeTab === "students"
-              ? "Student"
-              : "Admin"} */}
-          </button>
         </div>
       </div>
 
-      {/* Package Table */}
+      {/* Class Table */}
       <div
         className="rounded-lg overflow-hidden"
         style={{
@@ -342,59 +243,71 @@ const PackageManagement = () => {
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Name 
+                  Name / Email
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Spark Tokens
+                  User Type
                 </th>
-                {/* <th
+                <th
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Discount
-                </th> */}
-                <th
-                className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                style={{ color: colors.textMuted }}
-                  >
-                  Plan Type
+                  Package Name
                 </th>
                 <th
-                  className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Actions
+                  Package Type
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Purchased At
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Sparks
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
+                  Amount (SAR)
                 </th>
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {transactionLoading ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="7"
                     className="px-6 py-4 text-center"
                     style={{ color: colors.textMuted }}
                   >
                     <RefreshCw className="w-5 h-5 mx-auto animate-spin" />
                   </td>
                 </tr>
-              ) : paginatedData?.length === 0 ? (
+              ) : paginatedData.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="7"
                     className="px-6 py-4 text-center"
                     style={{ color: colors.textMuted }}
                   >
-                    No {activeTab} found matching your criteria
+                    No packages found matching your criteria
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((pckg, index) => (
+                paginatedData?.map((trnsct, index) => (
                   <tr
-                    key={pckg?.id}
+                    key={trnsct.id}
                     style={{
                       borderTop:
                         index !== 0
@@ -404,31 +317,28 @@ const PackageManagement = () => {
                         index % 2 === 0 ? colors.cardBg : colors.cardBgAlt,
                     }}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3"
                           style={{
-                            background:
-                              activeTab === "schools"
-                                ? `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentLight} 100%)`
-                                : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                            background:`linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
                           }}
                         >
-                          {pckg?.name?.charAt(0).toUpperCase()}
+                          {trnsct?.user?.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <div
                             className="font-medium"
                             style={{ color: colors.text }}
                           >
-                            {pckg?.name || "-"}
+                            {trnsct?.user?.name || "-"}
                           </div>
                           <div
                             className="text-sm"
                             style={{ color: colors.textMuted }}
                           >
-                            SAR {Math.floor(pckg.price)}
+                            {trnsct?.user?.email_address}
                           </div>
                         </div>
                       </div>
@@ -437,68 +347,37 @@ const PackageManagement = () => {
                       className="px-6 py-4 whitespace-nowrap text-sm"
                       style={{ color: colors.text }}
                     >
-                      {pckg?.sparks??0}
+                      {trnsct?.user?.user_type}
                     </td>
-                    {/* <td
+                    <td
                       className="px-6 py-4 whitespace-nowrap text-sm"
                       style={{ color: colors.text }}
                     >
-                      {pckg.discount??0}%
-                    </td> */}
-                      <td
-                        className="px-6 py-4 whitespace-nowrap"
-                        style={{ color: colors.text }}
-                      >
-                        <span
-                          className="px-2 py-1 text-xs rounded-full flex items-center w-min"
-                          style={{
-                            backgroundColor:
-                              pckg.package_type === "annual"
-                                ? `${colors.accent}20`
-                                : `${colors.primary}20`,
-                            color:
-                              pckg.package_type === "annual"
-                                ? colors.accent
-                                : colors.primary,
-                          }}
-                        >
-                          <Shield className="w-3 h-3 mr-1" />
-                          {pckg.package_type}
-                        </span>
-                      </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <div className="flex justify-end space-x-2">
-                        {/* <button
-                          className="p-1 rounded"
-                          style={{ color: colors.primary }}
-                          title="View Profile"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button> */}
-                        <button
-                          className="p-1 rounded"
-                          style={{ color: colors.accent }}
-                          title="Edit Package"
-                          onClick={() => {setPackageInfo(pckg);setShowModal(true);}}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        {/* <button
-                          className="p-1 rounded"
-                          style={{ color: colors.text }}
-                          title="Email Package"
-                        >
-                          <Mail className="w-4 h-4" />
-                        </button> */}
-                        <button
-                          className="p-1 rounded"
-                          style={{ color: colors.error }}
-                          title="Delete Package"
-                          onClick={() => handleDeletePackage(pckg?.id)}
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
+                      {trnsct?.package?.name}
+                    </td>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm"
+                      style={{ color: colors.text }}
+                    >
+                      {trnsct?.package?.package_type}
+                    </td>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm"
+                      style={{ color: colors.text }}
+                    >
+                      <div className="flex items-center">
+                        <Calendar
+                          className="w-3 h-3 mr-1"
+                          style={{ color: colors.textMuted }}
+                        />
+                        {formatDate(trnsct?.created_at)}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
+                      {trnsct?.spark_amount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
+                      {trnsct?.amount}
                     </td>
                   </tr>
                 ))
@@ -516,7 +395,7 @@ const PackageManagement = () => {
             <div className="text-sm" style={{ color: colors.textMuted }}>
               Showing {startIndex + 1} to{" "}
               {Math.min(startIndex + itemsPerPage, filteredData.length)} of{" "}
-              {filteredData.length} entries
+              {filteredData.length} purchases
             </div>
             <div className="flex space-x-1">
               <button
@@ -593,14 +472,44 @@ const PackageManagement = () => {
           </div>
         )}
       </div>
-      <PackageModal 
-        showModal={showModal} 
-        setShowModal={setShowModal}
-        packageInfo={packageInfo}
-        setPackageInfo={setPackageInfo}
-      />
     </div>
   );
 };
 
-export default PackageManagement;
+// Helper function to get subject gradients
+const getSubjectGradient = (subject) => {
+  const gradients = {
+    Mathematics: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+    Physics: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    Chemistry: "linear-gradient(135deg, #f46b45 0%, #eea849 100%)",
+    Biology: "linear-gradient(135deg, #38ef7d 0%, #11998e 100%)",
+    "Computer Science": "linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)",
+    History: "linear-gradient(135deg, #ff8a00 0%, #e52e71 100%)",
+    Geography: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
+    Literature: "linear-gradient(135deg, #603813 0%, #b29f94 100%)",
+    Art: "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
+  };
+
+  return (
+    gradients[subject] || "linear-gradient(135deg, #434343 0%, #000000 100%)"
+  );
+};
+
+// Helper function to get subject icons
+const getSubjectIcon = (subject) => {
+  const icons = {
+    Mathematics: "🧮",
+    Physics: "🔬",
+    Chemistry: "⚗️",
+    Biology: "🧪",
+    "Computer Science": "💻",
+    History: "🏛️",
+    Geography: "🌍",
+    Literature: "📚",
+    Art: "🎨",
+  };
+
+  return icons[subject] || "📚";
+};
+
+export default PackagePurchases;

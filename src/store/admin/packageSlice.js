@@ -66,6 +66,30 @@ export const fetchPackages = createAsyncThunk(
         }
     }
 );
+export const fetchPackageTransactions = createAsyncThunk(
+    "package/fetchPackageTransactions",
+    async (_, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) throw new Error("No auth token found");
+
+            const response = await api.get(`${BASE_URL}/transactions`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+
+            return response.data.data;
+        } catch (error) {
+            console.error("❌ API Error:", error.response?.data);
+            return rejectWithValue(
+                error.response?.data?.message || "Error fetching packages data"
+            );
+        }
+    }
+);
 export const deletePackage = createAsyncThunk(
     "packages/deletePackage",
     async (packageId, { rejectWithValue }) => {
@@ -89,6 +113,8 @@ const PackagesSlice = createSlice({
     name: "Packages",
     initialState: {
         packageList: [],
+        transactionList: [],
+        transactionLoading: false,
         loading: false,
         error: null,
     },
@@ -109,6 +135,18 @@ const PackagesSlice = createSlice({
             })
             .addCase(fetchPackages.rejected, (state, action) => {
                 state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(fetchPackageTransactions.pending, (state) => {
+                state.transactionLoading = true;
+                state.error = null;
+            })
+            .addCase(fetchPackageTransactions.fulfilled, (state, action) => {
+                state.transactionLoading = false;
+                state.transactionList = Array.isArray(action.payload) ? action.payload : [];
+            })
+            .addCase(fetchPackageTransactions.rejected, (state, action) => {
+                state.transactionLoading = false;
                 state.error = action.payload;
             })
             .addCase(deletePackage.fulfilled, (state, action) => {
