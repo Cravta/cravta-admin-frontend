@@ -29,10 +29,30 @@ const ProductDetail = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const { id } = useParams();
   const navigate=useNavigate();
   useEffect(() => {
-    dispatch(fetchProductById(id));
+    dispatch(fetchProductById(id))
+      .then((result) => {
+        if (fetchProductById.fulfilled.match(result)) {
+          const productData = result.payload;
+          if (productData?.image_array && productData.image_array.length > 0) {
+            const imageId = productData.image_array[0];
+            return dispatch(downloadProductById(imageId));
+          }
+        }
+      })
+      .then((imageResult) => {
+        if (imageResult && downloadProductById.fulfilled.match(imageResult)) {
+          if (imageResult.payload.uploadDocURL) {
+            setPreviewImageUrl(imageResult.payload.uploadDocURL);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching product or image:', error);
+      });
     dispatch(fetchAllMarketProducts());
   }, [id]);
   const {product, products:relatedProducts} = useSelector((state)=> state.product)
@@ -245,7 +265,7 @@ const ProductDetail = () => {
                 <div
                   className="h-72 bg-cover bg-center"
                   style={{
-                    backgroundImage: `url(${product?.image})`,
+                    backgroundImage: previewImageUrl ? `url(${previewImageUrl})` : 'none',
                     backgroundColor: colors.cardBg,
                   }}
                 />
@@ -544,7 +564,7 @@ const ProductDetail = () => {
                 </h3>
 
                 <div className="space-y-4">
-                  {relatedProducts?.map((item) => (
+                  {relatedProducts?.slice(0, 3).map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center p-2 rounded-lg hover:bg-opacity-50 cursor-pointer"

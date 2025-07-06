@@ -31,7 +31,7 @@ const ContentUpload = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [scheduleLater, setScheduleLater] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [previewImage, setPreviewImage] = useState(null);
   // Form state
   const [formData, setFormData] = useState({
     title: "",
@@ -52,13 +52,13 @@ const ContentUpload = () => {
   }, [dispatch]);
 
   // Show success toast when product is created
-  useEffect(() => {
-    if (success && success.includes("successfully")) {
-      // Only show toast for specific success messages, not all
-      // We handle success messages manually in handleSubmit
-      console.log('Success:', success);
-    }
-  }, [success]);
+  // useEffect(() => {
+  //   if (success && success.includes("successfully")) {
+  //     // Only show toast for specific success messages, not all
+  //     // We handle success messages manually in handleSubmit
+  //     console.log('Success:', success);
+  //   }
+  // }, [success]);
 
   // Show error toast when there's an error
   useEffect(() => {
@@ -131,6 +131,65 @@ const ContentUpload = () => {
   // Handle drag and drop
   const handleDragOver = (e) => {
     e.preventDefault();
+  };
+
+   const handlePreviewImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (2MB limit for preview images)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size > maxSize) {
+        toast.error('Preview image size must be less than 2MB');
+        return;
+      }
+
+      // Check file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a JPEG, PNG, or GIF image');
+        return;
+      }
+
+      try {
+        // Get signed URL for image upload
+        const signedUrlData = {
+          fileName: file.name,
+          mimeType: file.type,
+          fileSize: file.size
+        };
+
+        const signedUrlResult = await dispatch(createProductSignedUrl(signedUrlData));
+        
+        if (createProductSignedUrl.rejected.match(signedUrlResult)) {
+          toast.error('Failed to get upload URL for preview image');
+          return;
+        }
+
+        const signedUrl = signedUrlResult.payload.uploadDocURL;
+        const imageId = signedUrlResult.payload.id.id;
+
+        // Upload image to signed URL
+        await uploadFileToSignedUrl(signedUrl, file);
+        
+        // Create preview URL for display
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setPreviewImage({
+            file: file,
+            url: event.target.result,
+            name: file.name,
+            size: (file.size / 1024).toFixed(2) + " KB",
+            imageId: imageId // Store the image ID for later use
+          });
+        };
+        reader.readAsDataURL(file);
+
+        toast.success('Preview image uploaded successfully!');
+      } catch (error) {
+        console.error('Error uploading preview image:', error);
+        toast.error('Failed to upload preview image');
+      }
+    }
   };
 
   const handleDrop = (e) => {
@@ -244,7 +303,8 @@ const ContentUpload = () => {
         subject: formData.subject,
         content_type: formData.content_type,
         status: isDraft ? 'draft' : 'published',
-        ...(productId && { product_id: productId }), // Include product_id if we have it
+        ...(productId && { product_id: productId }),
+        ...(previewImage?.imageId && { image_array: [previewImage.imageId] }),
       };
 
       console.log('Creating product with data:', productData);
@@ -588,43 +648,102 @@ const ContentUpload = () => {
                   </label>
                   <div
                     className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center"
-                    style={{ borderColor: "rgba(224, 224, 224, 0.3)" }}
+                    style={{ 
+                      borderColor: previewImage 
+                        ? colors.primary 
+                        : "rgba(224, 224, 224, 0.3)",
+                      backgroundColor: previewImage
+                        ? "rgba(187, 134, 252, 0.05)"
+                        : "transparent",
+                    }}
                   >
-                    <Upload
-                      className="w-10 h-10 mb-3"
-                      style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                    />
-                    <p
-                      className="text-center mb-2"
-                      style={{ color: colors.text }}
-                    >
-                      Drag and drop an image file here, or click to browse
-                    </p>
-                    <p
-                      className="text-xs text-center"
-                      style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                    >
-                      Recommended size: 800x600px, Max size: 2MB
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      id="preview-image"
-                    />
-                    <button
-                      onClick={() =>
-                        document.getElementById("preview-image").click()
-                      }
-                      className="mt-4 px-4 py-2 rounded-lg"
-                      style={{
-                        backgroundColor: "rgba(187, 134, 252, 0.1)",
-                        color: colors.primary,
-                        border: `1px solid ${colors.primary}`,
-                      }}
-                    >
-                      Select Image
-                    </button>
+                    {!previewImage ? (
+                      <>
+                        <Upload
+                          className="w-10 h-10 mb-3"
+                          style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                        />
+                        <p
+                          className="text-center mb-2"
+                          style={{ color: colors.text }}
+                        >
+                          Drag and drop an image file here, or click to browse
+                        </p>
+                        <p
+                          className="text-xs text-center"
+                          style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                        >
+                          Recommended size: 800x600px, Max size: 2MB
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id="preview-image"
+                          onChange={handlePreviewImageUpload}
+                        />
+                        <button
+                          onClick={() =>
+                            document.getElementById("preview-image").click()
+                          }
+                          className="mt-4 px-4 py-2 rounded-lg"
+                          style={{
+                            backgroundColor: "rgba(187, 134, 252, 0.1)",
+                            color: colors.primary,
+                            border: `1px solid ${colors.primary}`,
+                          }}
+                        >
+                          Select Image
+                        </button>
+                      </>
+                    ) : (
+                      <div className="w-full">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <img
+                              src={previewImage.url}
+                              alt="Preview"
+                              className="w-16 h-16 object-cover rounded mr-3"
+                            />
+                            <div>
+                              <p
+                                className="font-medium"
+                                style={{ color: colors.lightText }}
+                              >
+                                {previewImage.name}
+                              </p>
+                              <p
+                                className="text-xs"
+                                style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                              >
+                                {previewImage.size}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setPreviewImage(null)}
+                            className="p-1 rounded-full"
+                            style={{
+                              backgroundColor: "rgba(207, 102, 121, 0.1)",
+                              color: colors.accentSecondary,
+                            }}
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        {/* <button
+                          onClick={() => document.getElementById("preview-image").click()}
+                          className="w-full px-4 py-2 rounded-lg text-sm"
+                          style={{
+                            backgroundColor: "rgba(187, 134, 252, 0.1)",
+                            color: colors.primary,
+                            border: `1px solid ${colors.primary}`,
+                          }}
+                        >
+                          Change Image
+                        </button> */}
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
 import { useNavigate } from "react-router-dom";
-import { fetchAllMarketProducts } from "../../store/admin/market/productSlice";
+import { fetchAllMarketProducts, fetchPreviewImages } from "../../store/admin/market/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 
 const Marketplace = () => {
@@ -29,7 +29,7 @@ const Marketplace = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
   const [filterOpen, setFilterOpen] = useState(false);
-  const {products} = useSelector((state)=> state.product)
+  const {products, previewImages} = useSelector((state)=> state.product)
   useEffect(() => {
     dispatch(fetchAllMarketProducts());
   },[])
@@ -50,7 +50,44 @@ const Marketplace = () => {
     navActiveBg: "rgba(187, 134, 252, 0.12)",
     inputBg: "#2d2d2d",
   };
+  const getImageUrl = (imageId) => {
+    if (!imageId) return null;
+    
+    // Format the image ID to match the previewImages key format (e.g., "11" -> "image_11")
+    const formattedImageId = `image_${imageId}`;
+    // console.log('Formatted imageId:', formattedImageId);
+    
+    // If previewImages is available and has the image ID, use it
+    if (previewImages && previewImages[formattedImageId]) {
+      console.log(`Using preview image for ${formattedImageId}:`, previewImages[formattedImageId]);
+      return previewImages[formattedImageId];
+    }
+    
+    // Fallback to null if no preview image is available
+    // console.log(`No preview image found for ${formattedImageId}`);
+    return null;
+  };
 
+  useEffect(() => {
+    // setFilteredProducts(products || []);
+    
+    // Collect all image_array[0] values from products
+    if (products && products.length > 0) {
+      const imageIds = products
+        .map(product => product.image_array && product.image_array[0])
+        .filter(imageId => imageId && String(imageId).trim() !== '');
+      
+      // Remove duplicates
+      const uniqueImageIds = [...new Set(imageIds)];
+      
+      console.log('Collected image IDs:', uniqueImageIds);
+      
+      // Fetch preview images if we have image IDs
+      if (uniqueImageIds.length > 0) {
+        dispatch(fetchPreviewImages(uniqueImageIds));
+      }
+    }
+  }, [products, dispatch]);
   // const products = [
   //   {
   //     id: 1,
@@ -685,7 +722,9 @@ const Marketplace = () => {
                     <div
                       className="h-40 bg-cover bg-center"
                       style={{
-                        backgroundImage: `url(${product.image})`,
+                        backgroundImage: product.image_array && product.image_array[0] 
+                          ? `url(${getImageUrl(product.image_array[0]) || product.image})`
+                          : `url(${product.image})`,
                         backgroundColor: colors.cardBg,
                       }}
                     />
@@ -784,7 +823,9 @@ const Marketplace = () => {
                     <div
                       className="w-48 bg-cover bg-center"
                       style={{
-                        backgroundImage: `url(${product.image})`,
+                        backgroundImage: product.image_array && product.image_array[0] 
+                          ? `url(${getImageUrl(product.image_array[0]) || product.image})`
+                          : `url(${product.image})`,
                         backgroundColor: colors.cardBg,
                       }}
                     />
