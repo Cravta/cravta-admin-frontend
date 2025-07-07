@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bell,
   Book,
@@ -24,12 +24,19 @@ import {
   Upload,
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSales, fetchSalesSummary } from "../../store/admin/market/salesSlice";
 
 const PurchaseTracking = () => {
+  const dispatch = useDispatch();
   const [darkMode, setDarkMode] = useState(true);
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [currentPage, setCurrentPage] = useState(1);
-
+  const { salesSummary, sales } = useSelector((state) => state.sales);
+  useEffect(() => {
+    dispatch(fetchSalesSummary())
+    dispatch(fetchSales());
+  }, [dispatch]);
   // Colors for dark mode
   const colors = {
     primary: "#bb86fc",
@@ -260,7 +267,7 @@ const PurchaseTracking = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {salesData.totalSales}
+                  {salesSummary?.total_sales??0}
                 </span>
               </div>
               <p className="text-xs" style={{ color: colors.primary }}>
@@ -290,7 +297,7 @@ const PurchaseTracking = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {salesData.totalRevenue}
+                  {salesSummary?.total_revenue??0}
                 </span>
               </div>
               <p className="text-xs" style={{ color: colors.accent }}>
@@ -298,7 +305,7 @@ const PurchaseTracking = () => {
               </p>
             </div>
 
-            <div
+            {/* <div
               className="rounded-lg shadow-md p-5"
               style={{
                 backgroundColor: colors.cardBgAlt,
@@ -332,7 +339,7 @@ const PurchaseTracking = () => {
                   {salesData.commissionPaid}
                 </span>
               </p>
-            </div>
+            </div> */}
 
             <div
               className="rounded-lg shadow-md p-5"
@@ -345,7 +352,7 @@ const PurchaseTracking = () => {
                 className="text-sm mb-2"
                 style={{ color: "rgba(224, 224, 224, 0.7)" }}
               >
-                Current Spark Balance
+                Total Revenue in Sparks
               </p>
               <div className="flex items-center mb-2">
                 <Sparkles
@@ -356,10 +363,10 @@ const PurchaseTracking = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {salesData.sparkBalance}
+                  {salesSummary?.spark_balance??0}
                 </span>
               </div>
-              <button
+              {/* <button
                 className="text-xs px-2 py-1 rounded"
                 style={{
                   backgroundColor: "rgba(3, 218, 198, 0.1)",
@@ -367,7 +374,7 @@ const PurchaseTracking = () => {
                 }}
               >
                 Exchange for Riyals
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -572,14 +579,14 @@ const PurchaseTracking = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {salesData.recentSales.map((sale) => (
+                  {sales?.map((sale) => (
                     <tr
-                      key={sale.id}
+                      key={sale.transaction_id}
                       className="border-t"
                       style={{ borderColor: colors.borderColor }}
                     >
                       <td className="py-3 px-4" style={{ color: colors.text }}>
-                        #{sale.id}
+                        #{sale.transaction_id}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
@@ -595,12 +602,12 @@ const PurchaseTracking = () => {
                             />
                           </div>
                           <span style={{ color: colors.lightText }}>
-                            {sale.buyer}
+                            {sale.buyer.name}
                           </span>
                         </div>
                       </td>
                       <td className="py-3 px-4" style={{ color: colors.text }}>
-                        {sale.product}
+                        {sale.product.title}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end">
@@ -609,7 +616,7 @@ const PurchaseTracking = () => {
                             style={{ color: colors.primary }}
                           />
                           <span style={{ color: colors.lightText }}>
-                            {sale.amount}
+                            {sale.sale_details.total_amount}
                           </span>
                         </div>
                       </td>
@@ -617,7 +624,7 @@ const PurchaseTracking = () => {
                         className="py-3 px-4"
                         style={{ color: "rgba(224, 224, 224, 0.7)" }}
                       >
-                        {new Date(sale.date).toLocaleDateString()}
+                        {new Date(sale.sale_details.sold_at).toLocaleDateString()}
                       </td>
                     </tr>
                   ))}

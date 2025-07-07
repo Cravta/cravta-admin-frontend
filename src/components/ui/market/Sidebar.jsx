@@ -229,7 +229,7 @@ const Sidebar = ({
                                     Commission
                                 </button>
                             </li>
-                            {/* <li>
+                            <li>
                                 <button
                                     onClick={() => navigate("/market/purchase-track")}
                                     className="flex items-center px-3 py-2.5 rounded w-full text-left"
@@ -248,7 +248,7 @@ const Sidebar = ({
                                     />
                                     Sales Analytics
                                 </button>
-                            </li> */}
+                            </li>
                             {/* <li>
                                 <button
                                     onClick={() => navigate("/market/currency")}
