@@ -16,6 +16,7 @@ import {
   Share2,
   Plus,
   Minus,
+  X,
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
 import {useNavigate, useParams} from "react-router-dom";
@@ -30,6 +31,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [documentUrl, setDocumentUrl] = useState(null);
   const { id } = useParams();
   const navigate=useNavigate();
   useEffect(() => {
@@ -58,10 +61,11 @@ const ProductDetail = () => {
   const {product, products:relatedProducts} = useSelector((state)=> state.product)
   
   // Handle preview download
-  const handlePreviewDownload = async () => {
+  const handlePreviewView = async () => {
     setLoading(true);
     if (!id || !product?.product_id) {
       toast.error('Product ID not found');
+      setLoading(false);
       return;
     }
 
@@ -72,33 +76,18 @@ const ProductDetail = () => {
 
       if (!fileUrl) {
         toast.error('No file URL found');
+        setLoading(false);
         return;
       }
 
-      const fileRes = await fetch(fileUrl);
-      console.log("FILE RES", fileRes);
-      if (!fileRes.ok) {
-        toast.error('Failed to download file');
-        return;
-      }
-
-      const blob = await fileRes.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = product?.title || "product-sample.pdf";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
-
-      toast.success('Sample downloaded successfully!');
+      setDocumentUrl(fileUrl);
+      setShowPreviewModal(true);
       setLoading(false);
+      // toast.success('Document loaded successfully!');
     } catch (err) {
       setLoading(false);
-      console.error("Download error:", err);
-      toast.error('Something went wrong during download');
+      console.error("Preview error:", err);
+      toast.error('Something went wrong while loading the document');
     }
   };
 
@@ -164,7 +153,10 @@ const ProductDetail = () => {
   //     image: "precalc_cover.jpg",
   //   },
   // ];
-
+  const handleCloseModal = () => {
+    setShowPreviewModal(false);
+    setDocumentUrl(null);
+  }
 
 
   return (
@@ -412,11 +404,11 @@ const ProductDetail = () => {
                     opacity: loading ? 0.6 : 1,
                     cursor: loading ? "not-allowed" : "pointer",
                   }}
-                  onClick={handlePreviewDownload}
+                  onClick={handlePreviewView}
                   disabled={loading}
                 >
-                  <Download className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  {loading ? 'Downloading...' : 'Preview Sample'}
+                  <BookOpen className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Loading...' : 'Preview Sample'}
                 </button>
 
                 <button
@@ -615,6 +607,74 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+      {/* Document Preview Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div
+            className="w-11/12 h-5/6 rounded-lg shadow-xl relative"
+            style={{
+              backgroundColor: colors.cardBgAlt,
+              border: `1px solid ${colors.borderColor}`,
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              className="flex justify-between items-center p-4 border-b"
+              style={{ borderColor: colors.borderColor }}
+            >
+              <h3
+                className="text-lg font-medium"
+                style={{ color: colors.primary }}
+              >
+                Document Preview - {product?.title}
+              </h3>
+              <button
+                onClick={handleCloseModal}
+                className="p-2 rounded-lg hover:bg-opacity-50 cursor-pointer"
+                style={{
+                  backgroundColor: "rgba(187, 134, 252, 0.1)",
+                  color: colors.primary,
+                }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 h-full">
+              {documentUrl ? (
+                <iframe
+                  src={documentUrl}
+                  className="w-full h-full rounded-lg"
+                  style={{
+                    backgroundColor: colors.cardBg,
+                    border: `1px solid ${colors.borderColor}`,
+                  }}
+                  title="Document Preview"
+                />
+              ) : (
+                <div
+                  className="w-full h-full rounded-lg flex items-center justify-center"
+                  style={{
+                    backgroundColor: colors.cardBg,
+                    border: `1px solid ${colors.borderColor}`,
+                  }}
+                >
+                  <div className="text-center">
+                    <BookOpen
+                      className="w-16 h-16 mx-auto mb-4"
+                      style={{ color: colors.primary }}
+                    />
+                    <p style={{ color: colors.text }}>
+                      Loading document...
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
