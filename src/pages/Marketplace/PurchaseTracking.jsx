@@ -449,7 +449,7 @@ const PurchaseTracking = () => {
               </div>
 
               <div className="space-y-4">
-                {salesData.productPerformance.map((product) => (
+                {salesSummary?.top_products?.map((product) => (
                   <div
                     key={product.id}
                     className="flex items-center p-2 rounded-lg"
@@ -475,7 +475,7 @@ const PurchaseTracking = () => {
                           className="text-xs"
                           style={{ color: "rgba(224, 224, 224, 0.5)" }}
                         >
-                          {product.sales} sales
+                          {product.total_quantity} sales
                         </p>
                         <div className="flex items-center">
                           <Sparkles
@@ -486,7 +486,7 @@ const PurchaseTracking = () => {
                             className="text-xs"
                             style={{ color: colors.primary }}
                           >
-                            {product.revenue}
+                            {product.total_sales_amount}
                           </span>
                         </div>
                       </div>

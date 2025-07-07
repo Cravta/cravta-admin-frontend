@@ -625,7 +625,7 @@ const CommissionManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentTransactions.transactions.map((transaction) => (
+                  {recentTransactions?.transactions?.map((transaction) => (
                     <tr
                       key={transaction.id}
                       className="border-t"
