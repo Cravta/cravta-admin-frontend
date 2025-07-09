@@ -10,18 +10,27 @@ import ContentUpload from "../pages/Marketplace/ContentUploadTeachers";
 import PurchaseTracking from "../pages/Marketplace/PurchaseTracking";
 import { Currency } from "lucide-react";
 import CurrencyExchange from "../pages/Marketplace/CurrencyExchange";
+import AdminProductManagement from "../pages/Marketplace/ProductManagement";
 
 export default function MarketPlaceRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<ProtectedRoute><MarketPlaceLayout /></ProtectedRoute>}>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <MarketPlaceLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="marketplace" replace />} />
         <Route path="marketplace" element={<MarketPlace />} />
         <Route path="marketplace/product/:id" element={<ProductDetail />} />
         <Route path="commission" element={<CommissionManagement />} />
         <Route path="content-upload" element={<ContentUpload />} />
         <Route path="purchase-track" element={<PurchaseTracking />} />
-        <Route path="currency" element={<CurrencyExchange/>} />
+        <Route path="currency" element={<CurrencyExchange />} />
+        <Route path="product/management" element={<AdminProductManagement />} />
       </Route>
     </Routes>
   );
