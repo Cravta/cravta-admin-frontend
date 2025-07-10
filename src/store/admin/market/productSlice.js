@@ -97,6 +97,26 @@ export const fetchPreviewImages = createAsyncThunk(
         }
     }
 );
+export const fetchProductImages = createAsyncThunk(
+    "market/fetchProductImages",
+    async (image_ids, { rejectWithValue }) => {
+        try {
+            const token = getAuthToken();
+            console.log('Sending image IDs to API:', image_ids);
+            const response = await axios.post(`${API_BASE_URL}/product-preview-images`, { image_ids }, {
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+            });
+            console.log('API response for preview images:', response.data);
+            return response.data.data;
+        } catch (error) {
+            console.error('Error in fetchPreviewImages:', error.response?.data || error.message);
+            return rejectWithValue(error.response?.data?.message || "Error fetching preview images");
+        }
+    }
+);
 const productSlice = createSlice({
     name: "products",
     initialState: {

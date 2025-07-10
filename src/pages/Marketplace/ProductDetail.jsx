@@ -22,7 +22,7 @@ import Logo1 from "../../assets/LOGO-01.png";
 import {useNavigate, useParams} from "react-router-dom";
 import { use } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {fetchAllMarketProducts, fetchProductById, downloadProductById} from "../../store/admin/market/productSlice";
+import {fetchAllMarketProducts, fetchProductById, downloadProductById, fetchProductImages} from "../../store/admin/market/productSlice";
 import {toast} from "react-toastify";
 
 const ProductDetail = () => {
@@ -33,6 +33,7 @@ const ProductDetail = () => {
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [documentUrl, setDocumentUrl] = useState(null);
+  const [productPreviewImages, setProductPreviewImages] = useState([]);
   const { id } = useParams();
   const navigate=useNavigate();
   useEffect(() => {
@@ -109,6 +110,24 @@ const ProductDetail = () => {
     inputBg: "#2d2d2d",
   };
 
+  const getImageUrl = (imageId) => {
+    if (!imageId) return null;
+    
+    // Format the image ID to match the previewImages key format (e.g., "11" -> "image_11")
+    const formattedImageId = `image_${imageId}`;
+    // console.log('Formatted imageId:', formattedImageId);
+    
+    // If previewImages is available and has the image ID, use it
+    if (productPreviewImages && productPreviewImages[formattedImageId]) {
+      console.log(`Using preview image for ${formattedImageId}:`, productPreviewImages[formattedImageId]);
+      return productPreviewImages[formattedImageId];
+    }
+    
+    // Fallback to null if no preview image is available
+    // console.log(`No preview image found for ${formattedImageId}`);
+    return null;
+  };
+
   // const product = {
   //   id: 1,
   //   title: "Advanced Algebra Workbook",
@@ -129,6 +148,18 @@ const ProductDetail = () => {
   //   image: "algebra_cover.jpg",
   //   preview: ["preview1.jpg", "preview2.jpg", "preview3.jpg"],
   // };
+
+  useEffect(() => {
+    if (product?.preview_images && Array.isArray(product.preview_images) && product.preview_images.length > 0) {
+      dispatch(fetchProductImages(product.preview_images)).then((result) => {
+        if (fetchProductImages.fulfilled.match(result)) {
+          setProductPreviewImages(result.payload);
+        }
+      });
+    } else {
+      setProductPreviewImages([]);
+    }
+  }, [dispatch, product?.preview_images]);
 
   // const relatedProducts = [
   //   {
@@ -265,7 +296,7 @@ const ProductDetail = () => {
 
               {/* Preview thumbnails */}
               <div className="grid grid-cols-3 gap-2">
-                {product?.preview?.map((img, index) => (
+                {product?.preview_images?.map((img, index) => (
                   <div
                     key={index}
                     className="rounded-lg overflow-hidden shadow-md"
@@ -277,7 +308,7 @@ const ProductDetail = () => {
                     <div
                       className="h-20 bg-cover bg-center"
                       style={{
-                        backgroundImage: `url(${img})`,
+                        backgroundImage: `url(${getImageUrl(img ||"")})`,
                         backgroundColor: colors.cardBg,
                       }}
                     />
