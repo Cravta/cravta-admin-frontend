@@ -19,6 +19,7 @@ import {
     DollarSign,
     Upload,
     Receipt,
+    SquareKanban,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import Logo1 from "../../../assets/LOGO-01.png";
@@ -247,6 +248,26 @@ const Sidebar = ({
                                         style={{ color: colors.primary }}
                                     />
                                     Sales Analytics
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    onClick={() => navigate("/market/product/management")}
+                                    className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                                    style={{
+                                        backgroundColor:
+                                            (pathname === "/market/product/management")
+                                                ? colors.navActiveBg
+                                                : "transparent",
+                                        color:
+                                            (pathname === "/market/product/management") ? colors.primary : colors.text,
+                                    }}
+                                >
+                                    <SquareKanban
+                                        className="w-5 h-5 mr-3"
+                                        style={{ color: colors.primary }}
+                                    />
+                                    Product Management
                                 </button>
                             </li>
                             {/* <li>

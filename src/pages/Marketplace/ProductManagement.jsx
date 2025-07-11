@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Search,
   Filter,
@@ -16,13 +16,30 @@ import {
   ChevronDown,
   RefreshCw,
 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProductsStats, fetchProductsWithStatus, downloadProductById } from "../../store/admin/market/productSlice";
+import DocumentPreviewModal from "../../components/modals/DocumentPreviewModal";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const AdminProductManagement = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [showActionMenu, setShowActionMenu] = useState(null);
-
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [documentUrl, setDocumentUrl] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  useEffect(() => {
+    console.log('Dispatching fetchProductsStats...');
+    dispatch(fetchProductsStats());
+    dispatch(fetchProductsWithStatus());
+  }, [dispatch]);
+  const {productStats, loading, error,products} = useSelector(state => state.product);
+  
   // Colors for dark mode (same as your component)
   const colors = {
     primary: "#bb86fc",
@@ -45,101 +62,107 @@ const AdminProductManagement = () => {
   };
 
   // Dummy data
-  const products = [
-    {
-      id: 1,
-      title: "Advanced Algebra Workbook",
-      teacher: "Dr. Smith",
-      subject: "Mathematics",
-      grade: "Grade 10",
-      price: 250,
-      status: "pending",
-      uploadDate: "2024-01-15",
-      views: 0,
-      sales: 0,
-      rating: 0,
-    },
-    {
-      id: 2,
-      title: "Chemistry Lab Manual",
-      teacher: "Prof. Johnson",
-      subject: "Science",
-      grade: "Grade 11",
-      price: 300,
-      status: "approved",
-      uploadDate: "2024-01-10",
-      views: 156,
-      sales: 23,
-      rating: 4.5,
-    },
-    {
-      id: 3,
-      title: "English Grammar Guide",
-      teacher: "Ms. Davis",
-      subject: "English",
-      grade: "Grade 9",
-      price: 200,
-      status: "approved",
-      uploadDate: "2024-01-08",
-      views: 234,
-      sales: 45,
-      rating: 4.8,
-    },
-    {
-      id: 4,
-      title: "Physics Problem Sets",
-      teacher: "Dr. Wilson",
-      subject: "Physics",
-      grade: "Grade 12",
-      price: 350,
-      status: "rejected",
-      uploadDate: "2024-01-12",
-      views: 0,
-      sales: 0,
-      rating: 0,
-      rejectionReason: "Poor quality content",
-    },
-    {
-      id: 5,
-      title: "History Timeline Workbook",
-      teacher: "Mr. Brown",
-      subject: "History",
-      grade: "Grade 8",
-      price: 180,
-      status: "archived",
-      uploadDate: "2023-12-20",
-      views: 89,
-      sales: 12,
-      rating: 3.9,
-    },
-    {
-      id: 6,
-      title: "Biology Lab Reports",
-      teacher: "Dr. Taylor",
-      subject: "Biology",
-      grade: "Grade 11",
-      price: 280,
-      status: "pending",
-      uploadDate: "2024-01-16",
-      views: 0,
-      sales: 0,
-      rating: 0,
-    },
-  ];
+  // const products = [
+  //   {
+  //     id: 1,
+  //     title: "Advanced Algebra Workbook",
+  //     teacher: "Dr. Smith",
+  //     subject: "Mathematics",
+  //     grade: "Grade 10",
+  //     price: 250,
+  //     status: "pending",
+  //     uploadDate: "2024-01-15",
+  //     views: 0,
+  //     sales: 0,
+  //     rating: 0,
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Chemistry Lab Manual",
+  //     teacher: "Prof. Johnson",
+  //     subject: "Science",
+  //     grade: "Grade 11",
+  //     price: 300,
+  //     status: "approved",
+  //     uploadDate: "2024-01-10",
+  //     views: 156,
+  //     sales: 23,
+  //     rating: 4.5,
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "English Grammar Guide",
+  //     teacher: "Ms. Davis",
+  //     subject: "English",
+  //     grade: "Grade 9",
+  //     price: 200,
+  //     status: "approved",
+  //     uploadDate: "2024-01-08",
+  //     views: 234,
+  //     sales: 45,
+  //     rating: 4.8,
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Physics Problem Sets",
+  //     teacher: "Dr. Wilson",
+  //     subject: "Physics",
+  //     grade: "Grade 12",
+  //     price: 350,
+  //     status: "rejected",
+  //     uploadDate: "2024-01-12",
+  //     views: 0,
+  //     sales: 0,
+  //     rating: 0,
+  //     rejectionReason: "Poor quality content",
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "History Timeline Workbook",
+  //     teacher: "Mr. Brown",
+  //     subject: "History",
+  //     grade: "Grade 8",
+  //     price: 180,
+  //     status: "archived",
+  //     uploadDate: "2023-12-20",
+  //     views: 89,
+  //     sales: 12,
+  //     rating: 3.9,
+  //   },
+  //   {
+  //     id: 6,
+  //     title: "Biology Lab Reports",
+  //     teacher: "Dr. Taylor",
+  //     subject: "Biology",
+  //     grade: "Grade 11",
+  //     price: 280,
+  //     status: "pending",
+  //     uploadDate: "2024-01-16",
+  //     views: 0,
+  //     sales: 0,
+  //     rating: 0,
+  //   },
+  // ];
 
   // Filter products based on status and search
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = products?.filter((product) => {
     const matchesStatus =
-      selectedStatus === "all" || product.status === selectedStatus;
+      selectedStatus === "all" || product?.status === selectedStatus;
     const matchesSearch =
-      product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.subject.toLowerCase().includes(searchQuery.toLowerCase());
+      product?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product?.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product?.subject.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
-
-  // Statistics
-  const stats = {
+  console.log('Filtered products:', products);
+  // Statistics - use API data if available, otherwise use dummy data
+  const stats = productStats ? {
+    total: productStats.totalProducts || 0,
+    pending: productStats.pending || 0,
+    approved: productStats.approved || 0,
+    rejected: productStats.rejected || 0,
+    archived: productStats.archived || 0,
+  } : {
     total: products.length,
     pending: products.filter((p) => p.status === "pending").length,
     approved: products.filter((p) => p.status === "approved").length,
@@ -180,9 +203,44 @@ const AdminProductManagement = () => {
           color: style.text,
         }}
       >
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {status?.charAt(0).toUpperCase() + status?.slice(1)}
       </span>
     );
+  };
+
+  // Handle preview button click
+  const handlePreviewClick = async (product) => {
+    setPreviewLoading(true);
+    setSelectedProduct(product);
+    setShowPreviewModal(true);
+
+    try {
+      // Get the first image from the product's image array
+      if (product?.product_id) {
+        const result = await dispatch(downloadProductById(product?.product_id)).unwrap();
+        
+        if (result?.uploadDocURL) {
+          setDocumentUrl(result.uploadDocURL);
+        } else {
+          toast.error('No preview document available');
+        }
+      } else {
+        toast.error('No preview document available');
+      }
+    } catch (error) {
+      console.error('Error loading preview:', error);
+      toast.error('Failed to load preview document');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    setShowPreviewModal(false);
+    setDocumentUrl(null);
+    setSelectedProduct(null);
+    setPreviewLoading(false);
   };
 
   return (
@@ -201,6 +259,13 @@ const AdminProductManagement = () => {
         <p style={{ color: colors.text }}>
           Review and manage teacher-uploaded products
         </p>
+        
+        {/* Debug Info */}
+        {loading && (
+          <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: colors.warning, color: '#000' }}>
+            Loading product stats...
+          </div>
+        )}
       </div>
 
       {/* Statistics Cards */}
@@ -287,7 +352,7 @@ const AdminProductManagement = () => {
               className="text-2xl font-bold"
               style={{ color: colors.lightText }}
             >
-              $12,450
+              SAR {productStats?.totalRevenue??0}
             </span>
           </div>
           <p className="text-sm" style={{ color: colors.text }}>
@@ -474,12 +539,12 @@ const AdminProductManagement = () => {
                       className="text-sm"
                       style={{ color: "rgba(224, 224, 224, 0.6)" }}
                     >
-                      Uploaded: {product.uploadDate}
+                      Uploaded: {product.createdAt.substring(0, 10)}
                     </p>
                   </div>
                 </td>
                 <td className="p-4">
-                  <p style={{ color: colors.text }}>{product.teacher}</p>
+                  <p style={{ color: colors.text }}>{product.isAdmin ? "Cravta" : product.uploader_name}</p>
                 </td>
                 <td className="p-4">
                   <p style={{ color: colors.text }}>{product.subject}</p>
@@ -496,7 +561,7 @@ const AdminProductManagement = () => {
                   </p>
                 </td>
                 <td className="p-4">
-                  {getStatusBadge(product.status)}
+                  {getStatusBadge(product.publishing_status)}
                   {product.rejectionReason && (
                     <p className="text-xs mt-1" style={{ color: colors.error }}>
                       {product.rejectionReason}
@@ -505,8 +570,8 @@ const AdminProductManagement = () => {
                 </td>
                 <td className="p-4">
                   <div className="text-sm">
-                    <p style={{ color: colors.text }}>Views: {product.views}</p>
-                    <p style={{ color: colors.text }}>Sales: {product.sales}</p>
+                    <p style={{ color: colors.text }}>Views: {product.views??0}</p>
+                    <p style={{ color: colors.text }}>Sales: {product.sales??0}</p>
                     {product.rating > 0 && (
                       <p style={{ color: colors.accent }}>
                         Rating: {product.rating}⭐
@@ -516,7 +581,7 @@ const AdminProductManagement = () => {
                 </td>
                 <td className="p-4">
                   <div className="flex items-center space-x-2">
-                    {product.status === "pending" && (
+                    {product.publishing_status.toLowerCase() === "pending" && (
                       <>
                         <button
                           className="p-2 rounded-lg hover:bg-opacity-20"
@@ -548,6 +613,7 @@ const AdminProductManagement = () => {
                         color: colors.primary,
                       }}
                       title="Preview"
+                      onClick={() => handlePreviewClick(product)}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -606,10 +672,11 @@ const AdminProductManagement = () => {
                               color: colors.text,
                               backgroundColor: "transparent",
                             }}
+                            onClick={() => navigate(`/market/marketplace/product/${product.id}`)}
                           >
                             View Details
                           </button>
-                          <button
+                          {/* <button
                             className="w-full px-4 py-2 text-left hover:bg-opacity-20"
                             style={{
                               color: colors.text,
@@ -626,7 +693,7 @@ const AdminProductManagement = () => {
                             }}
                           >
                             Contact Teacher
-                          </button>
+                          </button> */}
                           <button
                             className="w-full px-4 py-2 text-left hover:bg-opacity-20"
                             style={{
@@ -690,6 +757,16 @@ const AdminProductManagement = () => {
           </div>
         )}
       </div>
+
+      {/* Document Preview Modal */}
+      <DocumentPreviewModal
+        isOpen={showPreviewModal}
+        onClose={handleCloseModal}
+        documentUrl={documentUrl}
+        title={`Document Preview - ${selectedProduct?.title || 'Product'}`}
+        loading={previewLoading}
+        colors={colors}
+      />
     </div>
   );
 };

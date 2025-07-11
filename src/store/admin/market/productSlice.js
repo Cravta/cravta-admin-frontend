@@ -117,11 +117,50 @@ export const fetchProductImages = createAsyncThunk(
         }
     }
 );
+export const fetchProductsStats = createAsyncThunk(
+    "market/fetchProductsStats",
+    async (_, { rejectWithValue }) => {
+        try {
+            const token = getAuthToken();
+            const response = await axios.get(`${API_BASE_URL}/products-stats`, {
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+            });
+            console.log('API response for products stats:', response.data);
+            return response.data.data;
+        } catch (error) {
+            console.error('Error in fetchProductsStats:', error.response?.data || error.message);
+            return rejectWithValue(error.response?.data?.message || "Error fetching products stats");
+        }
+    }
+);
+export const fetchProductsWithStatus = createAsyncThunk(
+    "market/fetchProductsWithStatus",
+    async (_, { rejectWithValue }) => {
+        try {
+            const token = getAuthToken();
+            const response = await axios.get(`${API_BASE_URL}/products`, {
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+            });
+            console.log('API response for products stats:', response.data);
+            return response.data.data;
+        } catch (error) {
+            console.error('Error in fetchProductsStats:', error.response?.data || error.message);
+            return rejectWithValue(error.response?.data?.message || "Error fetching products stats");
+        }
+    }
+);
 const productSlice = createSlice({
     name: "products",
     initialState: {
         products: [],
         previewImages: [],
+        productStats:null,
         product: null,
         productId:null,
         loading: false,
@@ -221,6 +260,32 @@ const productSlice = createSlice({
             .addCase(fetchPreviewImages.fulfilled, (state, action) => {
                 state.loading = false;
                 state.previewImages = action.payload;
+            })
+            .addCase(fetchProductsStats.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchProductsStats.fulfilled, (state, action) => {
+                state.loading = false;
+                state.productStats = action.payload;
+                state.error = null;
+            })
+            .addCase(fetchProductsStats.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(fetchProductsWithStatus.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchProductsWithStatus.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = "Products fetched successfully!";
+                state.products = action.payload.products;
+            })
+            .addCase(fetchProductsWithStatus.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             });
     },
 });
