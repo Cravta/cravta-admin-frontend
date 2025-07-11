@@ -17,10 +17,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProductsStats, fetchProductsWithStatus, downloadProductById } from "../../store/admin/market/productSlice";
+import { fetchProductsStats, fetchProductsWithStatus, downloadProductById, updateProductStatus, deleteProduct } from "../../store/admin/market/productSlice";
 import DocumentPreviewModal from "../../components/modals/DocumentPreviewModal";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import RejectionReasonModal from "../../components/modals/RejectionReasonModal";
 
 const AdminProductManagement = () => {
   const dispatch = useDispatch();
@@ -33,6 +34,9 @@ const AdminProductManagement = () => {
   const [documentUrl, setDocumentUrl] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [rejectionLoading, setRejectionLoading] = useState(false);
+  const [rejectionProduct, setRejectionProduct] = useState(null);
   useEffect(() => {
     console.log('Dispatching fetchProductsStats...');
     dispatch(fetchProductsStats());
@@ -147,14 +151,13 @@ const AdminProductManagement = () => {
   // Filter products based on status and search
   const filteredProducts = products?.filter((product) => {
     const matchesStatus =
-      selectedStatus === "all" || product?.status === selectedStatus;
+      selectedStatus === "all" || product?.publishing_status === selectedStatus;
     const matchesSearch =
       product?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product?.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product?.subject.toLowerCase().includes(searchQuery.toLowerCase());
+      product?.uploader_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product?.subject?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
-  console.log('Filtered products:', products);
   // Statistics - use API data if available, otherwise use dummy data
   const stats = productStats ? {
     total: productStats.totalProducts || 0,
@@ -193,7 +196,7 @@ const AdminProductManagement = () => {
       archived: { bg: colors.borderColor, text: colors.text },
     };
 
-    const style = styles[status] || styles.pending;
+    const style = styles[status.toLowerCase()] || styles.pending;
 
     return (
       <span
@@ -241,6 +244,81 @@ const AdminProductManagement = () => {
     setDocumentUrl(null);
     setSelectedProduct(null);
     setPreviewLoading(false);
+  };
+
+  // Add handlers for Approve/Reject
+  const handleApprove = async (product) => {
+    try {
+      await dispatch(updateProductStatus({ id: product.id, status: "Approved" })).unwrap();
+      toast.success("Product approved successfully!");
+      dispatch(fetchProductsWithStatus());
+      dispatch(fetchProductsStats());
+    } catch (err) {
+      toast.error(err || "Failed to approve product");
+    }
+  };
+
+  const handleReject = (product) => {
+    setRejectionProduct(product);
+    setShowRejectionModal(true);
+  };
+
+  const handleRejectionSubmit = async (reason) => {
+    if (!rejectionProduct) return;
+    setRejectionLoading(true);
+    try {
+      await dispatch(updateProductStatus({ id: rejectionProduct.id, status: "Rejected", rejection_reason: reason })).unwrap();
+      toast.success("Product rejected successfully!");
+      setShowRejectionModal(false);
+      setRejectionProduct(null);
+      dispatch(fetchProductsWithStatus());
+      dispatch(fetchProductsStats());
+    } catch (err) {
+      toast.error(err || "Failed to reject product");
+    } finally {
+      setRejectionLoading(false);
+    }
+  };
+
+  const handleRejectionCancel = () => {
+    setShowRejectionModal(false);
+    setRejectionProduct(null);
+  };
+
+  const handleArchive = async (product) => {
+    try {
+      await dispatch(updateProductStatus({ id: product.id, status: "Archived" })).unwrap();
+      toast.success("Product archived successfully!");
+      dispatch(fetchProductsWithStatus());
+      dispatch(fetchProductsStats());
+    } catch (err) {
+      toast.error(err || "Failed to archive product");
+    }
+  };
+
+  const handleUnarchive = async (product) => {
+    try {
+      await dispatch(updateProductStatus({ id: product.id, status: "Approved" })).unwrap();
+      toast.success("Product unarchived (approved) successfully!");
+      dispatch(fetchProductsWithStatus());
+      dispatch(fetchProductsStats());
+    } catch (err) {
+      toast.error(err || "Failed to unarchive product");
+    }
+  };
+
+  const handleDeleteProduct = async (product) => {
+    if (!window.confirm(`Are you sure you want to delete "${product.title}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await dispatch(deleteProduct(product.id)).unwrap();
+      toast.success("Product deleted successfully!");
+      dispatch(fetchProductsWithStatus());
+      dispatch(fetchProductsStats());
+    } catch (err) {
+      toast.error(err?.message || "Failed to delete product");
+    }
   };
 
   return (
@@ -401,12 +479,16 @@ const AdminProductManagement = () => {
                 color: colors.primary,
                 border: `1px solid ${colors.primary}`,
               }}
+              onClick={() => {
+                dispatch(fetchProductsStats())
+                dispatch(fetchProductsWithStatus());
+              }}
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </button>
 
-            <button
+            {/* <button
               className="px-4 py-2 rounded-lg font-medium flex items-center"
               style={{
                 backgroundColor: colors.primary,
@@ -415,13 +497,13 @@ const AdminProductManagement = () => {
             >
               <Download className="w-4 h-4 mr-2" />
               Export
-            </button>
+            </button> */}
           </div>
         </div>
 
         {/* Status Filters */}
         <div className="flex items-center space-x-4">
-          {["all", "pending", "approved", "rejected", "archived"].map(
+          {["all", "Pending", "Approved", "Rejected", "Archived"].map(
             (status) => (
               <button
                 key={status}
@@ -452,7 +534,7 @@ const AdminProductManagement = () => {
                 >
                   {status === "all"
                     ? stats.total
-                    : products.filter((p) => p.status === status).length}
+                    : products.filter((p) => p.publishing_status === status).length}
                 </span>
               </button>
             )
@@ -471,7 +553,7 @@ const AdminProductManagement = () => {
         <table className="w-full">
           <thead>
             <tr style={{ backgroundColor: colors.cardBg }}>
-              <th className="p-4 text-left">
+              {/* <th className="p-4 text-left">
                 <input
                   type="checkbox"
                   checked={
@@ -482,7 +564,7 @@ const AdminProductManagement = () => {
                   className="rounded"
                   style={{ accentColor: colors.primary }}
                 />
-              </th>
+              </th> */}
               <th className="p-4 text-left" style={{ color: colors.primary }}>
                 Product
               </th>
@@ -518,7 +600,7 @@ const AdminProductManagement = () => {
                     : "transparent",
                 }}
               >
-                <td className="p-4">
+                {/* <td className="p-4">
                   <input
                     type="checkbox"
                     checked={selectedProducts.includes(product.id)}
@@ -526,7 +608,7 @@ const AdminProductManagement = () => {
                     className="rounded"
                     style={{ accentColor: colors.primary }}
                   />
-                </td>
+                </td> */}
                 <td className="p-4">
                   <div>
                     <h3
@@ -562,9 +644,9 @@ const AdminProductManagement = () => {
                 </td>
                 <td className="p-4">
                   {getStatusBadge(product.publishing_status)}
-                  {product.rejectionReason && (
+                  {product.rejection_reason && (
                     <p className="text-xs mt-1" style={{ color: colors.error }}>
-                      {product.rejectionReason}
+                      {product.rejection_reason}
                     </p>
                   )}
                 </td>
@@ -590,6 +672,7 @@ const AdminProductManagement = () => {
                             color: colors.success,
                           }}
                           title="Approve"
+                          onClick={() => handleApprove(product)}
                         >
                           <CheckCircle className="w-4 h-4" />
                         </button>
@@ -600,6 +683,7 @@ const AdminProductManagement = () => {
                             color: colors.error,
                           }}
                           title="Reject"
+                          onClick={() => handleReject(product)}
                         >
                           <XCircle className="w-4 h-4" />
                         </button>
@@ -618,29 +702,31 @@ const AdminProductManagement = () => {
                       <Eye className="w-4 h-4" />
                     </button>
 
-                    {product.status === "approved" && (
+                    {product.publishing_status === "Archived" ? (
                       <button
                         className="p-2 rounded-lg hover:bg-opacity-20"
                         style={{
                           backgroundColor: "rgba(255, 152, 0, 0.1)",
                           color: colors.warning,
                         }}
-                        title="Hide"
+                        title="Unhide"
+                        onClick={() => handleUnarchive(product)}
                       >
                         <EyeOff className="w-4 h-4" />
                       </button>
+                    ) : (
+                      <button
+                        className="p-2 rounded-lg hover:bg-opacity-20"
+                        style={{
+                          backgroundColor: "rgba(187, 134, 252, 0.1)",
+                          color: colors.text,
+                        }}
+                        title="Archive"
+                        onClick={() => handleArchive(product)}
+                      >
+                        <Archive className="w-4 h-4" />
+                      </button>
                     )}
-
-                    <button
-                      className="p-2 rounded-lg hover:bg-opacity-20"
-                      style={{
-                        backgroundColor: "rgba(187, 134, 252, 0.1)",
-                        color: colors.text,
-                      }}
-                      title="Archive"
-                    >
-                      <Archive className="w-4 h-4" />
-                    </button>
 
                     <div className="relative">
                       <button
@@ -700,6 +786,7 @@ const AdminProductManagement = () => {
                               color: colors.error,
                               backgroundColor: "transparent",
                             }}
+                            onClick={() => handleDeleteProduct(product)}
                           >
                             Delete Product
                           </button>
@@ -766,6 +853,14 @@ const AdminProductManagement = () => {
         title={`Document Preview - ${selectedProduct?.title || 'Product'}`}
         loading={previewLoading}
         colors={colors}
+      />
+
+      <RejectionReasonModal
+        isOpen={showRejectionModal}
+        onClose={handleRejectionCancel}
+        onSubmit={handleRejectionSubmit}
+        loading={rejectionLoading}
+        productTitle={rejectionProduct?.title}
       />
     </div>
   );

@@ -29,10 +29,82 @@ const Marketplace = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [filters, setFilters] = useState({
+    minPrice: null,
+    maxPrice: null,
+    minRating: null,
+    maxRating: null,
+    subject: "",              // Subject ID
+    grade: "",                // Grade
+    contentType: "",          // Content type
+    sortBy: "createdAt",      // Can be 'price' or 'rating'
+    sortOrder: "desc",        // 'asc' or 'desc'
+    page: 1,
+    limit: 10,
+    featured: "",             // true/false
+    publishingStatus: "",     // e.g., 'published', 'draft'
+    userType: "",             // 'teacher', 'admin'
+  });
   const {products, previewImages} = useSelector((state)=> state.product)
   useEffect(() => {
     dispatch(fetchAllMarketProducts());
   },[])
+  const handleSortChange = (e) => {
+    const value = e.target.value;
+
+    switch (value) {
+      case "Featured":
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+          featured: true,
+        }));
+        break;
+      case "Price: Low to High":
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "price",
+          sortOrder: "asc",
+          featured: "",
+        }));
+        break;
+      case "Price: High to Low":
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "price",
+          sortOrder: "desc",
+          featured: "",
+        }));
+        break;
+      case "Rating":
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "rating",
+          sortOrder: "desc",
+          featured: "",
+        }));
+        break;
+      case "Newest":
+      default:
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+          featured: "",
+        }));
+        break;
+    }
+  };
+
+
+  const updateFilter = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
   // Colors for dark mode
   const colors = {
     primary: "#bb86fc",
@@ -69,7 +141,7 @@ const Marketplace = () => {
   };
 
   useEffect(() => {
-    // setFilteredProducts(products || []);
+    setFilteredProducts(products || []);
     
     // Collect all image_array[0] values from products
     if (products && products.length > 0) {
@@ -88,6 +160,18 @@ const Marketplace = () => {
       }
     }
   }, [products, dispatch]);
+  useEffect(() => {
+    const queryParams = Object.fromEntries(
+        Object.entries(filters).filter(
+            ([, value]) =>
+                value !== null &&
+                value !== "" &&
+                value !== undefined
+        )
+    );
+
+    dispatch(fetchAllMarketProducts(queryParams));
+  }, [filters]);
   // const products = [
   //   {
   //     id: 1,
@@ -417,6 +501,7 @@ const Marketplace = () => {
                 color: colors.text,
                 border: `1px solid ${colors.borderColor}`,
               }}
+              onChange={handleSortChange}
             >
               <option>Featured</option>
               <option>Price: Low to High</option>
@@ -450,12 +535,13 @@ const Marketplace = () => {
                   color: colors.text,
                   border: `1px solid ${colors.borderColor}`,
                 }}
+                onChange={(e) => updateFilter("subject", e.target.value)}
               >
-                <option>All Subjects</option>
-                <option>Mathematics</option>
-                <option>Science</option>
-                <option>English</option>
-                <option>History</option>
+                <option value="">All Subjects</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Science">Science</option>
+                <option value="English">English</option>
+                <option value="History">History</option>
               </select>
             </div>
 
@@ -473,14 +559,15 @@ const Marketplace = () => {
                   color: colors.text,
                   border: `1px solid ${colors.borderColor}`,
                 }}
+                onChange={(e) => updateFilter("grade", e.target.value)}
               >
-                <option>All Grades</option>
-                <option>Grade 7</option>
-                <option>Grade 8</option>
-                <option>Grade 9</option>
-                <option>Grade 10</option>
-                <option>Grade 11</option>
-                <option>Grade 12</option>
+                <option value="">All Grades</option>
+                <option value="7">Grade 7</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
               </select>
             </div>
 
@@ -498,12 +585,13 @@ const Marketplace = () => {
                   color: colors.text,
                   border: `1px solid ${colors.borderColor}`,
                 }}
+                onChange={(e) => updateFilter("contentType", e.target.value)}
               >
-                <option>All Types</option>
-                <option>Textbooks</option>
-                <option>Workbooks</option>
-                <option>Study Guides</option>
-                <option>Practice Tests</option>
+                <option value="">All Types</option>
+                <option value="Textbook">Textbooks</option>
+                <option value="Book">Workbooks</option>
+                <option value="Guide">Study Guides</option>
+                <option value="Test">Practice Tests</option>
               </select>
             </div>
 
@@ -521,12 +609,31 @@ const Marketplace = () => {
                   color: colors.text,
                   border: `1px solid ${colors.borderColor}`,
                 }}
+                onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "under100") {
+                      updateFilter("minPrice", 0);
+                      updateFilter("maxPrice", 100);
+                    } else if (value === "100-250") {
+                      updateFilter("minPrice", 100);
+                      updateFilter("maxPrice", 250);
+                    } else if (value === "250-500") {
+                      updateFilter("minPrice", 250);
+                      updateFilter("maxPrice", 500);
+                    } else if (value === "over500") {
+                      updateFilter("minPrice", 500);
+                      updateFilter("maxPrice", null);
+                    } else {
+                      updateFilter("minPrice", null);
+                      updateFilter("maxPrice", null);
+                    }
+                  }}
               >
-                <option>Any Price</option>
-                <option>Under 100 Sparks</option>
-                <option>100-250 Sparks</option>
-                <option>250-500 Sparks</option>
-                <option>Over 500 Sparks</option>
+                <option value="">Any Price</option>
+                <option value="under100">Under 100 Sparks</option>
+                <option value="100-250">100–250 Sparks</option>
+                <option value="250-500">250–500 Sparks</option>
+                <option value="over500">Over 500 Sparks</option>
               </select>
             </div>
 
@@ -679,7 +786,7 @@ const Marketplace = () => {
                     </div>
                   </div>
                 ))}
-              {products.filter((product) => product.featured).length === 0 && (
+              {filteredProducts.filter((product) => product.featured).length === 0 && (
                 <div className="p-4 text-start">
                   <h4
                     className="font-medium mb-2"
@@ -709,7 +816,7 @@ const Marketplace = () => {
 
             {viewMode === "grid" ? (
               <div className="grid grid-cols-3 gap-6">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <div
                     key={product.id}
                     className="rounded-lg overflow-hidden shadow-md transition-transform duration-300 hover:transform hover:scale-105"
@@ -811,7 +918,7 @@ const Marketplace = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <div
                     key={product.id}
                     className="rounded-lg overflow-hidden shadow-md flex"

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import {toast} from "react-toastify";
+import api from "../../../api/axiosInstance";
 
 const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/market`;
 
@@ -9,15 +10,45 @@ const getAuthToken = () => localStorage.getItem("token");
 // Fetch all Questions
 export const fetchAllMarketProducts = createAsyncThunk(
     "market/allProducts",
-    async (_, { rejectWithValue }) => {
+    async (queryParams = {}, { rejectWithValue }) => {
         try {
             const token = getAuthToken();
-            const response = await axios.get(API_BASE_URL, {
-                headers: { Authorization: `Bearer ${token}` },
+
+            const searchParams = new URLSearchParams();
+
+            Object.entries(queryParams).forEach(([key, value]) => {
+                if (
+                    value !== undefined &&
+                    value !== null &&
+                    !(typeof value === "string" && value.trim() === "") &&
+                    !(Array.isArray(value) && value.length === 0)
+                ) {
+                    // If it's an array, add multiple params
+                    if (Array.isArray(value)) {
+                        value.forEach((v) => {
+                            if (v !== null && v !== undefined && `${v}`.trim() !== "") {
+                                searchParams.append(key, v);
+                            }
+                        });
+                    } else {
+                        searchParams.append(key, value);
+                    }
+                }
             });
+
+            const url = `${API_BASE_URL}?${searchParams.toString()}`;
+
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
             return response.data.data;
         } catch (error) {
-            return rejectWithValue(error.response?.data?.message || "Error fetching products");
+            return rejectWithValue(
+                error?.response?.data?.message || "Error fetching products"
+            );
         }
     }
 );
@@ -147,11 +178,43 @@ export const fetchProductsWithStatus = createAsyncThunk(
                     'Content-Type': 'application/json'
                 },
             });
-            console.log('API response for products stats:', response.data);
             return response.data.data;
         } catch (error) {
             console.error('Error in fetchProductsStats:', error.response?.data || error.message);
             return rejectWithValue(error.response?.data?.message || "Error fetching products stats");
+        }
+    }
+);
+export const updateProductStatus = createAsyncThunk(
+    "market/updateProductStatus",
+    async (data, { rejectWithValue }) => {
+        try {
+            const token = getAuthToken();
+            const response = await axios.patch(`${API_BASE_URL}/status/${data.id}`, data, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return response.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || "Error creating product");
+        }
+    }
+)
+export const deleteProduct = createAsyncThunk(
+    "classes/deleteProduct",
+    async (id, { rejectWithValue }) => {
+        try {
+            if (!id) {
+                throw new Error("classId is required");
+            }
+
+            const token = localStorage.getItem("token");
+            await api.delete(`${API_BASE_URL}/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            return id;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Error deleting class");
         }
     }
 );
