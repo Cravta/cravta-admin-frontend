@@ -22,9 +22,11 @@ import Logo1 from "../../assets/LOGO-01.png";
 import { useNavigate } from "react-router-dom";
 import { fetchAllMarketProducts, fetchPreviewImages } from "../../store/admin/market/productSlice";
 import { useDispatch, useSelector } from "react-redux";
-
+import {useTheme} from "../../contexts/ThemeContext";
 const Marketplace = () => {
   const navigate = useNavigate();
+  // Colors for dark mode
+  const {colors} = useTheme()
   const dispatch = useDispatch();
   const [darkMode, setDarkMode] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
@@ -104,23 +106,6 @@ const Marketplace = () => {
       ...prev,
       [key]: value,
     }));
-  };
-  // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
   };
   const getImageUrl = (imageId) => {
     if (!imageId) return null;
@@ -542,6 +527,8 @@ const Marketplace = () => {
                 <option value="Science">Science</option>
                 <option value="English">English</option>
                 <option value="History">History</option>
+                <option value="Geography">Geography</option>
+                <option value="Computer Science">Computer Science</option>
               </select>
             </div>
 
@@ -588,10 +575,12 @@ const Marketplace = () => {
                 onChange={(e) => updateFilter("contentType", e.target.value)}
               >
                 <option value="">All Types</option>
-                <option value="Textbook">Textbooks</option>
-                <option value="Book">Workbooks</option>
-                <option value="Guide">Study Guides</option>
-                <option value="Test">Practice Tests</option>
+                <option value="Textbook">Textbook</option>
+                <option value="Workbook">Workbook</option>
+                <option value="Study Guide">Study Guide</option>
+                <option value="Practice Test">Practice Test</option>
+                <option value="Lecture Notes">Lecture Notes</option>
+                <option value="Reference Material">Reference Material</option>
               </select>
             </div>
 
@@ -637,7 +626,7 @@ const Marketplace = () => {
               </select>
             </div>
 
-            <div>
+            {/* <div>
               <label
                 className="block mb-2 text-sm font-medium"
                 style={{ color: colors.primary }}
@@ -658,7 +647,7 @@ const Marketplace = () => {
                 <option>Dr. Davis</option>
                 <option>Platform Content</option>
               </select>
-            </div>
+            </div> */}
           </div>
         )}
 
@@ -1020,6 +1009,22 @@ const Marketplace = () => {
                 ))}
               </div>
             )}
+            {filteredProducts.length === 0 && ( 
+                <div className="p-4 text-start">
+                  <h4
+                    className="font-medium mb-2"
+                    style={{ color: colors.text }}
+                  >
+                    No Products Found
+                  </h4>
+                  {/* <p
+                    className="text-sm"
+                    style={{ color: "rgba(224, 224, 224, 0.7)" }}
+                  >
+                    We couldn't find any products matching your search criteria.
+                  </p> */}
+                </div>
+              )}
           </div>
         </div>
       </div>

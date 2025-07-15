@@ -24,6 +24,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {fetchAllMarketProducts, fetchProductById, downloadProductById, fetchProductImages} from "../../store/admin/market/productSlice";
 import {toast} from "react-toastify";
 import DocumentPreviewModal from "../../components/modals/DocumentPreviewModal";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const ProductDetail = () => {
   const dispatch = useDispatch();
@@ -93,22 +94,7 @@ const ProductDetail = () => {
   };
 
   // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
-  };
+  const { colors } = useTheme()
 
   const getImageUrl = (imageId) => {
     if (!imageId) return null;

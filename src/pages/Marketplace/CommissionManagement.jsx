@@ -632,7 +632,7 @@ const CommissionManagement = () => {
                       style={{ borderColor: colors.borderColor }}
                     >
                       <td className="py-3 px-4" style={{ color: colors.text }}>
-                        #{transaction.id}
+                        #{transaction.transaction_id}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">

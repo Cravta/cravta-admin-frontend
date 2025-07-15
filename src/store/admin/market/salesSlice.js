@@ -45,10 +45,10 @@ export const fetchRecentTransactions = createAsyncThunk(
 
 export const fetchSalesSummary = createAsyncThunk(
   "sales/fetchSalesSummary",
-  async (_, { rejectWithValue }) => {
+  async (salesType = "admin", { rejectWithValue }) => {
     try {
       const token = getAuthToken();
-      const response = await axios.get(`${API_BASE_URL}/summary`, {
+      const response = await axios.get(`${API_BASE_URL}/summary?scope=${salesType}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -64,10 +64,10 @@ export const fetchSalesSummary = createAsyncThunk(
 
 export const fetchSales = createAsyncThunk(
   "sales/fetchSales",
-  async (_, { rejectWithValue }) => {
+  async (salesType = "admin", { rejectWithValue }) => {
     try {
       const token = getAuthToken();
-      const response = await axios.get(`${API_BASE_URL}`, {
+      const response = await axios.get(`${API_BASE_URL}?scope=${salesType}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -124,6 +124,7 @@ const salesSlice = createSlice({
       // Fetch Sales
       .addCase(fetchSales.pending, (state) => {
         state.loading = true;
+        state.sales = [];
         state.error = null;
       })
       .addCase(fetchSales.fulfilled, (state, action) => {

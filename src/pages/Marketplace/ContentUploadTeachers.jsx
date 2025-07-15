@@ -24,6 +24,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { createProduct, createProductSignedUrl, clearError, clearSuccess } from "../../store/admin/market/productSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const ContentUpload = () => {
   const dispatch = useDispatch();
@@ -70,22 +71,7 @@ const ContentUpload = () => {
   }, [error]);
 
   // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
-  };
+  const { colors } = useTheme();
 
   // Handle form input changes
   const handleInputChange = (e) => {

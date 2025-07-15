@@ -32,11 +32,18 @@ const PurchaseTracking = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [currentPage, setCurrentPage] = useState(1);
+  const [salesType, setSalesType] = useState("admin"); // "all" or "admin"
   const { salesSummary, sales } = useSelector((state) => state.sales);
+  
   useEffect(() => {
-    dispatch(fetchSalesSummary())
-    dispatch(fetchSales());
-  }, [dispatch]);
+    dispatch(fetchSalesSummary(salesType))
+    dispatch(fetchSales(salesType));
+  }, [dispatch, salesType]);
+
+  const handleSalesTypeChange = (type) => {
+    setSalesType(type);
+  };
+
   // Colors for dark mode
   const colors = {
     primary: "#bb86fc",
@@ -243,6 +250,60 @@ const PurchaseTracking = () => {
           className="flex-1 overflow-auto p-6"
           style={{ backgroundColor: colors.background }}
         >
+          {/* Sales Type Selector */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <h1
+                className="text-3xl font-bold mb-2"
+                style={{ color: colors.lightText }}
+              >
+                
+                Sales Analytics
+              </h1>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                  <label
+                    className="mr-3 text-sm font-medium"
+                    style={{ color: colors.text }}
+                  >
+                    Sales View:
+                  </label>
+                  <div
+                    className="relative inline-block"
+                    style={{ backgroundColor: colors.cardBgAlt }}
+                  >
+                    <select
+                      value={salesType}
+                      onChange={(e) => handleSalesTypeChange(e.target.value)}
+                      className="appearance-none px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer"
+                      style={{
+                        backgroundColor: colors.cardBgAlt,
+                        color: colors.primary,
+                        border: `1px solid ${colors.borderColor}`,
+                      }}
+                    >
+                      <option value="admin">Admin Sales</option>
+                      <option value="overall">All Sales</option>
+                    </select>
+                    <div
+                      className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none"
+                      style={{ color: colors.primary }}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p style={{ color: colors.text }}>
+              {salesType === "admin" 
+                ? "Viewing sales for current admin user" 
+                : "Viewing all sales across the platform"
+              }
+            </p>
+          </div>
+
           {/* Analytics Summary Cards */}
           <div className="grid grid-cols-4 gap-6 mb-6">
             <div
@@ -305,7 +366,8 @@ const PurchaseTracking = () => {
               </p>
             </div>
 
-            {/* <div
+            {salesType ==="overall" && 
+              <div
               className="rounded-lg shadow-md p-5"
               style={{
                 backgroundColor: colors.cardBgAlt,
@@ -327,7 +389,7 @@ const PurchaseTracking = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {salesData.netRevenue}
+                  {salesSummary?.net_revenue?.toFixed(2)??0}
                 </span>
               </div>
               <p
@@ -336,10 +398,10 @@ const PurchaseTracking = () => {
               >
                 10% commission:{" "}
                 <span style={{ color: colors.accentSecondary }}>
-                  {salesData.commissionPaid}
+                  {((salesSummary?.total_revenue??0)-(salesSummary?.net_revenue??0))?.toFixed(2)}
                 </span>
               </p>
-            </div> */}
+            </div>}
 
             <div
               className="rounded-lg shadow-md p-5"
