@@ -26,9 +26,11 @@ import {
 import Logo1 from "../../assets/LOGO-01.png";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSales, fetchSalesSummary } from "../../store/admin/market/salesSlice";
+import { useNavigate } from "react-router-dom";
 
 const PurchaseTracking = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(true);
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [currentPage, setCurrentPage] = useState(1);
@@ -158,6 +160,9 @@ const PurchaseTracking = () => {
       { month: "May", sales: 3650 },
     ],
   };
+  const chartHeight = 220; // px, or whatever you want
+  const monthlySales = salesSummary?.monthlySales ?? [];
+  const maxSales = Math.max(...monthlySales.map(m => m.sales), 1)*1.5; // avoid 0
 
   return (
     <div
@@ -471,28 +476,33 @@ const PurchaseTracking = () => {
 
               {/* Chart Placeholder */}
               <div
-                className="h-64 rounded-lg"
-                style={{ backgroundColor: colors.cardBg }}
+                className="h-[220px] rounded-lg"
+                style={{ backgroundColor: colors.cardBg, height: chartHeight }}
               >
                 {/* This would be replaced with an actual chart component */}
                 <div className="flex items-end justify-between h-full p-4">
-                  {salesData.monthlySales.map((month, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div
-                        className="w-16"
-                        style={{
-                          height: `${(month.sales / 5000) * 100}%`,
-                          backgroundColor: colors.primary,
-                        }}
-                      ></div>
-                      <span
-                        className="mt-2 text-xs"
-                        style={{ color: colors.text }}
-                      >
-                        {month.month}
-                      </span>
-                    </div>
-                  ))}
+                  {monthlySales.map((month, index) => {
+                    const barHeight = (month.sales / maxSales) * chartHeight;
+                    return (
+                      <div key={index} className="flex flex-col items-center">
+                        <div
+                          className="w-8"
+                          style={{
+                            height: `${barHeight}px`,
+                            minHeight: "2px",
+                            backgroundColor: colors.primary,
+                            transition: "height 0.3s",
+                          }}
+                        ></div>
+                        <span
+                          className="mt-2 text-xs"
+                          style={{ color: colors.text }}
+                        >
+                          {month.month}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -563,6 +573,7 @@ const PurchaseTracking = () => {
                   backgroundColor: "rgba(187, 134, 252, 0.1)",
                   color: colors.primary,
                 }}
+                onClick={() => navigate("/market/product/management")}
               >
                 View All Products
               </button>
@@ -695,7 +706,7 @@ const PurchaseTracking = () => {
             </div>
 
             {/* Pagination */}
-            <div
+            {/* <div
               className="p-4 border-t flex justify-between items-center"
               style={{ borderColor: colors.borderColor }}
             >
@@ -726,7 +737,7 @@ const PurchaseTracking = () => {
                 Next
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

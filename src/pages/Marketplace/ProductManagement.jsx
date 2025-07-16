@@ -653,7 +653,7 @@ const AdminProductManagement = () => {
                 <td className="p-4">
                   <div className="text-sm">
                     <p style={{ color: colors.text }}>Views: {product.views??0}</p>
-                    <p style={{ color: colors.text }}>Sales: {product.sales??0}</p>
+                    <p style={{ color: colors.text }}>Sales: {product.total_sales??0}</p>
                     {product.rating > 0 && (
                       <p style={{ color: colors.accent }}>
                         Rating: {product.rating}⭐
