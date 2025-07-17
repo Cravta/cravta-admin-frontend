@@ -27,6 +27,16 @@ import Logo1 from "../../assets/LOGO-01.png";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSales, fetchSalesSummary } from "../../store/admin/market/salesSlice";
 import { useNavigate } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const PurchaseTracking = () => {
   const dispatch = useDispatch();
@@ -47,22 +57,7 @@ const PurchaseTracking = () => {
   };
 
   // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
-  };
+  const {colors} = useTheme();
 
   // Mock data for sales analytics
   const salesData = {
@@ -160,9 +155,6 @@ const PurchaseTracking = () => {
       { month: "May", sales: 3650 },
     ],
   };
-  const chartHeight = 220; // px, or whatever you want
-  const monthlySales = salesSummary?.monthlySales ?? [];
-  const maxSales = Math.max(...monthlySales.map(m => m.sales), 1)*1.5; // avoid 0
 
   return (
     <div
@@ -476,34 +468,25 @@ const PurchaseTracking = () => {
 
               {/* Chart Placeholder */}
               <div
-                className="h-[220px] rounded-lg"
-                style={{ backgroundColor: colors.cardBg, height: chartHeight }}
+                className="h-64 rounded-lg"
+                style={{ backgroundColor: colors.cardBg}}
               >
-                {/* This would be replaced with an actual chart component */}
-                <div className="flex items-end justify-between h-full p-4">
-                  {monthlySales.map((month, index) => {
-                    const barHeight = (month.sales / maxSales) * chartHeight;
-                    return (
-                      <div key={index} className="flex flex-col items-center">
-                        <div
-                          className="w-8"
-                          style={{
-                            height: `${barHeight}px`,
-                            minHeight: "2px",
-                            backgroundColor: colors.primary,
-                            transition: "height 0.3s",
-                          }}
-                        ></div>
-                        <span
-                          className="mt-2 text-xs"
-                          style={{ color: colors.text }}
-                        >
-                          {month.month}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={salesSummary?.monthlySales}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={colors.borderColor} />
+                    <XAxis dataKey="month" stroke={colors.text} />
+                    <YAxis stroke={colors.text} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: colors.cardBgAlt,
+                        border: `1px solid ${colors.borderColor}`,
+                        color: colors.text,
+                      }}
+                      labelStyle={{ color: colors.lightText }}
+                    />
+                    <Bar dataKey="sales" fill={colors.primary} radius={[4, 4, 0, 0]} barSize={64} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 

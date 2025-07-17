@@ -22,9 +22,20 @@ import {
 import Logo1 from "../../assets/LOGO-01.png";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRecentTransactions, fetchSalesComission } from "../../store/admin/market/salesSlice";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const CommissionManagement = () => {
   const dispatch = useDispatch();
+  const {colors} = useTheme();
   const [darkMode, setDarkMode] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState("This Month");
@@ -34,22 +45,22 @@ const CommissionManagement = () => {
     dispatch(fetchRecentTransactions())
   }, [dispatch]);
   // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
-  };
+  // const colors = {
+  //   primary: "#bb86fc",
+  //   secondary: "#3700b3",
+  //   accent: "#03dac6",
+  //   accentLight: "#018786",
+  //   accentSecondary: "#cf6679",
+  //   text: "#e0e0e0",
+  //   lightText: "#ffffff",
+  //   background: "#121212",
+  //   cardBg: "#1e1e1e",
+  //   cardBgAlt: "#2d2d2d",
+  //   borderColor: "#333333",
+  //   sidebarBg: "#1a1a1a",
+  //   navActiveBg: "rgba(187, 134, 252, 0.12)",
+  //   inputBg: "#2d2d2d",
+  // };
 
   // Mock commission data
   const commissionData = {
@@ -449,35 +460,34 @@ const CommissionManagement = () => {
                 className="h-64 rounded-lg"
                 style={{ backgroundColor: colors.cardBg }}
               >
-                {/* This would be replaced with an actual chart component */}
-                <div className="flex items-end justify-between h-full p-4">
-                  {commissionData.monthlySummary.map((month, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div className="flex flex-col items-center space-y-1">
-                        <div
-                          className="w-12"
-                          style={{
-                            height: `${(month.commission / 1600) * 100}%`,
-                            backgroundColor: colors.accent,
-                          }}
-                        ></div>
-                        <div
-                          className="w-12"
-                          style={{
-                            height: `${(month.sales / 16000) * 100}%`,
-                            backgroundColor: colors.primary,
-                          }}
-                        ></div>
-                      </div>
-                      <span
-                        className="mt-2 text-xs"
-                        style={{ color: colors.text }}
-                      >
-                        {month.month}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={commission?.monthlySummary} barCategoryGap={20}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={colors.borderColor} />
+                    <XAxis dataKey="month" stroke={colors.text} />
+                    <YAxis stroke={colors.text} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: colors.cardBgAlt,
+                        border: `1px solid ${colors.borderColor}`,
+                        color: colors.text,
+                      }}
+                      labelStyle={{ color: colors.lightText }}
+                      itemStyle={{ color: colors.text }}
+                    />
+                    <Bar
+                      dataKey="sales"
+                      fill={colors.primary}
+                      radius={[4, 4, 0, 0]}
+                      name="Sales"
+                    />
+                    <Bar
+                      dataKey="commission"
+                      fill={colors.accent}
+                      radius={[4, 4, 0, 0]}
+                      name="Commission"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
