@@ -234,7 +234,7 @@ const Marketplace = () => {
 
   return (
     <div
-      className="flex h-screen"
+      className="flex"
       style={{ backgroundColor: colors.background }}
     >
       {/* Sidebar - same as your existing component */}

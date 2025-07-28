@@ -965,7 +965,7 @@ const ContentUpload = () => {
 
                 {/* Submit Buttons */}
                 <div className="flex justify-end space-x-3">
-                  <button
+                  {/* <button
                     onClick={handleSaveDraft}
                     disabled={isSubmitting || loading}
                     className="px-6 py-2 rounded-lg disabled:opacity-50"
@@ -976,7 +976,7 @@ const ContentUpload = () => {
                     }}
                   >
                     {isSubmitting ? "Saving..." : "Save as Draft"}
-                  </button>
+                  </button> */}
 
                   <button
                     onClick={handlePublishNow}

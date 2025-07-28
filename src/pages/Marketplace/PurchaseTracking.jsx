@@ -158,7 +158,7 @@ const PurchaseTracking = () => {
 
   return (
     <div
-      className="flex h-screen"
+      className="flex"
       style={{ backgroundColor: colors.background }}
     >
 
