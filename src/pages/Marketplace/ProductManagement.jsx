@@ -153,7 +153,7 @@ const AdminProductManagement = () => {
     const matchesStatus =
       selectedStatus === "all" || product?.publishing_status === selectedStatus;
     const matchesSearch =
-      product?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product?.uploader_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product?.subject?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
@@ -196,7 +196,7 @@ const AdminProductManagement = () => {
       archived: { bg: colors.borderColor, text: colors.text },
     };
 
-    const style = styles[status.toLowerCase()] || styles.pending;
+    const style = styles[status?.toLowerCase()] || styles.pending;
 
     return (
       <span
@@ -663,7 +663,7 @@ const AdminProductManagement = () => {
                 </td>
                 <td className="p-4">
                   <div className="flex items-center space-x-2">
-                    {product.publishing_status.toLowerCase() === "pending" && (
+                    {product?.publishing_status?.toLowerCase() === "pending" && (
                       <>
                         <button
                           className="p-2 rounded-lg hover:bg-opacity-20"
