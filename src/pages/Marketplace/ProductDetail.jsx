@@ -21,27 +21,53 @@ import Logo1 from "../../assets/LOGO-01.png";
 import {useNavigate, useParams} from "react-router-dom";
 import { use } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {fetchAllMarketProducts, fetchProductById, downloadProductById} from "../../store/admin/market/productSlice";
+import {fetchAllMarketProducts, fetchProductById, downloadProductById, fetchProductImages} from "../../store/admin/market/productSlice";
 import {toast} from "react-toastify";
+import DocumentPreviewModal from "../../components/modals/DocumentPreviewModal";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const ProductDetail = () => {
   const dispatch = useDispatch();
   const [darkMode, setDarkMode] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [documentUrl, setDocumentUrl] = useState(null);
+  const [productPreviewImages, setProductPreviewImages] = useState([]);
   const { id } = useParams();
   const navigate=useNavigate();
   useEffect(() => {
-    dispatch(fetchProductById(id));
+    dispatch(fetchProductById(id))
+      .then((result) => {
+        if (fetchProductById.fulfilled.match(result)) {
+          const productData = result.payload;
+          if (productData?.image_array && productData.image_array.length > 0) {
+            const imageId = productData.image_array[0];
+            return dispatch(downloadProductById(imageId));
+          }
+        }
+      })
+      .then((imageResult) => {
+        if (imageResult && downloadProductById.fulfilled.match(imageResult)) {
+          if (imageResult.payload.uploadDocURL) {
+            setPreviewImageUrl(imageResult.payload.uploadDocURL);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching product or image:', error);
+      });
     dispatch(fetchAllMarketProducts());
   }, [id]);
   const {product, products:relatedProducts} = useSelector((state)=> state.product)
   
   // Handle preview download
-  const handlePreviewDownload = async () => {
+  const handlePreviewView = async () => {
     setLoading(true);
     if (!id || !product?.product_id) {
       toast.error('Product ID not found');
+      setLoading(false);
       return;
     }
 
@@ -52,52 +78,40 @@ const ProductDetail = () => {
 
       if (!fileUrl) {
         toast.error('No file URL found');
+        setLoading(false);
         return;
       }
 
-      const fileRes = await fetch(fileUrl);
-      console.log("FILE RES", fileRes);
-      if (!fileRes.ok) {
-        toast.error('Failed to download file');
-        return;
-      }
-
-      const blob = await fileRes.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = product?.title || "product-sample.pdf";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
-
-      toast.success('Sample downloaded successfully!');
+      setDocumentUrl(fileUrl);
+      setShowPreviewModal(true);
       setLoading(false);
+      // toast.success('Document loaded successfully!');
     } catch (err) {
       setLoading(false);
-      console.error("Download error:", err);
-      toast.error('Something went wrong during download');
+      console.error("Preview error:", err);
+      toast.error('Something went wrong while loading the document');
     }
   };
 
   // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
+  const { colors } = useTheme()
+
+  const getImageUrl = (imageId) => {
+    if (!imageId) return null;
+    
+    // Format the image ID to match the previewImages key format (e.g., "11" -> "image_11")
+    const formattedImageId = `image_${imageId}`;
+    // console.log('Formatted imageId:', formattedImageId);
+    
+    // If previewImages is available and has the image ID, use it
+    if (productPreviewImages && productPreviewImages[formattedImageId]) {
+      console.log(`Using preview image for ${formattedImageId}:`, productPreviewImages[formattedImageId]);
+      return productPreviewImages[formattedImageId];
+    }
+    
+    // Fallback to null if no preview image is available
+    // console.log(`No preview image found for ${formattedImageId}`);
+    return null;
   };
 
   // const product = {
@@ -120,6 +134,18 @@ const ProductDetail = () => {
   //   image: "algebra_cover.jpg",
   //   preview: ["preview1.jpg", "preview2.jpg", "preview3.jpg"],
   // };
+
+  useEffect(() => {
+    if (product?.preview_images && Array.isArray(product.preview_images) && product.preview_images.length > 0) {
+      dispatch(fetchProductImages(product.preview_images)).then((result) => {
+        if (fetchProductImages.fulfilled.match(result)) {
+          setProductPreviewImages(result.payload);
+        }
+      });
+    } else {
+      setProductPreviewImages([]);
+    }
+  }, [dispatch, product?.preview_images]);
 
   // const relatedProducts = [
   //   {
@@ -144,7 +170,10 @@ const ProductDetail = () => {
   //     image: "precalc_cover.jpg",
   //   },
   // ];
-
+  const handleCloseModal = () => {
+    setShowPreviewModal(false);
+    setDocumentUrl(null);
+  }
 
 
   return (
@@ -245,7 +274,7 @@ const ProductDetail = () => {
                 <div
                   className="h-72 bg-cover bg-center"
                   style={{
-                    backgroundImage: `url(${product?.image})`,
+                    backgroundImage: previewImageUrl ? `url(${previewImageUrl})` : 'none',
                     backgroundColor: colors.cardBg,
                   }}
                 />
@@ -253,7 +282,7 @@ const ProductDetail = () => {
 
               {/* Preview thumbnails */}
               <div className="grid grid-cols-3 gap-2">
-                {product?.preview?.map((img, index) => (
+                {product?.preview_images?.map((img, index) => (
                   <div
                     key={index}
                     className="rounded-lg overflow-hidden shadow-md"
@@ -265,7 +294,7 @@ const ProductDetail = () => {
                     <div
                       className="h-20 bg-cover bg-center"
                       style={{
-                        backgroundImage: `url(${img})`,
+                        backgroundImage: `url(${getImageUrl(img ||"")})`,
                         backgroundColor: colors.cardBg,
                       }}
                     />
@@ -392,11 +421,11 @@ const ProductDetail = () => {
                     opacity: loading ? 0.6 : 1,
                     cursor: loading ? "not-allowed" : "pointer",
                   }}
-                  onClick={handlePreviewDownload}
+                  onClick={handlePreviewView}
                   disabled={loading}
                 >
-                  <Download className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  {loading ? 'Downloading...' : 'Preview Sample'}
+                  <BookOpen className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Loading...' : 'Preview Sample'}
                 </button>
 
                 <button
@@ -544,7 +573,7 @@ const ProductDetail = () => {
                 </h3>
 
                 <div className="space-y-4">
-                  {relatedProducts?.map((item) => (
+                  {relatedProducts?.slice(0, 3).map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center p-2 rounded-lg hover:bg-opacity-50 cursor-pointer"
@@ -595,6 +624,15 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+      {/* Document Preview Modal */}
+      <DocumentPreviewModal
+        isOpen={showPreviewModal}
+        onClose={handleCloseModal}
+        documentUrl={documentUrl}
+        title={`Document Preview - ${product?.title}`}
+        loading={loading}
+        colors={colors}
+      />
     </div>
   );
 };

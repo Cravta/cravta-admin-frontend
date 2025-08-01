@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bell,
   Book,
@@ -24,29 +24,40 @@ import {
   Upload,
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSales, fetchSalesSummary } from "../../store/admin/market/salesSlice";
+import { useNavigate } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const PurchaseTracking = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(true);
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [currentPage, setCurrentPage] = useState(1);
+  const [salesType, setSalesType] = useState("admin"); // "all" or "admin"
+  const { salesSummary, sales } = useSelector((state) => state.sales);
+  
+  useEffect(() => {
+    dispatch(fetchSalesSummary(salesType))
+    dispatch(fetchSales(salesType));
+  }, [dispatch, salesType]);
+
+  const handleSalesTypeChange = (type) => {
+    setSalesType(type);
+  };
 
   // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
-  };
+  const {colors} = useTheme();
 
   // Mock data for sales analytics
   const salesData = {
@@ -147,7 +158,7 @@ const PurchaseTracking = () => {
 
   return (
     <div
-      className="flex h-screen"
+      className="flex"
       style={{ backgroundColor: colors.background }}
     >
 
@@ -236,6 +247,60 @@ const PurchaseTracking = () => {
           className="flex-1 overflow-auto p-6"
           style={{ backgroundColor: colors.background }}
         >
+          {/* Sales Type Selector */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <h1
+                className="text-3xl font-bold mb-2"
+                style={{ color: colors.lightText }}
+              >
+                
+                Sales Analytics
+              </h1>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                  <label
+                    className="mr-3 text-sm font-medium"
+                    style={{ color: colors.text }}
+                  >
+                    Sales View:
+                  </label>
+                  <div
+                    className="relative inline-block"
+                    style={{ backgroundColor: colors.cardBgAlt }}
+                  >
+                    <select
+                      value={salesType}
+                      onChange={(e) => handleSalesTypeChange(e.target.value)}
+                      className="appearance-none px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer"
+                      style={{
+                        backgroundColor: colors.cardBgAlt,
+                        color: colors.primary,
+                        border: `1px solid ${colors.borderColor}`,
+                      }}
+                    >
+                      <option value="admin">Admin Sales</option>
+                      <option value="overall">All Sales</option>
+                    </select>
+                    <div
+                      className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none"
+                      style={{ color: colors.primary }}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p style={{ color: colors.text }}>
+              {salesType === "admin" 
+                ? "Viewing sales for current admin user" 
+                : "Viewing all sales across the platform"
+              }
+            </p>
+          </div>
+
           {/* Analytics Summary Cards */}
           <div className="grid grid-cols-4 gap-6 mb-6">
             <div
@@ -260,7 +325,7 @@ const PurchaseTracking = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {salesData.totalSales}
+                  {salesSummary?.total_sales??0}
                 </span>
               </div>
               <p className="text-xs" style={{ color: colors.primary }}>
@@ -290,7 +355,7 @@ const PurchaseTracking = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {salesData.totalRevenue}
+                  {salesSummary?.total_revenue??0}
                 </span>
               </div>
               <p className="text-xs" style={{ color: colors.accent }}>
@@ -298,7 +363,8 @@ const PurchaseTracking = () => {
               </p>
             </div>
 
-            <div
+            {salesType ==="overall" && 
+              <div
               className="rounded-lg shadow-md p-5"
               style={{
                 backgroundColor: colors.cardBgAlt,
@@ -320,7 +386,7 @@ const PurchaseTracking = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {salesData.netRevenue}
+                  {salesSummary?.net_revenue?.toFixed(2)??0}
                 </span>
               </div>
               <p
@@ -329,10 +395,10 @@ const PurchaseTracking = () => {
               >
                 10% commission:{" "}
                 <span style={{ color: colors.accentSecondary }}>
-                  {salesData.commissionPaid}
+                  {((salesSummary?.total_revenue??0)-(salesSummary?.net_revenue??0))?.toFixed(2)}
                 </span>
               </p>
-            </div>
+            </div>}
 
             <div
               className="rounded-lg shadow-md p-5"
@@ -345,7 +411,7 @@ const PurchaseTracking = () => {
                 className="text-sm mb-2"
                 style={{ color: "rgba(224, 224, 224, 0.7)" }}
               >
-                Current Spark Balance
+                Total Revenue in Sparks
               </p>
               <div className="flex items-center mb-2">
                 <Sparkles
@@ -356,10 +422,10 @@ const PurchaseTracking = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {salesData.sparkBalance}
+                  {salesSummary?.spark_balance??0}
                 </span>
               </div>
-              <button
+              {/* <button
                 className="text-xs px-2 py-1 rounded"
                 style={{
                   backgroundColor: "rgba(3, 218, 198, 0.1)",
@@ -367,7 +433,7 @@ const PurchaseTracking = () => {
                 }}
               >
                 Exchange for Riyals
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -403,28 +469,24 @@ const PurchaseTracking = () => {
               {/* Chart Placeholder */}
               <div
                 className="h-64 rounded-lg"
-                style={{ backgroundColor: colors.cardBg }}
+                style={{ backgroundColor: colors.cardBg}}
               >
-                {/* This would be replaced with an actual chart component */}
-                <div className="flex items-end justify-between h-full p-4">
-                  {salesData.monthlySales.map((month, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div
-                        className="w-16"
-                        style={{
-                          height: `${(month.sales / 5000) * 100}%`,
-                          backgroundColor: colors.primary,
-                        }}
-                      ></div>
-                      <span
-                        className="mt-2 text-xs"
-                        style={{ color: colors.text }}
-                      >
-                        {month.month}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={salesSummary?.monthlySales}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={colors.borderColor} />
+                    <XAxis dataKey="month" stroke={colors.text} />
+                    <YAxis stroke={colors.text} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: colors.cardBgAlt,
+                        border: `1px solid ${colors.borderColor}`,
+                        color: colors.text,
+                      }}
+                      labelStyle={{ color: colors.lightText }}
+                    />
+                    <Bar dataKey="sales" fill={colors.primary} radius={[4, 4, 0, 0]} barSize={64} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -442,7 +504,7 @@ const PurchaseTracking = () => {
               </div>
 
               <div className="space-y-4">
-                {salesData.productPerformance.map((product) => (
+                {salesSummary?.top_products?.map((product) => (
                   <div
                     key={product.id}
                     className="flex items-center p-2 rounded-lg"
@@ -468,7 +530,7 @@ const PurchaseTracking = () => {
                           className="text-xs"
                           style={{ color: "rgba(224, 224, 224, 0.5)" }}
                         >
-                          {product.sales} sales
+                          {product.total_quantity} sales
                         </p>
                         <div className="flex items-center">
                           <Sparkles
@@ -479,7 +541,7 @@ const PurchaseTracking = () => {
                             className="text-xs"
                             style={{ color: colors.primary }}
                           >
-                            {product.revenue}
+                            {product.total_sales_amount}
                           </span>
                         </div>
                       </div>
@@ -494,6 +556,7 @@ const PurchaseTracking = () => {
                   backgroundColor: "rgba(187, 134, 252, 0.1)",
                   color: colors.primary,
                 }}
+                onClick={() => navigate("/market/product/management")}
               >
                 View All Products
               </button>
@@ -572,14 +635,14 @@ const PurchaseTracking = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {salesData.recentSales.map((sale) => (
+                  {sales?.map((sale) => (
                     <tr
-                      key={sale.id}
+                      key={sale.transaction_id}
                       className="border-t"
                       style={{ borderColor: colors.borderColor }}
                     >
                       <td className="py-3 px-4" style={{ color: colors.text }}>
-                        #{sale.id}
+                        #{sale.transaction_id}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
@@ -595,12 +658,12 @@ const PurchaseTracking = () => {
                             />
                           </div>
                           <span style={{ color: colors.lightText }}>
-                            {sale.buyer}
+                            {sale.buyer.name}
                           </span>
                         </div>
                       </td>
                       <td className="py-3 px-4" style={{ color: colors.text }}>
-                        {sale.product}
+                        {sale.product.title}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end">
@@ -609,7 +672,7 @@ const PurchaseTracking = () => {
                             style={{ color: colors.primary }}
                           />
                           <span style={{ color: colors.lightText }}>
-                            {sale.amount}
+                            {sale.sale_details.total_amount}
                           </span>
                         </div>
                       </td>
@@ -617,7 +680,7 @@ const PurchaseTracking = () => {
                         className="py-3 px-4"
                         style={{ color: "rgba(224, 224, 224, 0.7)" }}
                       >
-                        {new Date(sale.date).toLocaleDateString()}
+                        {new Date(sale.sale_details.sold_at).toLocaleDateString()}
                       </td>
                     </tr>
                   ))}
@@ -626,7 +689,7 @@ const PurchaseTracking = () => {
             </div>
 
             {/* Pagination */}
-            <div
+            {/* <div
               className="p-4 border-t flex justify-between items-center"
               style={{ borderColor: colors.borderColor }}
             >
@@ -657,7 +720,7 @@ const PurchaseTracking = () => {
                 Next
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

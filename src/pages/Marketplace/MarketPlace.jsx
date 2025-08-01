@@ -20,37 +20,143 @@ import {
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
 import { useNavigate } from "react-router-dom";
-import { fetchAllMarketProducts } from "../../store/admin/market/productSlice";
+import { fetchAllMarketProducts, fetchPreviewImages } from "../../store/admin/market/productSlice";
 import { useDispatch, useSelector } from "react-redux";
-
+import {useTheme} from "../../contexts/ThemeContext";
 const Marketplace = () => {
   const navigate = useNavigate();
+  // Colors for dark mode
+  const {colors} = useTheme()
   const dispatch = useDispatch();
   const [darkMode, setDarkMode] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
   const [filterOpen, setFilterOpen] = useState(false);
-  const {products} = useSelector((state)=> state.product)
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [filters, setFilters] = useState({
+    minPrice: null,
+    maxPrice: null,
+    minRating: null,
+    maxRating: null,
+    subject: "",              // Subject ID
+    grade: "",                // Grade
+    contentType: "",          // Content type
+    sortBy: "createdAt",      // Can be 'price' or 'rating'
+    sortOrder: "desc",        // 'asc' or 'desc'
+    page: 1,
+    limit: 10,
+    featured: "",             // true/false
+    publishingStatus: "",     // e.g., 'published', 'draft'
+    userType: "",             // 'teacher', 'admin'
+  });
+  const {products, previewImages} = useSelector((state)=> state.product)
   useEffect(() => {
     dispatch(fetchAllMarketProducts());
   },[])
-  // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
+  const handleSortChange = (e) => {
+    const value = e.target.value;
+
+    switch (value) {
+      case "Featured":
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+          featured: true,
+        }));
+        break;
+      case "Price: Low to High":
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "price",
+          sortOrder: "asc",
+          featured: "",
+        }));
+        break;
+      case "Price: High to Low":
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "price",
+          sortOrder: "desc",
+          featured: "",
+        }));
+        break;
+      case "Rating":
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "rating",
+          sortOrder: "desc",
+          featured: "",
+        }));
+        break;
+      case "Newest":
+      default:
+        setFilters((prev) => ({
+          ...prev,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+          featured: "",
+        }));
+        break;
+    }
   };
 
+
+  const updateFilter = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+  const getImageUrl = (imageId) => {
+    if (!imageId) return null;
+    
+    // Format the image ID to match the previewImages key format (e.g., "11" -> "image_11")
+    const formattedImageId = `image_${imageId}`;
+    // console.log('Formatted imageId:', formattedImageId);
+    
+    // If previewImages is available and has the image ID, use it
+    if (previewImages && previewImages[formattedImageId]) {
+      console.log(`Using preview image for ${formattedImageId}:`, previewImages[formattedImageId]);
+      return previewImages[formattedImageId];
+    }
+    
+    // Fallback to null if no preview image is available
+    // console.log(`No preview image found for ${formattedImageId}`);
+    return null;
+  };
+
+  useEffect(() => {
+    setFilteredProducts(products || []);
+    
+    // Collect all image_array[0] values from products
+    if (products && products.length > 0) {
+      const imageIds = products
+        .map(product => product.image_array && product.image_array[0])
+        .filter(imageId => imageId && String(imageId).trim() !== '');
+      
+      // Remove duplicates
+      const uniqueImageIds = [...new Set(imageIds)];
+      
+      console.log('Collected image IDs:', uniqueImageIds);
+      
+      // Fetch preview images if we have image IDs
+      if (uniqueImageIds.length > 0) {
+        dispatch(fetchPreviewImages(uniqueImageIds));
+      }
+    }
+  }, [products, dispatch]);
+  useEffect(() => {
+    const queryParams = Object.fromEntries(
+        Object.entries(filters).filter(
+            ([, value]) =>
+                value !== null &&
+                value !== "" &&
+                value !== undefined
+        )
+    );
+
+    dispatch(fetchAllMarketProducts(queryParams));
+  }, [filters]);
   // const products = [
   //   {
   //     id: 1,
@@ -128,7 +234,7 @@ const Marketplace = () => {
 
   return (
     <div
-      className="flex h-screen"
+      className="flex"
       style={{ backgroundColor: colors.background }}
     >
       {/* Sidebar - same as your existing component */}
@@ -380,6 +486,7 @@ const Marketplace = () => {
                 color: colors.text,
                 border: `1px solid ${colors.borderColor}`,
               }}
+              onChange={handleSortChange}
             >
               <option>Featured</option>
               <option>Price: Low to High</option>
@@ -413,12 +520,15 @@ const Marketplace = () => {
                   color: colors.text,
                   border: `1px solid ${colors.borderColor}`,
                 }}
+                onChange={(e) => updateFilter("subject", e.target.value)}
               >
-                <option>All Subjects</option>
-                <option>Mathematics</option>
-                <option>Science</option>
-                <option>English</option>
-                <option>History</option>
+                <option value="">All Subjects</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Science">Science</option>
+                <option value="English">English</option>
+                <option value="History">History</option>
+                <option value="Geography">Geography</option>
+                <option value="Computer Science">Computer Science</option>
               </select>
             </div>
 
@@ -436,14 +546,15 @@ const Marketplace = () => {
                   color: colors.text,
                   border: `1px solid ${colors.borderColor}`,
                 }}
+                onChange={(e) => updateFilter("grade", e.target.value)}
               >
-                <option>All Grades</option>
-                <option>Grade 7</option>
-                <option>Grade 8</option>
-                <option>Grade 9</option>
-                <option>Grade 10</option>
-                <option>Grade 11</option>
-                <option>Grade 12</option>
+                <option value="">All Grades</option>
+                <option value="7">Grade 7</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
               </select>
             </div>
 
@@ -461,12 +572,15 @@ const Marketplace = () => {
                   color: colors.text,
                   border: `1px solid ${colors.borderColor}`,
                 }}
+                onChange={(e) => updateFilter("contentType", e.target.value)}
               >
-                <option>All Types</option>
-                <option>Textbooks</option>
-                <option>Workbooks</option>
-                <option>Study Guides</option>
-                <option>Practice Tests</option>
+                <option value="">All Types</option>
+                <option value="Textbook">Textbook</option>
+                <option value="Workbook">Workbook</option>
+                <option value="Study Guide">Study Guide</option>
+                <option value="Practice Test">Practice Test</option>
+                <option value="Lecture Notes">Lecture Notes</option>
+                <option value="Reference Material">Reference Material</option>
               </select>
             </div>
 
@@ -484,16 +598,35 @@ const Marketplace = () => {
                   color: colors.text,
                   border: `1px solid ${colors.borderColor}`,
                 }}
+                onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "under100") {
+                      updateFilter("minPrice", 0);
+                      updateFilter("maxPrice", 100);
+                    } else if (value === "100-250") {
+                      updateFilter("minPrice", 100);
+                      updateFilter("maxPrice", 250);
+                    } else if (value === "250-500") {
+                      updateFilter("minPrice", 250);
+                      updateFilter("maxPrice", 500);
+                    } else if (value === "over500") {
+                      updateFilter("minPrice", 500);
+                      updateFilter("maxPrice", null);
+                    } else {
+                      updateFilter("minPrice", null);
+                      updateFilter("maxPrice", null);
+                    }
+                  }}
               >
-                <option>Any Price</option>
-                <option>Under 100 Sparks</option>
-                <option>100-250 Sparks</option>
-                <option>250-500 Sparks</option>
-                <option>Over 500 Sparks</option>
+                <option value="">Any Price</option>
+                <option value="under100">Under 100 Sparks</option>
+                <option value="100-250">100–250 Sparks</option>
+                <option value="250-500">250–500 Sparks</option>
+                <option value="over500">Over 500 Sparks</option>
               </select>
             </div>
 
-            <div>
+            {/* <div>
               <label
                 className="block mb-2 text-sm font-medium"
                 style={{ color: colors.primary }}
@@ -514,7 +647,7 @@ const Marketplace = () => {
                 <option>Dr. Davis</option>
                 <option>Platform Content</option>
               </select>
-            </div>
+            </div> */}
           </div>
         )}
 
@@ -642,7 +775,7 @@ const Marketplace = () => {
                     </div>
                   </div>
                 ))}
-              {products.filter((product) => product.featured).length === 0 && (
+              {filteredProducts.filter((product) => product.featured).length === 0 && (
                 <div className="p-4 text-start">
                   <h4
                     className="font-medium mb-2"
@@ -672,7 +805,7 @@ const Marketplace = () => {
 
             {viewMode === "grid" ? (
               <div className="grid grid-cols-3 gap-6">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <div
                     key={product.id}
                     className="rounded-lg overflow-hidden shadow-md transition-transform duration-300 hover:transform hover:scale-105"
@@ -685,7 +818,9 @@ const Marketplace = () => {
                     <div
                       className="h-40 bg-cover bg-center"
                       style={{
-                        backgroundImage: `url(${product.image})`,
+                        backgroundImage: product.image_array && product.image_array[0] 
+                          ? `url(${getImageUrl(product.image_array[0]) || product.image})`
+                          : `url(${product.image})`,
                         backgroundColor: colors.cardBg,
                       }}
                     />
@@ -772,7 +907,7 @@ const Marketplace = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <div
                     key={product.id}
                     className="rounded-lg overflow-hidden shadow-md flex"
@@ -784,7 +919,9 @@ const Marketplace = () => {
                     <div
                       className="w-48 bg-cover bg-center"
                       style={{
-                        backgroundImage: `url(${product.image})`,
+                        backgroundImage: product.image_array && product.image_array[0] 
+                          ? `url(${getImageUrl(product.image_array[0]) || product.image})`
+                          : `url(${product.image})`,
                         backgroundColor: colors.cardBg,
                       }}
                     />
@@ -872,6 +1009,22 @@ const Marketplace = () => {
                 ))}
               </div>
             )}
+            {filteredProducts.length === 0 && ( 
+                <div className="p-4 text-start">
+                  <h4
+                    className="font-medium mb-2"
+                    style={{ color: colors.text }}
+                  >
+                    No Products Found
+                  </h4>
+                  {/* <p
+                    className="text-sm"
+                    style={{ color: "rgba(224, 224, 224, 0.7)" }}
+                  >
+                    We couldn't find any products matching your search criteria.
+                  </p> */}
+                </div>
+              )}
           </div>
         </div>
       </div>

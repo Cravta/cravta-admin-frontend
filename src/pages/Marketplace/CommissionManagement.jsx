@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bell,
   Settings,
@@ -20,29 +20,47 @@ import {
   Search,
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchRecentTransactions, fetchSalesComission } from "../../store/admin/market/salesSlice";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const CommissionManagement = () => {
+  const dispatch = useDispatch();
+  const {colors} = useTheme();
   const [darkMode, setDarkMode] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState("This Month");
-
+  const {commission,recentTransactions} = useSelector((state) => state.sales);
+  useEffect(() => {
+    dispatch(fetchSalesComission())
+    dispatch(fetchRecentTransactions())
+  }, [dispatch]);
   // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
-  };
+  // const colors = {
+  //   primary: "#bb86fc",
+  //   secondary: "#3700b3",
+  //   accent: "#03dac6",
+  //   accentLight: "#018786",
+  //   accentSecondary: "#cf6679",
+  //   text: "#e0e0e0",
+  //   lightText: "#ffffff",
+  //   background: "#121212",
+  //   cardBg: "#1e1e1e",
+  //   cardBgAlt: "#2d2d2d",
+  //   borderColor: "#333333",
+  //   sidebarBg: "#1a1a1a",
+  //   navActiveBg: "rgba(187, 134, 252, 0.12)",
+  //   inputBg: "#2d2d2d",
+  // };
 
   // Mock commission data
   const commissionData = {
@@ -134,7 +152,7 @@ const CommissionManagement = () => {
 
   return (
     <div
-      className="flex h-screen"
+      className="flex"
       style={{ backgroundColor: colors.background }}
     >
 
@@ -297,7 +315,7 @@ const CommissionManagement = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {commissionData.totalCommission}
+                  {commission?.totalCommission??0}
                 </span>
               </div>
               <p className="text-xs" style={{ color: colors.accent }}>
@@ -327,11 +345,12 @@ const CommissionManagement = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {commissionData.pendingPayouts}
+                  {/* {commissionData.pendingPayouts} */}
+                  {commission?.pendingPayouts??0}
                 </span>
               </div>
               <p className="text-xs" style={{ color: colors.accentSecondary }}>
-                5 teacher payouts pending
+                0 teacher payouts pending
               </p>
             </div>
 
@@ -357,7 +376,7 @@ const CommissionManagement = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {commissionData.totalSales}
+                  {commission?.totalSalesAmount??0}
                 </span>
               </div>
               <p className="text-xs" style={{ color: colors.primary }}>
@@ -383,14 +402,14 @@ const CommissionManagement = () => {
                   className="text-2xl font-bold"
                   style={{ color: colors.lightText }}
                 >
-                  {commissionData.salesCount}
+                  {commission?.totalTransactions??0}
                 </span>
               </div>
               <p
                 className="text-xs"
                 style={{ color: "rgba(224, 224, 224, 0.7)" }}
               >
-                Across {commissionData.topSellers.length} sellers
+                Across {commission?.topSellers?.length??0} sellers
               </p>
             </div>
           </div>
@@ -441,35 +460,34 @@ const CommissionManagement = () => {
                 className="h-64 rounded-lg"
                 style={{ backgroundColor: colors.cardBg }}
               >
-                {/* This would be replaced with an actual chart component */}
-                <div className="flex items-end justify-between h-full p-4">
-                  {commissionData.monthlySummary.map((month, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div className="flex flex-col items-center space-y-1">
-                        <div
-                          className="w-12"
-                          style={{
-                            height: `${(month.commission / 1600) * 100}%`,
-                            backgroundColor: colors.accent,
-                          }}
-                        ></div>
-                        <div
-                          className="w-12"
-                          style={{
-                            height: `${(month.sales / 16000) * 100}%`,
-                            backgroundColor: colors.primary,
-                          }}
-                        ></div>
-                      </div>
-                      <span
-                        className="mt-2 text-xs"
-                        style={{ color: colors.text }}
-                      >
-                        {month.month}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={commission?.monthlySummary} barCategoryGap={20}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={colors.borderColor} />
+                    <XAxis dataKey="month" stroke={colors.text} />
+                    <YAxis stroke={colors.text} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: colors.cardBgAlt,
+                        border: `1px solid ${colors.borderColor}`,
+                        color: colors.text,
+                      }}
+                      labelStyle={{ color: colors.lightText }}
+                      itemStyle={{ color: colors.text }}
+                    />
+                    <Bar
+                      dataKey="sales"
+                      fill={colors.primary}
+                      radius={[4, 4, 0, 0]}
+                      name="Sales"
+                    />
+                    <Bar
+                      dataKey="commission"
+                      fill={colors.accent}
+                      radius={[4, 4, 0, 0]}
+                      name="Commission"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -491,9 +509,9 @@ const CommissionManagement = () => {
               </div>
 
               <div className="space-y-4">
-                {commissionData.topSellers.slice(0, 5).map((seller, index) => (
+                {commission?.topSellers?.slice(0, 5).map((seller, index) => (
                   <div
-                    key={seller.id}
+                    key={seller?.seller_id}
                     className="flex items-center justify-between"
                   >
                     <div className="flex items-center">
@@ -514,7 +532,7 @@ const CommissionManagement = () => {
                           className="font-medium"
                           style={{ color: colors.lightText }}
                         >
-                          {seller.name}
+                          {seller?.seller_name??"user"}
                         </p>
                         <p
                           className="text-xs"
@@ -522,7 +540,7 @@ const CommissionManagement = () => {
                         >
                           Sales:{" "}
                           <span style={{ color: colors.primary }}>
-                            {seller.totalSales}
+                            {seller?.total_sales??0}
                           </span>
                         </p>
                       </div>
@@ -533,7 +551,7 @@ const CommissionManagement = () => {
                         style={{ color: colors.accent }}
                       />
                       <span style={{ color: colors.text }}>
-                        {seller.commission}
+                        {seller?.total_commission??0}
                       </span>
                     </div>
                   </div>
@@ -568,8 +586,8 @@ const CommissionManagement = () => {
                 Recent Transactions
               </h3>
               <span style={{ color: "rgba(224, 224, 224, 0.7)" }}>
-                Showing {commissionData.recentTransactions.length} of{" "}
-                {commissionData.salesCount} transactions
+                Showing {recentTransactions?.total??0} of{" "}
+                {recentTransactions?.total??0} transactions
               </span>
             </div>
 
@@ -617,14 +635,14 @@ const CommissionManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {commissionData.recentTransactions.map((transaction) => (
+                  {recentTransactions?.transactions?.map((transaction) => (
                     <tr
                       key={transaction.id}
                       className="border-t"
                       style={{ borderColor: colors.borderColor }}
                     >
                       <td className="py-3 px-4" style={{ color: colors.text }}>
-                        #{transaction.id}
+                        #{transaction.transaction_id}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
@@ -654,7 +672,7 @@ const CommissionManagement = () => {
                             style={{ color: colors.primary }}
                           />
                           <span style={{ color: colors.lightText }}>
-                            {transaction.amount}
+                            {transaction.sale_amount}
                           </span>
                         </div>
                       </td>
@@ -682,7 +700,7 @@ const CommissionManagement = () => {
             </div>
 
             {/* Pagination */}
-            <div
+            {/* <div
               className="p-4 border-t flex justify-between items-center"
               style={{ borderColor: colors.borderColor }}
             >
@@ -713,7 +731,7 @@ const CommissionManagement = () => {
                 Next
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

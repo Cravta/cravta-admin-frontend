@@ -17,12 +17,14 @@ import {
   Clock,
   DollarSign,
   Sparkles,
+  Plus
 } from "lucide-react";
 import Logo1 from "../../assets/LOGO-01.png";
 import { useDispatch, useSelector } from "react-redux";
 import { createProduct, createProductSignedUrl, clearError, clearSuccess } from "../../store/admin/market/productSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const ContentUpload = () => {
   const dispatch = useDispatch();
@@ -31,7 +33,8 @@ const ContentUpload = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [scheduleLater, setScheduleLater] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [previewImage, setPreviewImage] = useState(null);
+  const [productPreviewImages, setProductPreviewImages] = useState([]);
   // Form state
   const [formData, setFormData] = useState({
     title: "",
@@ -52,13 +55,13 @@ const ContentUpload = () => {
   }, [dispatch]);
 
   // Show success toast when product is created
-  useEffect(() => {
-    if (success && success.includes("successfully")) {
-      // Only show toast for specific success messages, not all
-      // We handle success messages manually in handleSubmit
-      console.log('Success:', success);
-    }
-  }, [success]);
+  // useEffect(() => {
+  //   if (success && success.includes("successfully")) {
+  //     // Only show toast for specific success messages, not all
+  //     // We handle success messages manually in handleSubmit
+  //     console.log('Success:', success);
+  //   }
+  // }, [success]);
 
   // Show error toast when there's an error
   useEffect(() => {
@@ -68,22 +71,7 @@ const ContentUpload = () => {
   }, [error]);
 
   // Colors for dark mode
-  const colors = {
-    primary: "#bb86fc",
-    secondary: "#3700b3",
-    accent: "#03dac6",
-    accentLight: "#018786",
-    accentSecondary: "#cf6679",
-    text: "#e0e0e0",
-    lightText: "#ffffff",
-    background: "#121212",
-    cardBg: "#1e1e1e",
-    cardBgAlt: "#2d2d2d",
-    borderColor: "#333333",
-    sidebarBg: "#1a1a1a",
-    navActiveBg: "rgba(187, 134, 252, 0.12)",
-    inputBg: "#2d2d2d",
-  };
+  const { colors } = useTheme();
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -133,6 +121,65 @@ const ContentUpload = () => {
     e.preventDefault();
   };
 
+   const handlePreviewImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (2MB limit for preview images)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size > maxSize) {
+        toast.error('Preview image size must be less than 2MB');
+        return;
+      }
+
+      // Check file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a JPEG, PNG, or GIF image');
+        return;
+      }
+
+      try {
+        // Get signed URL for image upload
+        const signedUrlData = {
+          fileName: file.name,
+          mimeType: file.type,
+          fileSize: file.size
+        };
+
+        const signedUrlResult = await dispatch(createProductSignedUrl(signedUrlData));
+        
+        if (createProductSignedUrl.rejected.match(signedUrlResult)) {
+          toast.error('Failed to get upload URL for preview image');
+          return;
+        }
+
+        const signedUrl = signedUrlResult.payload.uploadDocURL;
+        const imageId = signedUrlResult.payload.id.id;
+
+        // Upload image to signed URL
+        await uploadFileToSignedUrl(signedUrl, file);
+        
+        // Create preview URL for display
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setPreviewImage({
+            file: file,
+            url: event.target.result,
+            name: file.name,
+            size: (file.size / 1024).toFixed(2) + " KB",
+            imageId: imageId // Store the image ID for later use
+          });
+        };
+        reader.readAsDataURL(file);
+
+        toast.success('Preview image uploaded successfully!');
+      } catch (error) {
+        console.error('Error uploading preview image:', error);
+        toast.error('Failed to upload preview image');
+      }
+    }
+  };
+
   const handleDrop = (e) => {
     e.preventDefault();
     const files = e.dataTransfer.files;
@@ -146,6 +193,82 @@ const ContentUpload = () => {
       };
       handleFileUpload(syntheticEvent);
     }
+  };
+
+  const handleProductPreviewImagesUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    const maxImages = 5; // Maximum 5 images allowed
+
+    if (productPreviewImages.length + files.length > maxImages) {
+      toast.error(`You can upload maximum ${maxImages} images. You already have ${productPreviewImages.length} images.`);
+      return;
+    }
+
+    for (const file of files) {
+      // Check file size (2MB limit for preview images)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size > maxSize) {
+        toast.error(`${file.name} size must be less than 2MB`);
+        continue;
+      }
+
+      // Check file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`${file.name} is not a valid image format. Please upload JPEG, PNG, or GIF images.`);
+        continue;
+      }
+
+      try {
+        // Get signed URL for image upload
+        const signedUrlData = {
+          fileName: file.name,
+          mimeType: file.type,
+          fileSize: file.size,
+          isPreview: true
+        };
+
+        const signedUrlResult = await dispatch(createProductSignedUrl(signedUrlData));
+
+        if (createProductSignedUrl.rejected.match(signedUrlResult)) {
+          toast.error(`Failed to get upload URL for ${file.name}`);
+          continue;
+        }
+
+        const signedUrl = signedUrlResult.payload.uploadDocURL;
+        const imageId = signedUrlResult.payload.id.id;
+
+        // Upload image to signed URL
+        await uploadFileToSignedUrl(signedUrl, file);
+
+        // Create preview URL for display
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const newImage = {
+            file: file,
+            url: event.target.result,
+            name: file.name,
+            size: (file.size / 1024).toFixed(2) + " KB",
+            imageId: imageId // Store the image ID for later use
+          };
+
+          setProductPreviewImages(prev => [...prev, newImage]);
+        };
+        reader.readAsDataURL(file);
+
+      } catch (error) {
+        console.error(`Error uploading ${file.name}:`, error);
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+
+    if (files.length > 0) {
+      toast.success(`${files.length} image(s) uploaded successfully!`);
+    }
+  };
+
+  const removeProductPreviewImage = (index) => {
+    setProductPreviewImages(prev => prev.filter((_, i) => i !== index));
   };
 
   // Validate form data
@@ -244,7 +367,11 @@ const ContentUpload = () => {
         subject: formData.subject,
         content_type: formData.content_type,
         status: isDraft ? 'draft' : 'published',
-        ...(productId && { product_id: productId }), // Include product_id if we have it
+        ...(productId && { product_id: productId }),
+        ...(previewImage?.imageId && { image_array: [previewImage.imageId] }),
+        ...(productPreviewImages.length > 0 && { 
+          preview_images: productPreviewImages.map(img => img.imageId) 
+        }),
       };
 
       console.log('Creating product with data:', productData);
@@ -506,7 +633,7 @@ const ContentUpload = () => {
                 </div>
 
                 {/* Publication Schedule */}
-                <div className="mb-5">
+                {/* <div className="mb-5">
                   <label
                     className="block mb-2 font-medium"
                     style={{ color: colors.text }}
@@ -576,7 +703,7 @@ const ContentUpload = () => {
                       </div>
                     </div>
                   )}
-                </div>
+                </div> */}
 
                 {/* Preview Image */}
                 <div className="mb-5">
@@ -588,44 +715,232 @@ const ContentUpload = () => {
                   </label>
                   <div
                     className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center"
-                    style={{ borderColor: "rgba(224, 224, 224, 0.3)" }}
+                    style={{ 
+                      borderColor: previewImage 
+                        ? colors.primary 
+                        : "rgba(224, 224, 224, 0.3)",
+                      backgroundColor: previewImage
+                        ? "rgba(187, 134, 252, 0.05)"
+                        : "transparent",
+                    }}
                   >
-                    <Upload
-                      className="w-10 h-10 mb-3"
-                      style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                    />
-                    <p
-                      className="text-center mb-2"
-                      style={{ color: colors.text }}
-                    >
-                      Drag and drop an image file here, or click to browse
-                    </p>
-                    <p
-                      className="text-xs text-center"
-                      style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                    >
-                      Recommended size: 800x600px, Max size: 2MB
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      id="preview-image"
-                    />
-                    <button
-                      onClick={() =>
-                        document.getElementById("preview-image").click()
-                      }
-                      className="mt-4 px-4 py-2 rounded-lg"
+                    {!previewImage ? (
+                      <>
+                        <Upload
+                          className="w-10 h-10 mb-3"
+                          style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                        />
+                        <p
+                          className="text-center mb-2"
+                          style={{ color: colors.text }}
+                        >
+                          Drag and drop an image file here, or click to browse
+                        </p>
+                        <p
+                          className="text-xs text-center"
+                          style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                        >
+                          Recommended size: 800x600px, Max size: 2MB
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id="preview-image"
+                          onChange={handlePreviewImageUpload}
+                        />
+                        <button
+                          onClick={() =>
+                            document.getElementById("preview-image").click()
+                          }
+                          className="mt-4 px-4 py-2 rounded-lg"
+                          style={{
+                            backgroundColor: "rgba(187, 134, 252, 0.1)",
+                            color: colors.primary,
+                            border: `1px solid ${colors.primary}`,
+                          }}
+                        >
+                          Select Image
+                        </button>
+                      </>
+                    ) : (
+                      <div className="w-full">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <img
+                              src={previewImage.url}
+                              alt="Preview"
+                              className="w-16 h-16 object-cover rounded mr-3"
+                            />
+                            <div>
+                              <p
+                                className="font-medium"
+                                style={{ color: colors.lightText }}
+                              >
+                                {previewImage.name}
+                              </p>
+                              <p
+                                className="text-xs"
+                                style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                              >
+                                {previewImage.size}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setPreviewImage(null)}
+                            className="p-1 rounded-full"
+                            style={{
+                              backgroundColor: "rgba(207, 102, 121, 0.1)",
+                              color: colors.accentSecondary,
+                            }}
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        {/* <button
+                          onClick={() => document.getElementById("preview-image").click()}
+                          className="w-full px-4 py-2 rounded-lg text-sm"
+                          style={{
+                            backgroundColor: "rgba(187, 134, 252, 0.1)",
+                            color: colors.primary,
+                            border: `1px solid ${colors.primary}`,
+                          }}
+                        >
+                          Change Image
+                        </button> */}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Product Preview Images */}
+                <div className="mb-5">
+                  <label
+                    className="block mb-2 font-medium"
+                    style={{ color: colors.text }}
+                  >
+                    Product Preview Images (Optional)
+                  </label>
+                  <p
+                    className="text-xs mb-3"
+                    style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                  >
+                    Upload up to 5 images to showcase your content. These will be displayed in the product gallery.
+                  </p>
+
+                  {/* Upload Area */}
+                  {productPreviewImages.length < 5 && (
+                    <div
+                      className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center mb-4"
                       style={{
-                        backgroundColor: "rgba(187, 134, 252, 0.1)",
-                        color: colors.primary,
-                        border: `1px solid ${colors.primary}`,
+                        borderColor: "rgba(224, 224, 224, 0.3)",
+                        backgroundColor: "transparent",
                       }}
                     >
-                      Select Image
-                    </button>
-                  </div>
+                      <Upload
+                        className="w-8 h-8 mb-2"
+                        style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                      />
+                      <p
+                        className="text-center mb-2 text-sm"
+                        style={{ color: colors.text }}
+                      >
+                        Click to add more images
+                      </p>
+                      <p
+                        className="text-xs text-center mb-3"
+                        style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                      >
+                        JPEG, PNG, GIF up to 2MB each
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        id="product-preview-images"
+                        onChange={handleProductPreviewImagesUpload}
+                      />
+                      <button
+                        onClick={() =>
+                          document.getElementById("product-preview-images").click()
+                        }
+                        className="px-4 py-2 rounded-lg text-sm"
+                        style={{
+                          backgroundColor: "rgba(187, 134, 252, 0.1)",
+                          color: colors.primary,
+                          border: `1px solid ${colors.primary}`,
+                        }}
+                      >
+                        <Plus className="w-4 h-4 inline mr-1" />
+                        Add Images
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Display Uploaded Images */}
+                  {productPreviewImages.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: colors.text }}
+                        >
+                          Uploaded Images ({productPreviewImages.length}/5)
+                        </span>
+                        {productPreviewImages.length >= 5 && (
+                          <span
+                            className="text-xs"
+                            style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                          >
+                            Maximum images reached
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        {productPreviewImages.map((image, index) => (
+                          <div
+                            key={index}
+                            className="relative border rounded-lg p-3"
+                            style={{
+                              backgroundColor: colors.cardBg,
+                              borderColor: colors.borderColor,
+                            }}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span
+                                className="text-xs font-medium truncate"
+                                style={{ color: colors.text }}
+                                title={image.name}
+                              >
+                                {image.name}
+                              </span>
+                              <button
+                                onClick={() => removeProductPreviewImage(index)}
+                                className="p-1 rounded-full hover:bg-red-500/10"
+                                style={{ color: colors.accentSecondary }}
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <img
+                              src={image.url}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-24 object-cover rounded"
+                            />
+                            <p
+                              className="text-xs mt-1"
+                              style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                            >
+                              {image.size}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Tags */}
@@ -650,7 +965,7 @@ const ContentUpload = () => {
 
                 {/* Submit Buttons */}
                 <div className="flex justify-end space-x-3">
-                  <button
+                  {/* <button
                     onClick={handleSaveDraft}
                     disabled={isSubmitting || loading}
                     className="px-6 py-2 rounded-lg disabled:opacity-50"
@@ -661,7 +976,7 @@ const ContentUpload = () => {
                     }}
                   >
                     {isSubmitting ? "Saving..." : "Save as Draft"}
-                  </button>
+                  </button> */}
 
                   <button
                     onClick={handlePublishNow}
