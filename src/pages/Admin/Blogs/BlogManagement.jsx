@@ -6,6 +6,7 @@ import BlogView from "./BlogView";
 import {fetchBlogs} from "../../../store/admin/blogSlice.js";
 import {useDispatch, useSelector} from "react-redux";
 import ScreenLoader from "../../../components/loader/ScreenLoader.jsx";
+import Pagination from "../../../components/pagination/Pagination.jsx";
 
 const BlogManagement = () => {
     const dispatch = useDispatch();
@@ -16,12 +17,22 @@ const BlogManagement = () => {
     const [selectedBlog, setSelectedBlog] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const totalItems = blogs?.pagination?.total;
+    useEffect(()=> {
+        dispatch(fetchBlogs({page, limit}));
 
+    } , [dispatch,page,limit]);
+    const handlePageChange = (newPage) => {
+        if (newPage < 1 || newPage > Math.ceil(totalItems / limit)) return;
+        setPage(newPage);
+    };
 
-    useEffect(() => {
-        dispatch(fetchBlogs({}));
-    }, [dispatch]);
-
+    const handleLimitChange = (newLimit) => {
+        setLimit(newLimit);
+        setPage(1); // reset to first page when limit changes
+    };
     // Function to load blogs from API
     const loadBlogs = async () => {
         setIsLoading(true);
@@ -65,7 +76,8 @@ const BlogManagement = () => {
                 </div>
 
                 {/* Display the appropriate view based on state */}
-                {activeView === "list" && (<BlogList
+                {activeView === "list" && (
+                    <BlogList
                         blogs={blogs}
                         isLoading={isLoading}
                         error={error}
@@ -75,6 +87,16 @@ const BlogManagement = () => {
                         onRefresh={loadBlogs}
                     />)}
 
+                {activeView === "list" && (
+                    <div className={'mt-5'}>
+                    <Pagination
+                        page={page}
+                        limit={limit}
+                        totalItems={totalItems}
+                        onPageChange={handlePageChange}
+                        onLimitChange={handleLimitChange}
+                    /></div>
+                   )}
                 {activeView === "form" && (<BlogForm
                         blog={selectedBlog}
                         onCancel={() => handleViewChange("list")}
