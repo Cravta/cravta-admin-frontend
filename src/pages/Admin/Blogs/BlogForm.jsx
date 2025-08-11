@@ -20,6 +20,7 @@ import {
   Image,
   FileText,
   Edit3,
+  Link, // Add this import
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {
@@ -192,7 +193,133 @@ export async function detectImageMimeType(image) {
     return null;
   }
 }
+const insertHyperlink = (text, startPos, endPos, url, linkText = null) => {
+  const selectedText = linkText || text.substring(startPos, endPos);
+  const linkMarkdown = `[${selectedText}](${url})`;
+  return text?.substring(0, startPos) + linkMarkdown + text?.substring(endPos);
+};
+const parseTextWithLinks = (text, colors) => {
+  if (!text) return text;
 
+  // Use theme's primary color instead of hardcoded blue
+  return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" style="color: ${colors.primary}; text-decoration: underline; font-weight: 500;">$1</a>`);
+};
+
+const HyperlinkModal = ({ isOpen, onClose, onInsert, selectedText, colors }) => {
+  const [url, setUrl] = useState('');
+  const [linkText, setLinkText] = useState(selectedText || '');
+
+  useEffect(() => {
+    if (isOpen) {
+      setLinkText(selectedText || '');
+      setUrl('');
+    }
+  }, [isOpen, selectedText]);
+
+  const handleInsert = () => {
+    if (url && linkText) {
+      onInsert(url, linkText);
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div
+            className="bg-white rounded-lg p-6 w-96 max-w-full mx-4"
+            style={{
+              backgroundColor: colors.cardBg,
+              border: `1px solid ${colors.borderColor}`,
+            }}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium" style={{ color: colors.text }}>
+              Insert Hyperlink
+            </h3>
+            <button
+                onClick={onClose}
+                className="p-1 rounded"
+                style={{ color: colors.textMuted }}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: colors.text }}
+              >
+                Link Text
+              </label>
+              <input
+                  type="text"
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                  placeholder="Enter link text"
+                  className="w-full px-3 py-2 rounded-lg focus:outline-none"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    border: `1px solid ${colors.borderColor}`,
+                    color: colors.text,
+                  }}
+              />
+            </div>
+
+            <div>
+              <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: colors.text }}
+              >
+                URL
+              </label>
+              <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-3 py-2 rounded-lg focus:outline-none"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    border: `1px solid ${colors.borderColor}`,
+                    color: colors.text,
+                  }}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+                onClick={onClose}
+                className="px-4 py-2 rounded-lg text-sm"
+                style={{
+                  backgroundColor: colors.inputBg,
+                  border: `1px solid ${colors.borderColor}`,
+                  color: colors.text,
+                }}
+            >
+              Cancel
+            </button>
+            <button
+                onClick={handleInsert}
+                disabled={!url || !linkText}
+                className="px-4 py-2 rounded-lg text-sm"
+                style={{
+                  backgroundColor: colors.primary,
+                  color: colors.lightText,
+                  opacity: (!url || !linkText) ? 0.5 : 1,
+                }}
+            >
+              Insert Link
+            </button>
+          </div>
+        </div>
+      </div>
+  );
+};
 const BlogForm = ({ blog = null, onCancel, onSaved }) => {
   const dispatch = useDispatch();
   const { blogDetails, loading } = useSelector((state) => state.blogs);
@@ -203,6 +330,13 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
   const fileInputRef = useRef(null);
   const featuredImageInputRef = useRef(null);
   const [uploadProgress, setUploadProgress] = useState({});
+  const [hyperlinkModal, setHyperlinkModal] = useState({
+    isOpen: false,
+    sectionIndex: null,
+    selectedText: '',
+    selectionStart: 0,
+    selectionEnd: 0,
+  });
 
   const [formData, setFormData] = useState({
     title: "",
@@ -308,13 +442,10 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
   };
 
   useEffect(() => {
-    if (
-      blog?.id &&
-      (blog.id !== blogDetails?.id || !shallowCompareSubset(blog, blogDetails))
-    ) {
+    if (blog?.id && blog.id !== blogDetails?.id) {
       dispatch(fetchBlogById(blog.id));
     }
-  }, [blog, blogDetails]);
+  }, [blog?.id, blogDetails?.id, dispatch]);
 
   useEffect(() => {
     if (blogDetails && blog) {
@@ -448,7 +579,87 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
       });
     }
   };
+  const handleOpenHyperlinkModal = (sectionIndex, textareaRef) => {
+    const textarea = textareaRef.current;
+    const selectedText = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
 
+    setHyperlinkModal({
+      isOpen: true,
+      sectionIndex,
+      selectedText,
+      selectionStart: textarea.selectionStart,
+      selectionEnd: textarea.selectionEnd,
+    });
+  };
+  const handleInsertHyperlink = (url, linkText) => {
+    const { sectionIndex, selectionStart, selectionEnd } = hyperlinkModal;
+
+    // Parse the sectionIndex to understand what we're updating
+    if (typeof sectionIndex === 'string') {
+      // Handle complex section types (FAQs, bullet points)
+      const parts = sectionIndex.split('-');
+      const mainIndex = parseInt(parts[0]);
+      const section = formData.content[mainIndex];
+
+      if (sectionIndex.includes('faq-question')) {
+        // FAQ Question
+        const faqIndex = parseInt(parts[parts.length - 1]);
+        const currentText = section.content[faqIndex].question;
+        const newText = insertHyperlink(currentText, selectionStart, selectionEnd, url, linkText);
+
+        const newContent = [...section.content];
+        newContent[faqIndex] = {
+          ...newContent[faqIndex],
+          question: newText,
+        };
+        updateContentSection(mainIndex, newContent);
+
+      } else if (sectionIndex.includes('faq-answer')) {
+        // FAQ Answer
+        const faqIndex = parseInt(parts[parts.length - 1]);
+        const currentText = section.content[faqIndex].answer;
+        const newText = insertHyperlink(currentText, selectionStart, selectionEnd, url, linkText);
+
+        const newContent = [...section.content];
+        newContent[faqIndex] = {
+          ...newContent[faqIndex],
+          answer: newText,
+        };
+        updateContentSection(mainIndex, newContent);
+
+      } else if (sectionIndex.includes('heading')) {
+        // Bullet Points with Heading
+        const itemIndex = parseInt(parts[parts.length - 1]);
+        const currentText = section.content.items[itemIndex];
+        const newText = insertHyperlink(currentText, selectionStart, selectionEnd, url, linkText);
+
+        const newItems = [...(section.content.items || [])];
+        newItems[itemIndex] = newText;
+        updateContentSection(mainIndex, {
+          ...section.content,
+          items: newItems,
+        });
+
+      } else {
+        // Regular bullet points or numbered lists
+        const itemIndex = parseInt(parts[parts.length - 1]);
+        const currentText = section.content[itemIndex];
+        const newText = insertHyperlink(currentText, selectionStart, selectionEnd, url, linkText);
+
+        const newContent = [...section.content];
+        newContent[itemIndex] = newText;
+        updateContentSection(mainIndex, newContent);
+      }
+    } else {
+      // Handle simple section types (introduction, closing, subtitle, quote)
+      const section = formData.content[sectionIndex];
+      const currentText = section?.content;
+      const newText = insertHyperlink(currentText, selectionStart, selectionEnd, url, linkText);
+      updateContentSection(sectionIndex, newText);
+    }
+
+    setHyperlinkModal({ isOpen: false, sectionIndex: null, selectedText: '', selectionStart: 0, selectionEnd: 0 });
+  };
   const handleImageUpload = async (index, file) => {
     try {
       // Update UI to show loading state
@@ -549,480 +760,680 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
       case "subtitle":
       case "quote":
         return (
-          <textarea
-            value={content}
-            onChange={(e) => updateContentSection(index, e.target.value)}
-            placeholder={`Enter ${type} content...`}
-            rows={type === "subtitle" ? 2 : 4}
-            className="w-full px-4 py-2 rounded-lg focus:outline-none"
-            style={{
-              backgroundColor: colors.inputBg,
-              border: `1px solid ${colors.borderColor}`,
-              color: colors.text,
-            }}
-          />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                    type="button"
+                    onClick={() => {
+                      // Find the textarea directly instead of using a ref
+                      const textarea = document.querySelector(`[data-textarea-index="${index}"]`);
+                      if (textarea) {
+                        handleOpenHyperlinkModal(index, { current: textarea });
+                      }
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs"
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      border: `1px solid ${colors.borderColor}`,
+                      color: colors.textMuted,
+                    }}
+                    title="Add hyperlink to selected text"
+                >
+                  <Link className="w-3 h-3" />
+                  Link
+                </button>
+                <span className="text-xs" style={{ color: colors.textMuted }}>
+              Select text and click Link to add hyperlink
+            </span>
+              </div>
+              <textarea
+                  data-textarea-index={index} // Add this data attribute
+                  value={content}
+                  onChange={(e) => updateContentSection(index, e.target.value)}
+                  placeholder={`Enter ${type} content...`}
+                  rows={type === "subtitle" ? 2 : 4}
+                  className="w-full px-4 py-2 rounded-lg focus:outline-none"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    border: `1px solid ${colors.borderColor}`,
+                    color: colors.text,
+                  }}
+              />
+              {/* Preview with links */}
+              {content && (
+                  <div
+                      className="px-4 py-2 rounded-lg text-sm"
+                      style={{
+                        backgroundColor: `${colors.primary}10`,
+                        border: `1px solid ${colors.primary}30`,
+                        color: colors.text,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: parseTextWithLinks(content, colors) }}
+                  />
+              )}
+            </div>
         );
 
       case "bulletPoints":
       case "numberedList":
         return (
-          <div className="space-y-2">
-            {content.map((item, itemIndex) => (
-              <div key={itemIndex} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={item}
-                  onChange={(e) => {
-                    const newContent = [...content];
-                    newContent[itemIndex] = e.target.value;
+            <div className="space-y-2">
+              {content.map((item, itemIndex) => (
+                  <div key={itemIndex} className="space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.querySelector(`[data-bullet-index="${index}-${itemIndex}"]`);
+                            if (input) {
+                              handleOpenHyperlinkModal(`${index}-${itemIndex}`, { current: input });
+                            }
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 rounded text-xs"
+                          style={{
+                            backgroundColor: colors.inputBg,
+                            border: `1px solid ${colors.borderColor}`,
+                            color: colors.textMuted,
+                          }}
+                          title="Add hyperlink to selected text"
+                      >
+                        <Link className="w-3 h-3" />
+                        Link
+                      </button>
+                      <span className="text-xs" style={{ color: colors.textMuted }}>
+                  Select text and click Link to add hyperlink
+                </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                          data-bullet-index={`${index}-${itemIndex}`}
+                          type="text"
+                          value={item}
+                          onChange={(e) => {
+                            const newContent = [...content];
+                            newContent[itemIndex] = e.target.value;
+                            updateContentSection(index, newContent);
+                          }}
+                          placeholder={`${
+                              type === "numberedList" ? "Numbered" : "Bullet"
+                          } point ${itemIndex + 1}`}
+                          className="flex-1 px-4 py-2 rounded-lg focus:outline-none"
+                          style={{
+                            backgroundColor: colors.inputBg,
+                            border: `1px solid ${colors.borderColor}`,
+                            color: colors.text,
+                          }}
+                      />
+                      {content.length > 1 && (
+                          <button
+                              type="button"
+                              onClick={() => {
+                                const newContent = content.filter(
+                                    (_, i) => i !== itemIndex
+                                );
+                                updateContentSection(index, newContent);
+                              }}
+                              className="p-2 rounded"
+                              style={{ color: colors.error }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                      )}
+                    </div>
+                    {/* Preview with links for bullet points */}
+                    {item && (
+                        <div
+                            className="px-4 py-2 rounded-lg text-sm ml-4"
+                            style={{
+                              backgroundColor: `${colors.primary}10`,
+                              border: `1px solid ${colors.primary}30`,
+                              color: colors.text,
+                            }}
+                            dangerouslySetInnerHTML={{ __html: parseTextWithLinks(item, colors) }}
+                        />
+                    )}
+                  </div>
+              ))}
+              <button
+                  type="button"
+                  onClick={() => {
+                    const newContent = [...content, ""];
                     updateContentSection(index, newContent);
                   }}
-                  placeholder={`${
-                    type === "numberedList" ? "Numbered" : "Bullet"
-                  } point ${itemIndex + 1}`}
-                  className="flex-1 px-4 py-2 rounded-lg focus:outline-none"
+                  className="px-3 py-1 rounded text-sm"
+                  style={{
+                    backgroundColor: colors.primary,
+                    color: colors.lightText,
+                  }}
+              >
+                Add Item
+              </button>
+            </div>
+        );
+
+      case "bulletPointsWithHeading":
+        return (
+            <div className="space-y-4">
+              <input
+                  type="text"
+                  value={content.heading || ""}
+                  onChange={(e) => {
+                    updateContentSection(index, {
+                      ...content,
+                      heading: e.target.value,
+                    });
+                  }}
+                  placeholder="Enter heading..."
+                  className="w-full px-4 py-2 rounded-lg focus:outline-none font-medium"
                   style={{
                     backgroundColor: colors.inputBg,
                     border: `1px solid ${colors.borderColor}`,
                     color: colors.text,
                   }}
-                />
-                {content.length > 1 && (
-                  <button
+              />
+              <div className="space-y-2">
+                {(content.items || [""]).map((item, itemIndex) => (
+                    <div key={itemIndex} className="space-y-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <button
+                            type="button"
+                            onClick={() => {
+                              const input = document.querySelector(`[data-bullet-heading-index="${index}-${itemIndex}"]`);
+                              if (input) {
+                                handleOpenHyperlinkModal(`${index}-heading-${itemIndex}`, { current: input });
+                              }
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-xs"
+                            style={{
+                              backgroundColor: colors.inputBg,
+                              border: `1px solid ${colors.borderColor}`,
+                              color: colors.textMuted,
+                            }}
+                            title="Add hyperlink to selected text"
+                        >
+                          <Link className="w-3 h-3" />
+                          Link
+                        </button>
+                        <span className="text-xs" style={{ color: colors.textMuted }}>
+                    Select text and click Link to add hyperlink
+                  </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                            data-bullet-heading-index={`${index}-${itemIndex}`}
+                            type="text"
+                            value={item}
+                            onChange={(e) => {
+                              const newItems = [...(content.items || [""])];
+                              newItems[itemIndex] = e.target.value;
+                              updateContentSection(index, {
+                                ...content,
+                                items: newItems,
+                              });
+                            }}
+                            placeholder={`Bullet point ${itemIndex + 1}`}
+                            className="flex-1 px-4 py-2 rounded-lg focus:outline-none"
+                            style={{
+                              backgroundColor: colors.inputBg,
+                              border: `1px solid ${colors.borderColor}`,
+                              color: colors.text,
+                            }}
+                        />
+                        {(content.items || [""]).length > 1 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                  const newItems = (content.items || [""]).filter(
+                                      (_, i) => i !== itemIndex
+                                  );
+                                  updateContentSection(index, {
+                                    ...content,
+                                    items: newItems,
+                                  });
+                                }}
+                                className="p-2 rounded"
+                                style={{ color: colors.error }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                      </div>
+                      {/* Preview with links for bullet points with heading */}
+                      {item && (
+                          <div
+                              className="px-4 py-2 rounded-lg text-sm ml-4"
+                              style={{
+                                backgroundColor: `${colors.primary}10`,
+                                border: `1px solid ${colors.primary}30`,
+                                color: colors.text,
+                              }}
+                              dangerouslySetInnerHTML={{ __html: parseTextWithLinks(item, colors) }}
+                          />
+                      )}
+                    </div>
+                ))}
+                <button
                     type="button"
                     onClick={() => {
-                      const newContent = content.filter(
-                        (_, i) => i !== itemIndex
-                      );
-                      updateContentSection(index, newContent);
-                    }}
-                    className="p-2 rounded"
-                    style={{ color: colors.error }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => {
-                const newContent = [...content, ""];
-                updateContentSection(index, newContent);
-              }}
-              className="px-3 py-1 rounded text-sm"
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.lightText,
-              }}
-            >
-              Add Item
-            </button>
-          </div>
-        );
-
-      case "bulletPointsWithHeading":
-        return (
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={content.heading || ""}
-              onChange={(e) => {
-                updateContentSection(index, {
-                  ...content,
-                  heading: e.target.value,
-                });
-              }}
-              placeholder="Enter heading..."
-              className="w-full px-4 py-2 rounded-lg focus:outline-none font-medium"
-              style={{
-                backgroundColor: colors.inputBg,
-                border: `1px solid ${colors.borderColor}`,
-                color: colors.text,
-              }}
-            />
-            <div className="space-y-2">
-              {(content.items || [""]).map((item, itemIndex) => (
-                <div key={itemIndex} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={item}
-                    onChange={(e) => {
-                      const newItems = [...(content.items || [""])];
-                      newItems[itemIndex] = e.target.value;
+                      const newItems = [...(content.items || [""]), ""];
                       updateContentSection(index, {
                         ...content,
                         items: newItems,
                       });
                     }}
-                    placeholder={`Bullet point ${itemIndex + 1}`}
-                    className="flex-1 px-4 py-2 rounded-lg focus:outline-none"
+                    className="px-3 py-1 rounded text-sm"
                     style={{
-                      backgroundColor: colors.inputBg,
-                      border: `1px solid ${colors.borderColor}`,
-                      color: colors.text,
+                      backgroundColor: colors.primary,
+                      color: colors.lightText,
                     }}
-                  />
-                  {(content.items || [""]).length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newItems = (content.items || [""]).filter(
-                          (_, i) => i !== itemIndex
-                        );
-                        updateContentSection(index, {
-                          ...content,
-                          items: newItems,
-                        });
-                      }}
-                      className="p-2 rounded"
-                      style={{ color: colors.error }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  const newItems = [...(content.items || [""]), ""];
-                  updateContentSection(index, {
-                    ...content,
-                    items: newItems,
-                  });
-                }}
-                className="px-3 py-1 rounded text-sm"
-                style={{
-                  backgroundColor: colors.primary,
-                  color: colors.lightText,
-                }}
-              >
-                Add Item
-              </button>
+                >
+                  Add Item
+                </button>
+              </div>
             </div>
-          </div>
         );
 
       case "faq":
         return (
-          <div className="space-y-4">
-            {content.map((faqItem, faqIndex) => (
-              <div
-                key={faqIndex}
-                className="p-4 rounded-lg"
-                style={{
-                  backgroundColor: colors.cardBgAlt,
-                  border: `1px solid ${colors.borderColor}`,
-                }}
-              >
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={faqItem.question}
-                    onChange={(e) => {
-                      const newContent = [...content];
-                      newContent[faqIndex] = {
-                        ...newContent[faqIndex],
-                        question: e.target.value,
-                      };
-                      updateContentSection(index, newContent);
-                    }}
-                    placeholder="Enter question..."
-                    className="w-full px-4 py-2 rounded-lg focus:outline-none font-medium"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      border: `1px solid ${colors.borderColor}`,
-                      color: colors.text,
-                    }}
-                  />
-                  <textarea
-                    value={faqItem.answer}
-                    onChange={(e) => {
-                      const newContent = [...content];
-                      newContent[faqIndex] = {
-                        ...newContent[faqIndex],
-                        answer: e.target.value,
-                      };
-                      updateContentSection(index, newContent);
-                    }}
-                    placeholder="Enter answer..."
-                    rows="3"
-                    className="w-full px-4 py-2 rounded-lg focus:outline-none"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      border: `1px solid ${colors.borderColor}`,
-                      color: colors.text,
-                    }}
-                  />
-                  {content.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newContent = content.filter(
-                          (_, i) => i !== faqIndex
-                        );
-                        updateContentSection(index, newContent);
-                      }}
-                      className="px-3 py-1 rounded text-sm"
+            <div className="space-y-4">
+              {content.map((faqItem, faqIndex) => (
+                  <div
+                      key={faqIndex}
+                      className="p-4 rounded-lg"
                       style={{
-                        backgroundColor: colors.error,
-                        color: colors.lightText,
+                        backgroundColor: colors.cardBgAlt,
+                        border: `1px solid ${colors.borderColor}`,
                       }}
-                    >
-                      Remove FAQ
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => {
-                const newContent = [...content, { question: "", answer: "" }];
-                updateContentSection(index, newContent);
-              }}
-              className="px-3 py-1 rounded text-sm"
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.lightText,
-              }}
-            >
-              Add FAQ
-            </button>
-          </div>
+                  >
+                    <div className="space-y-3">
+                      {/* Question section with hyperlink */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <button
+                              type="button"
+                              onClick={() => {
+                                const input = document.querySelector(`[data-faq-question-index="${index}-${faqIndex}"]`);
+                                if (input) {
+                                  handleOpenHyperlinkModal(`${index}-faq-question-${faqIndex}`, { current: input });
+                                }
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 rounded text-xs"
+                              style={{
+                                backgroundColor: colors.inputBg,
+                                border: `1px solid ${colors.borderColor}`,
+                                color: colors.textMuted,
+                              }}
+                              title="Add hyperlink to selected text in question"
+                          >
+                            <Link className="w-3 h-3" />
+                            Link
+                          </button>
+                          <span className="text-xs" style={{ color: colors.textMuted }}>
+                      Select text in question and click Link to add hyperlink
+                    </span>
+                        </div>
+                        <input
+                            data-faq-question-index={`${index}-${faqIndex}`}
+                            type="text"
+                            value={faqItem.question}
+                            onChange={(e) => {
+                              const newContent = [...content];
+                              newContent[faqIndex] = {
+                                ...newContent[faqIndex],
+                                question: e.target.value,
+                              };
+                              updateContentSection(index, newContent);
+                            }}
+                            placeholder="Enter question..."
+                            className="w-full px-4 py-2 rounded-lg focus:outline-none font-medium"
+                            style={{
+                              backgroundColor: colors.inputBg,
+                              border: `1px solid ${colors.borderColor}`,
+                              color: colors.text,
+                            }}
+                        />
+                        {/* Preview with links for question */}
+                        {faqItem.question && (
+                            <div
+                                className="px-4 py-2 rounded-lg text-sm"
+                                style={{
+                                  backgroundColor: `${colors.primary}10`,
+                                  border: `1px solid ${colors.primary}30`,
+                                  color: colors.text,
+                                }}
+                                dangerouslySetInnerHTML={{ __html: parseTextWithLinks(faqItem.question, colors) }}
+                            />
+                        )}
+                      </div>
+
+                      {/* Answer section with hyperlink */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <button
+                              type="button"
+                              onClick={() => {
+                                const textarea = document.querySelector(`[data-faq-answer-index="${index}-${faqIndex}"]`);
+                                if (textarea) {
+                                  handleOpenHyperlinkModal(`${index}-faq-answer-${faqIndex}`, { current: textarea });
+                                }
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 rounded text-xs"
+                              style={{
+                                backgroundColor: colors.inputBg,
+                                border: `1px solid ${colors.borderColor}`,
+                                color: colors.textMuted,
+                              }}
+                              title="Add hyperlink to selected text in answer"
+                          >
+                            <Link className="w-3 h-3" />
+                            Link
+                          </button>
+                          <span className="text-xs" style={{ color: colors.textMuted }}>
+                      Select text in answer and click Link to add hyperlink
+                    </span>
+                        </div>
+                        <textarea
+                            data-faq-answer-index={`${index}-${faqIndex}`}
+                            value={faqItem.answer}
+                            onChange={(e) => {
+                              const newContent = [...content];
+                              newContent[faqIndex] = {
+                                ...newContent[faqIndex],
+                                answer: e.target.value,
+                              };
+                              updateContentSection(index, newContent);
+                            }}
+                            placeholder="Enter answer..."
+                            rows="3"
+                            className="w-full px-4 py-2 rounded-lg focus:outline-none"
+                            style={{
+                              backgroundColor: colors.inputBg,
+                              border: `1px solid ${colors.borderColor}`,
+                              color: colors.text,
+                            }}
+                        />
+                        {/* Preview with links for answer */}
+                        {faqItem.answer && (
+                            <div
+                                className="px-4 py-2 rounded-lg text-sm"
+                                style={{
+                                  backgroundColor: `${colors.primary}10`,
+                                  border: `1px solid ${colors.primary}30`,
+                                  color: colors.text,
+                                }}
+                                dangerouslySetInnerHTML={{ __html: parseTextWithLinks(faqItem.answer, colors) }}
+                            />
+                        )}
+                      </div>
+
+                      {content.length > 1 && (
+                          <button
+                              type="button"
+                              onClick={() => {
+                                const newContent = content.filter(
+                                    (_, i) => i !== faqIndex
+                                );
+                                updateContentSection(index, newContent);
+                              }}
+                              className="px-3 py-1 rounded text-sm"
+                              style={{
+                                backgroundColor: colors.error,
+                                color: colors.lightText,
+                              }}
+                          >
+                            Remove FAQ
+                          </button>
+                      )}
+                    </div>
+                  </div>
+              ))}
+              <button
+                  type="button"
+                  onClick={() => {
+                    const newContent = [...content, { question: "", answer: "" }];
+                    updateContentSection(index, newContent);
+                  }}
+                  className="px-3 py-1 rounded text-sm"
+                  style={{
+                    backgroundColor: colors.primary,
+                    color: colors.lightText,
+                  }}
+              >
+                Add FAQ
+              </button>
+            </div>
         );
 
       case "image":
         return (
-          <div className="space-y-4">
-            {/* Image Upload Area */}
-            <div
-              className="border-2 border-dashed rounded-lg p-4 text-center"
-              style={{ borderColor: colors.borderColor }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.add("bg-opacity-10");
-                e.currentTarget.style.backgroundColor = `${colors.primary}20`;
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.remove("bg-opacity-10");
-                e.currentTarget.style.backgroundColor = "";
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.remove("bg-opacity-10");
-                e.currentTarget.style.backgroundColor = "";
+            <div className="space-y-4">
+              {/* Image Upload Area */}
+              <div
+                  className="border-2 border-dashed rounded-lg p-4 text-center"
+                  style={{ borderColor: colors.borderColor }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.add("bg-opacity-10");
+                    e.currentTarget.style.backgroundColor = `${colors.primary}20`;
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove("bg-opacity-10");
+                    e.currentTarget.style.backgroundColor = "";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove("bg-opacity-10");
+                    e.currentTarget.style.backgroundColor = "";
 
-                const files = e.dataTransfer.files;
-                if (
-                  files &&
-                  files.length > 0 &&
-                  files[0].type.startsWith("image/")
-                ) {
-                  handleImageUpload(index, files[0]);
-                }
-              }}
-            >
-              {content.url ? (
-                <div className="relative">
-                  <img
-                    src={content.url}
-                    alt={content.alt || "Preview"}
-                    className="max-w-full max-h-48 object-contain rounded mx-auto"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateContentSection(index, {
-                        ...content,
-                        url: "",
-                        file: null,
-                        imageId: null,
-                      });
-                    }}
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    style={{ transform: "translate(50%, -50%)" }}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <Upload
-                    className="mx-auto mb-2"
-                    style={{ color: colors.textMuted }}
-                  />
-                  <p className="text-sm" style={{ color: colors.textMuted }}>
-                    Drag and drop an image here, or{" "}
-                    <button
-                      type="button"
-                      className="font-medium"
-                      style={{ color: colors.primary }}
-                      onClick={() => {
-                        if (fileInputRef.current) {
-                          fileInputRef.current.click();
-                        }
-                      }}
+                    const files = e.dataTransfer.files;
+                    if (
+                        files &&
+                        files.length > 0 &&
+                        files[0].type.startsWith("image/")
+                    ) {
+                      handleImageUpload(index, files[0]);
+                    }
+                  }}
+              >
+                {content.url ? (
+                    <div className="relative">
+                      <img
+                          src={content.url}
+                          alt={content.alt || "Preview"}
+                          className="max-w-full max-h-48 object-contain rounded mx-auto"
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                          }}
+                      />
+                      <button
+                          type="button"
+                          onClick={() => {
+                            updateContentSection(index, {
+                              ...content,
+                              url: "",
+                              file: null,
+                              imageId: null,
+                            });
+                          }}
+                          className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                          style={{ transform: "translate(50%, -50%)" }}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                ) : (
+                    <>
+                      <Upload
+                          className="mx-auto mb-2"
+                          style={{ color: colors.textMuted }}
+                      />
+                      <p className="text-sm" style={{ color: colors.textMuted }}>
+                        Drag and drop an image here, or{" "}
+                        <button
+                            type="button"
+                            className="font-medium"
+                            style={{ color: colors.primary }}
+                            onClick={() => {
+                              if (fileInputRef.current) {
+                                fileInputRef.current.click();
+                              }
+                            }}
+                        >
+                          click to browse
+                        </button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                handleImageUpload(index, e.target.files[0]);
+                                e.target.value = "";
+                              }
+                            }}
+                        />
+                      </p>
+                      <p
+                          className="text-xs mt-1"
+                          style={{ color: colors.textMuted }}
+                      >
+                        Recommended size: 1200x800px, max 2MB
+                      </p>
+                    </>
+                )}
+
+                {/* Upload progress indicator */}
+                {uploadProgress[`content-${index}`]?.status === "loading" && (
+                    <div className="text-center mt-2">
+                      <p style={{ color: colors.textMuted }}>
+                        Uploading image...{" "}
+                        {uploadProgress[`content-${index}`].progress}%
+                      </p>
+                    </div>
+                )}
+
+                {uploadProgress[`content-${index}`]?.status === "error" && (
+                    <div className="text-center mt-2">
+                      <p style={{ color: colors.error }}>
+                        {uploadProgress[`content-${index}`].error ||
+                            "Upload failed"}
+                      </p>
+                    </div>
+                )}
+              </div>
+
+              {/* Image Details */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label
+                        className="block text-xs mb-1"
+                        style={{ color: colors.textMuted }}
                     >
-                      click to browse
-                    </button>
+                      Image URL
+                    </label>
                     <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          handleImageUpload(index, e.target.files[0]);
-                          e.target.value = "";
-                        }
-                      }}
+                        type="text"
+                        value={content.url || ""}
+                        onChange={(e) => {
+                          updateContentSection(index, {
+                            ...content,
+                            url: e.target.value,
+                            file: null,
+                            imageId: null,
+                          });
+                        }}
+                        placeholder="Image URL..."
+                        className="w-full px-4 py-2 rounded-lg focus:outline-none"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          border: `1px solid ${colors.borderColor}`,
+                          color: colors.text,
+                        }}
                     />
-                  </p>
-                  <p
-                    className="text-xs mt-1"
-                    style={{ color: colors.textMuted }}
-                  >
-                    Recommended size: 1200x800px, max 2MB
-                  </p>
-                </>
-              )}
-
-              {/* Upload progress indicator */}
-              {uploadProgress[`content-${index}`]?.status === "loading" && (
-                <div className="text-center mt-2">
-                  <p style={{ color: colors.textMuted }}>
-                    Uploading image...{" "}
-                    {uploadProgress[`content-${index}`].progress}%
-                  </p>
+                  </div>
                 </div>
-              )}
 
-              {uploadProgress[`content-${index}`]?.status === "error" && (
-                <div className="text-center mt-2">
-                  <p style={{ color: colors.error }}>
-                    {uploadProgress[`content-${index}`].error ||
-                      "Upload failed"}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Image Details */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <label
-                    className="block text-xs mb-1"
-                    style={{ color: colors.textMuted }}
-                  >
-                    Image URL
-                  </label>
-                  <input
-                    type="text"
-                    value={content.url || ""}
-                    onChange={(e) => {
-                      updateContentSection(index, {
-                        ...content,
-                        url: e.target.value,
-                        file: null,
-                        imageId: null,
-                      });
-                    }}
-                    placeholder="Image URL..."
-                    className="w-full px-4 py-2 rounded-lg focus:outline-none"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      border: `1px solid ${colors.borderColor}`,
-                      color: colors.text,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  className="block text-xs mb-1"
-                  style={{ color: colors.textMuted }}
-                >
-                  Alt Text (for accessibility and SEO)
-                </label>
-                <input
-                  type="text"
-                  value={content.alt || ""}
-                  onChange={(e) => {
-                    updateContentSection(index, {
-                      ...content,
-                      alt: e.target.value,
-                    });
-                  }}
-                  placeholder="Describe the image..."
-                  className="w-full px-4 py-2 rounded-lg focus:outline-none"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    border: `1px solid ${colors.borderColor}`,
-                    color: colors.text,
-                  }}
-                />
-              </div>
-
-              <div>
-                <label
-                  className="block text-xs mb-1"
-                  style={{ color: colors.textMuted }}
-                >
-                  Caption (optional)
-                </label>
-                <input
-                  type="text"
-                  value={content.caption || ""}
-                  onChange={(e) => {
-                    updateContentSection(index, {
-                      ...content,
-                      caption: e.target.value,
-                    });
-                  }}
-                  placeholder="Image caption..."
-                  className="w-full px-4 py-2 rounded-lg focus:outline-none"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    border: `1px solid ${colors.borderColor}`,
-                    color: colors.text,
-                  }}
-                />
-              </div>
-
-              {content.imageId && (
                 <div>
                   <label
-                    className="block text-xs mb-1"
-                    style={{ color: colors.textMuted }}
+                      className="block text-xs mb-1"
+                      style={{ color: colors.textMuted }}
                   >
-                    Image ID
+                    Alt Text (for accessibility and SEO)
                   </label>
                   <input
-                    type="text"
-                    value={content.imageId || ""}
-                    readOnly
-                    className="w-full px-4 py-2 rounded-lg focus:outline-none bg-gray-100"
-                    style={{
-                      backgroundColor: `${colors.inputBg}80`,
-                      border: `1px solid ${colors.borderColor}`,
-                      color: colors.textMuted,
-                    }}
+                      type="text"
+                      value={content.alt || ""}
+                      onChange={(e) => {
+                        updateContentSection(index, {
+                          ...content,
+                          alt: e.target.value,
+                        });
+                      }}
+                      placeholder="Describe the image..."
+                      className="w-full px-4 py-2 rounded-lg focus:outline-none"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        border: `1px solid ${colors.borderColor}`,
+                        color: colors.text,
+                      }}
                   />
                 </div>
-              )}
+
+                <div>
+                  <label
+                      className="block text-xs mb-1"
+                      style={{ color: colors.textMuted }}
+                  >
+                    Caption (optional)
+                  </label>
+                  <input
+                      type="text"
+                      value={content.caption || ""}
+                      onChange={(e) => {
+                        updateContentSection(index, {
+                          ...content,
+                          caption: e.target.value,
+                        });
+                      }}
+                      placeholder="Image caption..."
+                      className="w-full px-4 py-2 rounded-lg focus:outline-none"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        border: `1px solid ${colors.borderColor}`,
+                        color: colors.text,
+                      }}
+                  />
+                </div>
+
+                {content.imageId && (
+                    <div>
+                      <label
+                          className="block text-xs mb-1"
+                          style={{ color: colors.textMuted }}
+                      >
+                        Image ID
+                      </label>
+                      <input
+                          type="text"
+                          value={content.imageId || ""}
+                          readOnly
+                          className="w-full px-4 py-2 rounded-lg focus:outline-none bg-gray-100"
+                          style={{
+                            backgroundColor: `${colors.inputBg}80`,
+                            border: `1px solid ${colors.borderColor}`,
+                            color: colors.textMuted,
+                          }}
+                      />
+                    </div>
+                )}
+              </div>
             </div>
-          </div>
         );
 
       default:
@@ -1622,43 +2033,56 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                     )}
                     <div style={{ color: colors.text }}>
                       {section.type === "faq" &&
-                        section.content.map((faq, faqIndex) => (
-                          <div key={faqIndex} className="mb-2">
-                            <p className="font-medium">{faq.question}</p>
-                            <p className="text-sm">{faq.answer}</p>
-                          </div>
-                        ))}
-                      {(section.type === "bulletPoints" ||
-                        section.type === "numberedList") && (
-                        <ul
-                          className={
-                            section.type === "numberedList"
-                              ? "list-decimal"
-                              : "list-disc"
-                          }
-                          style={{ paddingLeft: "20px" }}
-                        >
-                          {section.content.map((item, itemIndex) => (
-                            <li key={itemIndex}>{item}</li>
+                          section.content.map((faq, faqIndex) => (
+                              <div key={faqIndex} className="mb-2">
+                                <div
+                                    className="px-2 py-1 rounded text-sm font-medium mb-1"
+                                    style={{
+                                      backgroundColor: `${colors.primary}05`,
+                                      color: colors.text,
+                                    }}
+                                    dangerouslySetInnerHTML={{__html: parseTextWithLinks(faq.question, colors) }}
+                                />
+                                <div
+                                    className="px-2 py-1 rounded text-sm"
+                                    style={{
+                                      backgroundColor: `${colors.primary}05`,
+                                      color: colors.text,
+                                    }}
+                                    dangerouslySetInnerHTML={{__html: parseTextWithLinks(faq.answer, colors) }}
+                                />
+                              </div>
                           ))}
-                        </ul>
+                      {(section.type === "bulletPoints" ||
+                          section.type === "numberedList") && (
+                          <ul className={section.type === "numberedList" ? "list-decimal" : "list-disc"}
+                              style={{paddingLeft: "20px"}}>
+                            {section.content.map((item, itemIndex) => (
+                                <li key={itemIndex} style={{marginBottom: "4px"}}>
+                                  <span dangerouslySetInnerHTML={{__html: parseTextWithLinks(item, colors) }}></span>
+                                </li>
+                            ))}
+                          </ul>
                       )}
                       {section.type === "bulletPointsWithHeading" && (
-                        <div>
-                          <h5 className="font-medium mb-2">
-                            {section.content.heading}
-                          </h5>
-                          <ul
-                            className="list-disc"
-                            style={{ paddingLeft: "20px" }}
-                          >
-                            {(section.content.items || []).map(
-                              (item, itemIndex) => (
-                                <li key={itemIndex}>{item}</li>
-                              )
-                            )}
-                          </ul>
-                        </div>
+                          <div>
+                            <h5 className="font-medium mb-2">
+                              {section.content.heading}
+                            </h5>
+                            <ul
+                                className="list-disc"
+                                style={{ paddingLeft: "20px" }}
+                            >
+                              {(section.content.items || []).map(
+                                  (item, itemIndex) => (
+                                      <li
+                                          key={itemIndex}
+                                          dangerouslySetInnerHTML={{ __html: parseTextWithLinks(item, colors) }}
+                                      />
+                                  )
+                              )}
+                            </ul>
+                          </div>
                       )}
                       {section.type === "image" && section.content.url && (
                         <div>
@@ -1675,12 +2099,13 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                         </div>
                       )}
                       {(section.type === "introduction" ||
-                        section.type === "closing" ||
-                        section.type === "subtitle" ||
-                        section.type === "quote") && (
-                        <p className={section.type === "quote" ? "italic" : ""}>
-                          {section.content}
-                        </p>
+                          section.type === "closing" ||
+                          section.type === "subtitle" ||
+                          section.type === "quote") && (
+                          <div
+                              className={section.type === "quote" ? "italic" : ""}
+                              dangerouslySetInnerHTML={{ __html: parseTextWithLinks(section.content, colors) }}
+                          />
                       )}
                     </div>
                   </div>
@@ -1897,6 +2322,14 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
           </button>
         </div>
       </div>
+
+      <HyperlinkModal
+          isOpen={hyperlinkModal.isOpen}
+          onClose={() => setHyperlinkModal({ isOpen: false, sectionIndex: null, selectedText: '', selectionStart: 0, selectionEnd: 0 })}
+          onInsert={handleInsertHyperlink}
+          selectedText={hyperlinkModal.selectedText}
+          colors={colors}
+      />
     </div>
   );
 };
