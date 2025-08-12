@@ -751,6 +751,69 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
     }
   };
 
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  const allTags = [
+    'AI Learning',
+    'Gamification',
+    'Student Engagement',
+    'EdTech',
+    'Teaching Methods',
+    'Assessment',
+    'Personalization',
+    'Online Learning'
+  ];
+
+  const selectedTags = formData.tags || [];
+
+  const filteredTags = allTags.filter(tag =>
+      tag.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !selectedTags.includes(tag)
+  );
+
+  const handleTagSelect = (tag) => {
+    const newTags = [...selectedTags, tag];
+    handleInputChange({
+      target: {
+        name: 'tags',
+        value: newTags
+      }
+    });
+    setSearchTerm('');
+  };
+
+  const handleTagRemove = (tagToRemove) => {
+    const newTags = selectedTags.filter(tag => tag !== tagToRemove);
+    handleInputChange({
+      target: {
+        name: 'tags',
+        value: newTags
+      }
+    });
+  };
+
+  const handleClickOutside = (event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setIsOpen(false);
+      setSearchTerm('');
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isOpen]);
+
   const renderContentEditor = (section, index) => {
     const { type, content } = section;
 
@@ -1551,46 +1614,46 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: colors.text }}
+                        className="block text-sm font-medium mb-2"
+                        style={{color: colors.text}}
                     >
-                      Blog Title <span style={{ color: colors.error }}>*</span>
+                      Blog Title <span style={{color: colors.error}}>*</span>
                     </label>
                     <input
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="Enter blog title"
-                      className="w-full px-4 py-2 rounded-lg focus:outline-none"
-                      style={{
-                        backgroundColor: colors.inputBg,
-                        border: `1px solid ${colors.borderColor}`,
-                        color: colors.text,
-                      }}
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter blog title"
+                        className="w-full px-4 py-2 rounded-lg focus:outline-none"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          border: `1px solid ${colors.borderColor}`,
+                          color: colors.text,
+                        }}
                     />
                   </div>
 
                   <div>
                     <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: colors.text }}
+                        className="block text-sm font-medium mb-2"
+                        style={{color: colors.text}}
                     >
                       Document Title
                     </label>
                     <input
-                      type="text"
-                      name="documentTitle"
-                      value={formData.documentTitle}
-                      onChange={handleInputChange}
-                      placeholder="Document title for SEO"
-                      className="w-full px-4 py-2 rounded-lg focus:outline-none"
-                      style={{
-                        backgroundColor: colors.inputBg,
-                        border: `1px solid ${colors.borderColor}`,
-                        color: colors.text,
-                      }}
+                        type="text"
+                        name="documentTitle"
+                        value={formData.documentTitle}
+                        onChange={handleInputChange}
+                        placeholder="Document title for SEO"
+                        className="w-full px-4 py-2 rounded-lg focus:outline-none"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          border: `1px solid ${colors.borderColor}`,
+                          color: colors.text,
+                        }}
                     />
                   </div>
                 </div>
@@ -1598,33 +1661,33 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                 {/* URL Slug */}
                 <div>
                   <label
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: colors.text }}
+                      className="block text-sm font-medium mb-2"
+                      style={{color: colors.text}}
                   >
                     URL Slug
                   </label>
                   <div className="flex gap-2">
                     <input
-                      type="text"
-                      name="urlSlug"
-                      value={formData.urlSlug}
-                      onChange={handleInputChange}
-                      placeholder="url-slug"
-                      className="flex-1 px-4 py-2 rounded-lg focus:outline-none"
-                      style={{
-                        backgroundColor: colors.inputBg,
-                        border: `1px solid ${colors.borderColor}`,
-                        color: colors.text,
-                      }}
+                        type="text"
+                        name="urlSlug"
+                        value={formData.urlSlug}
+                        onChange={handleInputChange}
+                        placeholder="url-slug"
+                        className="flex-1 px-4 py-2 rounded-lg focus:outline-none"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          border: `1px solid ${colors.borderColor}`,
+                          color: colors.text,
+                        }}
                     />
                     <button
-                      type="button"
-                      onClick={generateSlug}
-                      className="px-4 py-2 rounded-lg text-sm"
-                      style={{
-                        backgroundColor: colors.primary,
-                        color: colors.lightText,
-                      }}
+                        type="button"
+                        onClick={generateSlug}
+                        className="px-4 py-2 rounded-lg text-sm"
+                        style={{
+                          backgroundColor: colors.primary,
+                          color: colors.lightText,
+                        }}
                     >
                       Generate
                     </button>
@@ -1634,71 +1697,160 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                 {/* Summary */}
                 <div>
                   <label
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: colors.text }}
+                      className="block text-sm font-medium mb-2"
+                      style={{color: colors.text}}
                   >
                     Summary
                   </label>
                   <textarea
-                    name="summary"
-                    value={formData.summary}
-                    onChange={handleInputChange}
-                    placeholder="Brief summary of the blog post"
-                    rows="3"
-                    className="w-full px-4 py-2 rounded-lg focus:outline-none"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      border: `1px solid ${colors.borderColor}`,
-                      color: colors.text,
-                    }}
+                      name="summary"
+                      value={formData.summary}
+                      onChange={handleInputChange}
+                      placeholder="Brief summary of the blog post"
+                      rows="3"
+                      className="w-full px-4 py-2 rounded-lg focus:outline-none"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        border: `1px solid ${colors.borderColor}`,
+                        color: colors.text,
+                      }}
                   />
                 </div>
+                <div>
+                  <label
+                      className="block text-sm font-medium mb-2"
+                      style={{color: colors.text}}
+                  >
+                    Tags
+                  </label>
 
+                  <div className="relative" ref={dropdownRef}>
+                    {/* Selected tags display */}
+                    <div
+                        className="w-full min-h-[42px] px-4 py-2 rounded-lg focus-within:outline-none cursor-text flex flex-wrap gap-2 items-center"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          border: `1px solid ${colors.borderColor}`,
+                        }}
+                        onClick={() => setIsOpen(true)}
+                    >
+                      {selectedTags.map((tag, index) => (
+                          <span
+                              key={index}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm"
+                              style={{
+                                backgroundColor: colors.borderColor,
+                                color: colors.text,
+                              }}
+                          >
+              {tag}
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleTagRemove(tag);
+                                }}
+                                className="hover:opacity-70 ml-1"
+                            >
+                ×
+              </button>
+            </span>
+                      ))}
+
+                      {/* Search input */}
+                      <input
+                          ref={searchInputRef}
+                          type="text"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onFocus={() => setIsOpen(true)}
+                          placeholder={selectedTags.length === 0 ? "Search and select tags..." : "Add more tags..."}
+                          className="flex-1 min-w-[120px] bg-transparent outline-none"
+                          style={{color: colors.text}}
+                      />
+                    </div>
+
+                    {/* Dropdown */}
+                    {isOpen && (
+                        <div
+                            className="absolute z-50 w-full mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                            style={{
+                              backgroundColor: colors.inputBg,
+                              border: `1px solid ${colors.borderColor}`,
+                            }}
+                        >
+                          {filteredTags.length > 0 ? (
+                              filteredTags.map((tag, index) => (
+                                  <div
+                                      key={index}
+                                      className="px-4 py-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                      style={{color: colors.text}}
+                                      onClick={() => handleTagSelect(tag)}
+                                  >
+                                    {tag}
+                                  </div>
+                              ))
+                          ) : (
+                              <div
+                                  className="px-4 py-2 opacity-50"
+                                  style={{color: colors.text}}
+                              >
+                                {searchTerm ? 'No matching tags found' : 'No more tags available'}
+                              </div>
+                          )}
+                        </div>
+                    )}
+                  </div>
+
+                  <p className="text-xs mt-1 opacity-70" style={{color: colors.text}}>
+                    Search and click to add tags. Click × to remove.
+                  </p>
+                </div>
                 {/* Meta Description */}
                 <div>
                   <label
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: colors.text }}
+                      className="block text-sm font-medium mb-2"
+                      style={{color: colors.text}}
                   >
                     Meta Description
                   </label>
                   <div className="space-y-2">
                     {formData.metaDescription.map((desc, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={desc}
-                          onChange={(e) =>
-                            handleMetaDescriptionChange(index, e.target.value)
-                          }
-                          placeholder="Meta description..."
-                          className="flex-1 px-4 py-2 rounded-lg focus:outline-none"
-                          style={{
-                            backgroundColor: colors.inputBg,
-                            border: `1px solid ${colors.borderColor}`,
-                            color: colors.text,
-                          }}
-                        />
-                        {formData.metaDescription.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeMetaDescription(index)}
-                            className="p-2 rounded"
-                            style={{ color: colors.error }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
+                        <div key={index} className="flex items-center gap-2">
+                          <input
+                              type="text"
+                              value={desc}
+                              onChange={(e) =>
+                                  handleMetaDescriptionChange(index, e.target.value)
+                              }
+                              placeholder="Meta description..."
+                              className="flex-1 px-4 py-2 rounded-lg focus:outline-none"
+                              style={{
+                                backgroundColor: colors.inputBg,
+                                border: `1px solid ${colors.borderColor}`,
+                                color: colors.text,
+                              }}
+                          />
+                          {formData.metaDescription.length > 1 && (
+                              <button
+                                  type="button"
+                                  onClick={() => removeMetaDescription(index)}
+                                  className="p-2 rounded"
+                                  style={{color: colors.error}}
+                              >
+                                <Trash2 className="w-4 h-4"/>
+                              </button>
+                          )}
+                        </div>
                     ))}
                     <button
-                      type="button"
-                      onClick={addMetaDescription}
-                      className="px-3 py-1 rounded text-sm"
-                      style={{
-                        backgroundColor: colors.primary,
-                        color: colors.lightText,
-                      }}
+                        type="button"
+                        onClick={addMetaDescription}
+                        className="px-3 py-1 rounded text-sm"
+                        style={{
+                          backgroundColor: colors.primary,
+                          color: colors.lightText,
+                        }}
                     >
                       Add Meta Description
                     </button>
@@ -1708,135 +1860,135 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                 {/* Featured Image Upload */}
                 <div>
                   <label
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: colors.text }}
+                      className="block text-sm font-medium mb-2"
+                      style={{color: colors.text}}
                   >
                     Featured Image
                   </label>
                   <div
-                    className="border-2 border-dashed rounded-lg p-4 text-center"
-                    style={{ borderColor: colors.borderColor }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      e.currentTarget.style.backgroundColor = `${colors.primary}20`;
-                    }}
-                    onDragLeave={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      e.currentTarget.style.backgroundColor = "";
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      e.currentTarget.style.backgroundColor = "";
+                      className="border-2 border-dashed rounded-lg p-4 text-center"
+                      style={{borderColor: colors.borderColor}}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.currentTarget.style.backgroundColor = `${colors.primary}20`;
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.currentTarget.style.backgroundColor = "";
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.currentTarget.style.backgroundColor = "";
 
-                      const files = e.dataTransfer.files;
-                      if (
-                        files &&
-                        files.length > 0 &&
-                        files[0].type.startsWith("image/")
-                      ) {
-                        handleFeaturedImageUpload(files[0]);
-                      }
-                    }}
+                        const files = e.dataTransfer.files;
+                        if (
+                            files &&
+                            files.length > 0 &&
+                            files[0].type.startsWith("image/")
+                        ) {
+                          handleFeaturedImageUpload(files[0]);
+                        }
+                      }}
                   >
                     {formData.featuredImage?.url ? (
-                      <div className="relative">
-                        <img
-                          src={formData.featuredImage.url}
-                          alt="Featured"
-                          className="max-w-full h-32 object-cover rounded mx-auto mb-2"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              featuredImage: null,
-                            });
-                          }}
-                          className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                          style={{ transform: "translate(50%, -50%)" }}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <Upload
-                          className="mx-auto mb-2"
-                          style={{ color: colors.textMuted }}
-                        />
-                        <p
-                          className="text-sm"
-                          style={{ color: colors.textMuted }}
-                        >
-                          Drag and drop an image here, or{" "}
-                          <button
-                            type="button"
-                            className="font-medium"
-                            style={{ color: colors.primary }}
-                            onClick={() => {
-                              if (featuredImageInputRef.current) {
-                                featuredImageInputRef.current.click();
-                              }
-                            }}
-                          >
-                            click to browse
-                          </button>
-                          <input
-                            ref={featuredImageInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                handleFeaturedImageUpload(e.target.files[0]);
-                                e.target.value = "";
-                              }
-                            }}
+                        <div className="relative">
+                          <img
+                              src={formData.featuredImage.url}
+                              alt="Featured"
+                              className="max-w-full h-32 object-cover rounded mx-auto mb-2"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
                           />
-                        </p>
-                      </>
+                          <button
+                              type="button"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  featuredImage: null,
+                                });
+                              }}
+                              className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                              style={{transform: "translate(50%, -50%)"}}
+                          >
+                            <X className="w-3 h-3"/>
+                          </button>
+                        </div>
+                    ) : (
+                        <>
+                          <Upload
+                              className="mx-auto mb-2"
+                              style={{color: colors.textMuted}}
+                          />
+                          <p
+                              className="text-sm"
+                              style={{color: colors.textMuted}}
+                          >
+                            Drag and drop an image here, or{" "}
+                            <button
+                                type="button"
+                                className="font-medium"
+                                style={{color: colors.primary}}
+                                onClick={() => {
+                                  if (featuredImageInputRef.current) {
+                                    featuredImageInputRef.current.click();
+                                  }
+                                }}
+                            >
+                              click to browse
+                            </button>
+                            <input
+                                ref={featuredImageInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    handleFeaturedImageUpload(e.target.files[0]);
+                                    e.target.value = "";
+                                  }
+                                }}
+                            />
+                          </p>
+                        </>
                     )}
                     <p
-                      className="text-xs mt-1"
-                      style={{ color: colors.textMuted }}
+                        className="text-xs mt-1"
+                        style={{color: colors.textMuted}}
                     >
                       Recommended size: 1200x630px, max 2MB
                     </p>
 
                     {/* Upload progress indicator */}
                     {uploadProgress["featured"]?.status === "loading" && (
-                      <div className="text-center mt-2">
-                        <p style={{ color: colors.textMuted }}>
-                          Uploading image...{" "}
-                          {uploadProgress["featured"].progress}%
-                        </p>
-                      </div>
+                        <div className="text-center mt-2">
+                          <p style={{color: colors.textMuted}}>
+                            Uploading image...{" "}
+                            {uploadProgress["featured"].progress}%
+                          </p>
+                        </div>
                     )}
 
                     {uploadProgress["featured"]?.status === "error" && (
-                      <div className="text-center mt-2">
-                        <p style={{ color: colors.error }}>
-                          {uploadProgress["featured"].error || "Upload failed"}
-                        </p>
-                      </div>
+                        <div className="text-center mt-2">
+                          <p style={{color: colors.error}}>
+                            {uploadProgress["featured"].error || "Upload failed"}
+                          </p>
+                        </div>
                     )}
 
                     {formData.featuredImage?.imageId && (
-                      <div className="text-center mt-2">
-                        <p
-                          className="text-xs"
-                          style={{ color: colors.textMuted }}
-                        >
-                          Image ID: {formData.featuredImage.imageId}
-                        </p>
-                      </div>
+                        <div className="text-center mt-2">
+                          <p
+                              className="text-xs"
+                              style={{color: colors.textMuted}}
+                          >
+                            Image ID: {formData.featuredImage.imageId}
+                          </p>
+                        </div>
                     )}
                   </div>
                 </div>
@@ -1844,89 +1996,89 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                 {/* Blog Content Sections */}
                 <div>
                   <label
-                    className="block text-sm font-medium mb-4"
-                    style={{ color: colors.text }}
+                      className="block text-sm font-medium mb-4"
+                      style={{color: colors.text}}
                   >
-                    Blog Content <span style={{ color: colors.error }}>*</span>
+                    Blog Content <span style={{color: colors.error}}>*</span>
                   </label>
 
                   <div className="space-y-4">
                     {formData.content.map((section, index) => {
                       const SectionIcon =
-                        SECTION_TYPES[section.type]?.icon || FileText;
+                          SECTION_TYPES[section.type]?.icon || FileText;
                       const isIntroduction = section.type === "introduction";
 
                       return (
-                        <div
-                          key={index}
-                          className="p-4 rounded-lg"
-                          style={{
-                            backgroundColor: colors.cardBgAlt,
-                            border: `1px solid ${colors.borderColor}`,
-                          }}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <SectionIcon
-                                className="w-5 h-5"
-                                style={{ color: colors.primary }}
-                              />
-                              <h4
-                                className="font-medium"
-                                style={{ color: colors.text }}
-                              >
-                                {SECTION_TYPES[section.type]?.label ||
-                                  section.type}
-                              </h4>
-                              {isIntroduction && (
-                                <span
-                                  className="px-2 py-1 text-xs rounded"
-                                  style={{
-                                    backgroundColor: colors.primary,
-                                    color: colors.lightText,
-                                  }}
+                          <div
+                              key={index}
+                              className="p-4 rounded-lg"
+                              style={{
+                                backgroundColor: colors.cardBgAlt,
+                                border: `1px solid ${colors.borderColor}`,
+                              }}
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <SectionIcon
+                                    className="w-5 h-5"
+                                    style={{color: colors.primary}}
+                                />
+                                <h4
+                                    className="font-medium"
+                                    style={{color: colors.text}}
                                 >
+                                  {SECTION_TYPES[section.type]?.label ||
+                                      section.type}
+                                </h4>
+                                {isIntroduction && (
+                                    <span
+                                        className="px-2 py-1 text-xs rounded"
+                                        style={{
+                                          backgroundColor: colors.primary,
+                                          color: colors.lightText,
+                                        }}
+                                    >
                                   Required
                                 </span>
-                              )}
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1">
+                                {index > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => moveSection(index, "up")}
+                                        className="p-1 rounded"
+                                        style={{color: colors.textMuted}}
+                                    >
+                                      <ArrowUp className="w-4 h-4"/>
+                                    </button>
+                                )}
+                                {index < formData.content.length - 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => moveSection(index, "down")}
+                                        className="p-1 rounded"
+                                        style={{color: colors.textMuted}}
+                                    >
+                                      <ArrowDown className="w-4 h-4"/>
+                                    </button>
+                                )}
+                                {!isIntroduction && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeContentSection(index)}
+                                        className="p-1 rounded"
+                                        style={{color: colors.error}}
+                                    >
+                                      <Trash2 className="w-4 h-4"/>
+                                    </button>
+                                )}
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-1">
-                              {index > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() => moveSection(index, "up")}
-                                  className="p-1 rounded"
-                                  style={{ color: colors.textMuted }}
-                                >
-                                  <ArrowUp className="w-4 h-4" />
-                                </button>
-                              )}
-                              {index < formData.content.length - 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => moveSection(index, "down")}
-                                  className="p-1 rounded"
-                                  style={{ color: colors.textMuted }}
-                                >
-                                  <ArrowDown className="w-4 h-4" />
-                                </button>
-                              )}
-                              {!isIntroduction && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeContentSection(index)}
-                                  className="p-1 rounded"
-                                  style={{ color: colors.error }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
+                            {renderContentEditor(section, index)}
                           </div>
-
-                          {renderContentEditor(section, index)}
-                        </div>
                       );
                     })}
                   </div>
@@ -1934,33 +2086,33 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                   {/* Add Section Buttons */}
                   <div className="mt-4">
                     <p
-                      className="text-sm mb-3"
-                      style={{ color: colors.textMuted }}
+                        className="text-sm mb-3"
+                        style={{color: colors.textMuted}}
                     >
                       Add new section:
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                       {Object.entries(SECTION_TYPES).map(
-                        ([type, { icon: Icon, label, mandatory }]) => {
-                          if (mandatory) return null; // Don't show mandatory sections in add buttons
+                          ([type, {icon: Icon, label, mandatory}]) => {
+                            if (mandatory) return null; // Don't show mandatory sections in add buttons
 
-                          return (
-                            <button
-                              key={type}
-                              type="button"
-                              onClick={() => addContentSection(type)}
-                              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-                              style={{
-                                backgroundColor: colors.inputBg,
-                                border: `1px solid ${colors.borderColor}`,
-                                color: colors.text,
-                              }}
-                            >
-                              <Icon className="w-4 h-4" />
-                              {label}
-                            </button>
-                          );
-                        }
+                            return (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => addContentSection(type)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                                    style={{
+                                      backgroundColor: colors.inputBg,
+                                      border: `1px solid ${colors.borderColor}`,
+                                      color: colors.text,
+                                    }}
+                                >
+                                  <Icon className="w-4 h-4"/>
+                                  {label}
+                                </button>
+                            );
+                          }
                       )}
                     </div>
                   </div>
@@ -1974,31 +2126,31 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
       {/* Settings section */}
       <div>
         {showPreview ? (
-          // Preview panel
-          <div
-            className="rounded-lg overflow-hidden"
-            style={{
-              border: `1px solid ${colors.borderColor}`,
-              backgroundColor: colors.cardBg,
-            }}
-          >
+            // Preview panel
             <div
-              className="px-6 py-4 border-b"
-              style={{ borderColor: colors.borderColor }}
-            >
-              <h3
-                className="text-lg font-medium"
-                style={{ color: colors.text }}
-              >
-                Preview
-              </h3>
-            </div>
-            <div className="p-6 max-h-96 overflow-y-auto">
-              <div
-                className="p-4 rounded-lg mb-4"
+                className="rounded-lg overflow-hidden"
                 style={{
-                  backgroundColor: colors.cardBgAlt,
                   border: `1px solid ${colors.borderColor}`,
+                  backgroundColor: colors.cardBg,
+                }}
+            >
+              <div
+                  className="px-6 py-4 border-b"
+                  style={{borderColor: colors.borderColor}}
+              >
+                <h3
+                    className="text-lg font-medium"
+                    style={{color: colors.text}}
+                >
+                  Preview
+                </h3>
+              </div>
+              <div className="p-6 max-h-96 overflow-y-auto">
+                <div
+                    className="p-4 rounded-lg mb-4"
+                    style={{
+                      backgroundColor: colors.cardBgAlt,
+                      border: `1px solid ${colors.borderColor}`,
                 }}
               >
                 {formData.featuredImage?.url && (
