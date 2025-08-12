@@ -82,7 +82,8 @@ const BlogList = ({
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [isDeleting, setIsDeleting] = useState(false);
-
+    const [tagFilter, setTagFilter] = useState([]);
+    const [showTagDropdown, setShowTagDropdown] = useState(false);
     // Items per page
     const itemsPerPage = 10;
     // Calculate blog stats
@@ -94,7 +95,19 @@ const BlogList = ({
     const draftBlogs = blogs.body?.filter((blog) => blog.status === "draft").length || [];
     const reviewBlogs = blogs.body?.filter((blog) => blog.status === "review").length || [];
 
-    // Get filtered data
+
+// Add this function to get all unique tags
+    const getAllTags = () => {
+        const allTags = new Set();
+        blogs.body?.forEach(blog => {
+            if (blog.tags && Array.isArray(blog.tags)) {
+                blog.tags.forEach(tag => allTags.add(tag));
+            }
+        });
+        return Array.from(allTags).sort();
+    };
+
+// Update the getFilteredData function to include tag filtering
     const getFilteredData = () => {
         let data = [...blogs.body || []];
 
@@ -123,8 +136,34 @@ const BlogList = ({
             data = data.filter((blog) => blog.language === languageFilter);
         }
 
+        // Apply tag filter
+        if (tagFilter.length > 0) {
+            data = data.filter((blog) => {
+                if (!blog.tags || !Array.isArray(blog.tags)) return false;
+                return tagFilter.some(selectedTag => blog.tags.includes(selectedTag));
+            });
+        }
+
         return data;
     };
+
+// Add tag filter functions
+    const handleTagToggle = (tag) => {
+        setTagFilter(prev => {
+            if (prev.includes(tag)) {
+                return prev.filter(t => t !== tag);
+            } else {
+                return [...prev, tag];
+            }
+        });
+        setCurrentPage(1);
+    };
+
+    const clearTagFilter = () => {
+        setTagFilter([]);
+        setCurrentPage(1);
+    };
+
 
     const filteredData = getFilteredData();
 
@@ -481,6 +520,92 @@ const BlogList = ({
                             </div>
                         )}
                     </div>
+                    {/* Tag filter dropdown */}
+                    <div className="relative">
+                        <button
+                            className="flex items-center px-3 py-2 rounded-lg"
+                            style={{
+                                backgroundColor:
+                                    tagFilter.length > 0
+                                        ? `${colors.primary}20`
+                                        : colors.inputBg,
+                                color: tagFilter.length > 0 ? colors.primary : colors.text,
+                                border: `1px solid ${colors.borderColor}`,
+                            }}
+                            onClick={() => setShowTagDropdown(!showTagDropdown)}
+                        >
+                            <Filter className="w-4 h-4 mr-2"/>
+                            <span>
+            {tagFilter.length === 0
+                ? "Tags"
+                : `${tagFilter.length} tag${tagFilter.length > 1 ? 's' : ''} selected`}
+        </span>
+                            <ChevronDown className="w-4 h-4 ml-2"/>
+                        </button>
+
+                        {showTagDropdown && (
+                            <div
+                                className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-10 overflow-hidden max-h-60 overflow-y-auto"
+                                style={{
+                                    backgroundColor: colors.cardBg,
+                                    border: `1px solid ${colors.borderColor}`,
+                                }}
+                            >
+                                <div className="p-3 border-b" style={{borderColor: colors.borderColor}}>
+                                    <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium" style={{color: colors.text}}>
+                        Filter by Tags
+                    </span>
+                                        {tagFilter.length > 0 && (
+                                            <button
+                                                className="text-xs underline"
+                                                style={{color: colors.primary}}
+                                                onClick={clearTagFilter}
+                                            >
+                                                Clear all
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="py-2 max-h-40 overflow-y-auto">
+                                    {getAllTags().length === 0 ? (
+                                        <div className="px-4 py-2 text-sm" style={{color: colors.textMuted}}>
+                                            No tags available
+                                        </div>
+                                    ) : (
+                                        getAllTags().map((tag) => (
+                                            <label
+                                                key={tag}
+                                                className="flex items-center px-4 py-2 text-sm cursor-pointer hover:bg-opacity-50"
+                                                style={{
+                                                    backgroundColor: tagFilter.includes(tag) ? `${colors.primary}10` : 'transparent',
+                                                }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={tagFilter.includes(tag)}
+                                                    onChange={() => handleTagToggle(tag)}
+                                                    className="mr-3 rounded"
+                                                    style={{
+                                                        accentColor: colors.primary,
+                                                    }}
+                                                />
+                                                <span
+                                                    className="px-2 py-1 text-xs rounded-full mr-2"
+                                                    style={{
+                                                        backgroundColor: "rgba(187, 134, 252, 0.1)",
+                                                        color: colors.primary,
+                                                    }}
+                                                >
+                                {tag}
+                            </span>
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Refresh button */}
                     <button
@@ -567,6 +692,12 @@ const BlogList = ({
                                 className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                                 style={{color: colors.textMuted}}
                             >
+                                Tags
+                            </th>
+                            <th
+                                className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                                style={{color: colors.textMuted}}
+                            >
                                 Status
                             </th>
                             <th
@@ -605,7 +736,7 @@ const BlogList = ({
                         {isLoading ? (
                             <tr>
                                 <td
-                                    colSpan="8"
+                                    colSpan="9"
                                     className="px-6 py-4 text-center"
                                     style={{color: colors.textMuted}}
                                 >
@@ -615,7 +746,7 @@ const BlogList = ({
                         ) : paginatedData.length === 0 ? (
                             <tr>
                                 <td
-                                    colSpan="8"
+                                    colSpan="9"
                                     className="px-6 py-4 text-center"
                                     style={{color: colors.textMuted}}
                                 >
@@ -678,6 +809,99 @@ const BlogList = ({
                                                 style={{color: colors.textMuted}}
                                             />
                                             {blog.author}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <div className="flex flex-wrap gap-1 max-w-32">
+                                            {blog.tags && Array.isArray(blog.tags) && blog.tags.length > 0 ? (
+                                                <>
+                                                    {blog.tags.slice(0, 2).map((tag, tagIndex) => (
+                                                        <span
+                                                            key={tagIndex}
+                                                            className="px-2 py-1 text-xs rounded-full"
+                                                            style={{
+                                                                backgroundColor: "rgba(187, 134, 252, 0.1)",
+                                                                color: colors.primary,
+                                                            }}
+                                                        >
+                                                {tag}
+                                            </span>
+                                                    ))}
+                                                    {blog.tags.length > 2 && (
+                                                        <div className="relative group">
+                                                <span
+                                                    className="text-xs px-2 py-1 rounded-full cursor-help transition-all"
+                                                    style={{
+                                                        color: colors.primary,
+                                                        backgroundColor: "rgba(187, 134, 252, 0.1)",
+                                                        border: `1px dashed ${colors.primary}`,
+                                                    }}
+                                                >
+                                                    +{blog.tags.length - 2} more
+                                                </span>
+                                                            {/* Tooltip positioned outside table boundaries */}
+                                                            <div
+                                                                className="fixed z-[9999] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-3 rounded-lg shadow-xl border min-w-max pointer-events-none"
+                                                                style={{
+                                                                    backgroundColor: colors.cardBg,
+                                                                    borderColor: colors.borderColor,
+                                                                    maxWidth: '300px',
+                                                                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+                                                                    top: 'auto',
+                                                                    left: 'auto',
+                                                                    transform: 'translate(-50%, -100%)',
+                                                                    marginTop: '-8px'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    // Position tooltip relative to trigger element
+                                                                    const trigger = e.target.previousElementSibling;
+                                                                    const rect = trigger.getBoundingClientRect();
+                                                                    const tooltip = e.target;
+
+                                                                    // Position above the trigger element
+                                                                    tooltip.style.left = `${rect.left + rect.width / 2}px`;
+                                                                    tooltip.style.top = `${rect.top - 8}px`;
+                                                                }}
+                                                            >
+                                                                <div className="text-xs font-medium mb-2"
+                                                                     style={{color: colors.text}}>
+                                                                    All Tags ({blog.tags.length})
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {blog.tags.map((tag, tagIndex) => (
+                                                                        <span
+                                                                            key={tagIndex}
+                                                                            className="px-2 py-1 text-xs rounded-full"
+                                                                            style={{
+                                                                                backgroundColor: "rgba(187, 134, 252, 0.1)",
+                                                                                color: colors.primary,
+                                                                            }}
+                                                                        >
+                                                                {tag}
+                                                            </span>
+                                                                    ))}
+                                                                </div>
+                                                                {/* Arrow pointing down */}
+                                                                <div
+                                                                    className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 rotate-45"
+                                                                    style={{
+                                                                        backgroundColor: colors.cardBg,
+                                                                        borderRight: `1px solid ${colors.borderColor}`,
+                                                                        borderBottom: `1px solid ${colors.borderColor}`,
+                                                                    }}
+                                                                ></div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <span
+                                                    className="text-xs"
+                                                    style={{color: colors.textMuted}}
+                                                >
+                                        No tags
+                                    </span>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">

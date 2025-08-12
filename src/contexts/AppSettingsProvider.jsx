@@ -5,11 +5,13 @@ import { useTranslation } from "react-i18next";
 const lightColors = {
   primary: "#9575cd",
   secondary: "#5c6bc0",
+  golden: "#ffd700", // Golden
   accent: "#ffab00",
   accentLight: "#fff8e1",
   accentSecondary: "#f57c00",
   text: "#424242",
   lightText: "#f5f5f5",
+  lightLandingText: "#9575CD",
   background: "#f5f5f5",
   cardBg: "#ffffff",
   cardBgAlt: "#f9f9f9",
@@ -26,17 +28,24 @@ const lightColors = {
   terColor3: "rgba(33, 33, 33, 0.1)",
   terColor4: "rgba(33, 33, 33, 0.2)",
   terColor5: "rgba(33, 33, 33, 0.3)",
+  textSecondary: "#a0a0a0",
+
+  border: "#333333",
+  yellow: "#FFD700",
 };
 
 // Dark theme color palette
 const darkColors = {
   primary: "#bb86fc",
   secondary: "#3700b3",
+  golden: "#ffd700", // Golden
   accent: "#03dac6",
   accentLight: "#018786",
   accentSecondary: "#cf6679",
   text: "#e0e0e0",
   lightText: "#ffffff",
+  lightLandingText: "#ffffff",
+  textSecondary: "#757575",
   background: "#121212",
   cardBg: "#1e1e1e",
   cardBgAlt: "#2d2d2d",
@@ -47,14 +56,15 @@ const darkColors = {
   success: "#4caf50",
   warning: "#ff9800",
   error: "#f44336",
+  border: "#e0e0e0",
   chartColors: ["#bb86fc", "#03dac6", "#cf6679", "#64ffda", "#b39ddb"],
   terColor: "rgba(224, 224, 224, 0.7)",
   terColor2: "rgba(224, 224, 224, 0.5)",
   terColor3: "rgba(224, 224, 224, 0.1)",
   terColor4: "rgba(224, 224, 224, 0.2)",
   terColor5: "rgba(224, 224, 224, 0.3)",
+  yellow: "#FFD700",
 };
-
 const AppSettingsContext = createContext({
   isDarkMode: false,
   toggleTheme: () => {},

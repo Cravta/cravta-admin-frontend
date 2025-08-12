@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 import api from "../../api/axiosInstance.js";
 
 const PUBLIC_BLOG_URL = `${import.meta.env.VITE_API_BASE_URL}/blogs`;
@@ -11,9 +10,9 @@ const getAuthToken = () => localStorage.getItem("token");
 // Fetch all blogs (public)
 export const fetchBlogs = createAsyncThunk(
     "blogs/fetchBlogs",
-    async (_, { rejectWithValue }) => {
+    async (data, { rejectWithValue }) => {
         try {
-            const response = await api.get(PUBLIC_BLOG_URL);
+            const response = await api.get(`${PUBLIC_BLOG_URL}?page=${data.page}&limit=${data.limit}&paginate=true`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || "Error fetching blogs");
