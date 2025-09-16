@@ -17,7 +17,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProductsStats, fetchProductsWithStatus, downloadProductById, updateProductStatus, deleteProduct } from "../../store/admin/market/productSlice";
+import { fetchProductsStats, fetchProductsWithStatus, downloadProductById, updateProductStatus, deleteProduct,updateProductFeatured  } from "../../store/admin/market/productSlice";
 import DocumentPreviewModal from "../../components/modals/DocumentPreviewModal";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -172,6 +172,23 @@ const AdminProductManagement = () => {
     rejected: products.filter((p) => p.status === "rejected").length,
   };
 
+  const handleToggleFeatured = async (product) => {
+    try {
+      const newFeaturedStatus = !product.featured;
+      await dispatch(updateProductFeatured({
+        id: product.id,
+        featured: newFeaturedStatus
+      })).unwrap();
+
+      toast.success(
+          `Product ${newFeaturedStatus ? 'featured' : 'unfeatured'} successfully!`
+      );
+      dispatch(fetchProductsWithStatus());
+      dispatch(fetchProductsStats());
+    } catch (err) {
+      toast.error(err || "Failed to update featured status");
+    }
+  };
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       setSelectedProducts(filteredProducts.map((p) => p.id));
@@ -664,105 +681,118 @@ const AdminProductManagement = () => {
                 <td className="p-4">
                   <div className="flex items-center space-x-2">
                     {product?.publishing_status?.toLowerCase() === "pending" && (
-                      <>
-                        <button
-                          className="p-2 rounded-lg hover:bg-opacity-20"
-                          style={{
-                            backgroundColor: "rgba(76, 175, 80, 0.1)",
-                            color: colors.success,
-                          }}
-                          title="Approve"
-                          onClick={() => handleApprove(product)}
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="p-2 rounded-lg hover:bg-opacity-20"
-                          style={{
-                            backgroundColor: "rgba(244, 67, 54, 0.1)",
-                            color: colors.error,
-                          }}
-                          title="Reject"
-                          onClick={() => handleReject(product)}
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      </>
+                        <>
+                          <button
+                              className="p-2 rounded-lg hover:bg-opacity-20"
+                              style={{
+                                backgroundColor: "rgba(76, 175, 80, 0.1)",
+                                color: colors.success,
+                              }}
+                              title="Approve"
+                              onClick={() => handleApprove(product)}
+                          >
+                            <CheckCircle className="w-4 h-4"/>
+                          </button>
+                          <button
+                              className="p-2 rounded-lg hover:bg-opacity-20"
+                              style={{
+                                backgroundColor: "rgba(244, 67, 54, 0.1)",
+                                color: colors.error,
+                              }}
+                              title="Reject"
+                              onClick={() => handleReject(product)}
+                          >
+                            <XCircle className="w-4 h-4"/>
+                          </button>
+                        </>
                     )}
-
                     <button
-                      className="p-2 rounded-lg hover:bg-opacity-20"
-                      style={{
-                        backgroundColor: "rgba(187, 134, 252, 0.1)",
-                        color: colors.primary,
-                      }}
-                      title="Preview"
-                      onClick={() => handlePreviewClick(product)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-
-                    {product.publishing_status === "Archived" ? (
-                      <button
                         className="p-2 rounded-lg hover:bg-opacity-20"
                         style={{
-                          backgroundColor: "rgba(255, 152, 0, 0.1)",
-                          color: colors.warning,
+                          backgroundColor: product.featured
+                              ? "rgba(255, 193, 7, 0.2)"
+                              : "rgba(187, 134, 252, 0.1)",
+                          color: product.featured ? "#ffc107" : colors.primary,
                         }}
-                        title="Unhide"
-                        onClick={() => handleUnarchive(product)}
-                      >
-                        <EyeOff className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <button
+                        title={product.featured ? "Remove Featured" : "Make Featured"}
+                        onClick={() => handleToggleFeatured(product)}
+                    >
+                      <TrendingUp className="w-4 h-4"/>
+                    </button>
+
+                    <button
                         className="p-2 rounded-lg hover:bg-opacity-20"
                         style={{
                           backgroundColor: "rgba(187, 134, 252, 0.1)",
-                          color: colors.text,
+                          color: colors.primary,
                         }}
-                        title="Archive"
-                        onClick={() => handleArchive(product)}
-                      >
-                        <Archive className="w-4 h-4" />
-                      </button>
+                        title="Preview"
+                        onClick={() => handlePreviewClick(product)}
+                    >
+                      <Eye className="w-4 h-4"/>
+                    </button>
+
+                    {product.publishing_status === "Archived" ? (
+                        <button
+                            className="p-2 rounded-lg hover:bg-opacity-20"
+                            style={{
+                              backgroundColor: "rgba(255, 152, 0, 0.1)",
+                              color: colors.warning,
+                            }}
+                            title="Unhide"
+                            onClick={() => handleUnarchive(product)}
+                        >
+                          <EyeOff className="w-4 h-4"/>
+                        </button>
+                    ) : (
+                        <button
+                            className="p-2 rounded-lg hover:bg-opacity-20"
+                            style={{
+                              backgroundColor: "rgba(187, 134, 252, 0.1)",
+                              color: colors.text,
+                            }}
+                            title="Archive"
+                            onClick={() => handleArchive(product)}
+                        >
+                          <Archive className="w-4 h-4"/>
+                        </button>
                     )}
 
                     <div className="relative">
                       <button
-                        className="p-2 rounded-lg hover:bg-opacity-20"
-                        style={{
-                          backgroundColor: "rgba(187, 134, 252, 0.1)",
-                          color: colors.text,
-                        }}
-                        onClick={() =>
-                          setShowActionMenu(
-                            showActionMenu === product.id ? null : product.id
-                          )
-                        }
+                          className="p-2 rounded-lg hover:bg-opacity-20"
+                          style={{
+                            backgroundColor: "rgba(187, 134, 252, 0.1)",
+                            color: colors.text,
+                          }}
+                          onClick={() =>
+                              setShowActionMenu(
+                                  showActionMenu === product.id ? null : product.id
+                              )
+                          }
                       >
-                        <MoreVertical className="w-4 h-4" />
+                        <MoreVertical className="w-4 h-4"/>
                       </button>
 
                       {showActionMenu === product.id && (
-                        <div
-                          className="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-lg z-10"
-                          style={{
-                            backgroundColor: colors.cardBg,
-                            border: `1px solid ${colors.borderColor}`,
-                          }}
-                        >
-                          <button
-                            className="w-full px-4 py-2 text-left hover:bg-opacity-20"
-                            style={{
-                              color: colors.text,
-                              backgroundColor: "transparent",
-                            }}
-                            onClick={() => navigate(`/market/marketplace/product/${product.id}`)}
+                          <div
+                              className="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-lg z-10"
+                              style={{
+                                backgroundColor: colors.cardBg,
+                                border: `1px solid ${colors.borderColor}`,
+                              }}
                           >
-                            View Details
-                          </button>
-                          {/* <button
+                            <button
+                                className="w-full px-4 py-2 text-left hover:bg-opacity-20"
+                                style={{
+                                  color: colors.text,
+                                  backgroundColor: "transparent",
+                                }}
+                                onClick={() => navigate(`/market/marketplace/product/${product.id}`)}
+                            >
+                              View Details
+                            </button>
+                            {/* <button
                             className="w-full px-4 py-2 text-left hover:bg-opacity-20"
                             style={{
                               color: colors.text,
@@ -780,17 +810,17 @@ const AdminProductManagement = () => {
                           >
                             Contact Teacher
                           </button> */}
-                          <button
-                            className="w-full px-4 py-2 text-left hover:bg-opacity-20"
-                            style={{
-                              color: colors.error,
-                              backgroundColor: "transparent",
-                            }}
-                            onClick={() => handleDeleteProduct(product)}
-                          >
-                            Delete Product
-                          </button>
-                        </div>
+                            <button
+                                className="w-full px-4 py-2 text-left hover:bg-opacity-20"
+                                style={{
+                                  color: colors.error,
+                                  backgroundColor: "transparent",
+                                }}
+                                onClick={() => handleDeleteProduct(product)}
+                            >
+                              Delete Product
+                            </button>
+                          </div>
                       )}
                     </div>
                   </div>
@@ -802,13 +832,13 @@ const AdminProductManagement = () => {
 
         {/* Bulk Actions */}
         {selectedProducts.length > 0 && (
-          <div
-            className="p-4 flex items-center justify-between"
-            style={{
-              backgroundColor: colors.cardBg,
-              borderTop: `1px solid ${colors.borderColor}`,
-            }}
-          >
+            <div
+                className="p-4 flex items-center justify-between"
+                style={{
+                  backgroundColor: colors.cardBg,
+                  borderTop: `1px solid ${colors.borderColor}`,
+                }}
+            >
             <p style={{ color: colors.text }}>
               {selectedProducts.length} products selected
             </p>

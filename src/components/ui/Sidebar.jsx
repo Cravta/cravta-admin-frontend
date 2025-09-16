@@ -124,336 +124,357 @@ const Sidebar = ({
           <nav>
             <ul className="space-y-1">
               {user?.role?.rights?.includes("overview") &&
-              <li>
-                <button
-                  onClick={() =>  navigate("/admin/overview")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                      (pathname === "/admin/overview")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/overview")
-                        ? colors.primary
-                        : colors.text,
-                  }}
-                >
-                  <Home
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Dashboard Overview
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/overview")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/overview")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/overview")
+                                  ? colors.primary
+                                  : colors.text,
+                        }}
+                    >
+                      <Home
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Dashboard Overview
+                    </button>
+                  </li>
+
               }
-              {user?.role?.rights?.includes("teams") &&
               <li>
                 <button
-                  onClick={() => navigate("/admin/teams")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/teams")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/teams") ? colors.primary : colors.text,
-                  }}
+                    onClick={() => navigate("/admin/enterprise")}
+                    className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                    style={{
+                      backgroundColor:
+                          (pathname === "/admin/enterprise")
+                              ? colors.navActiveBg
+                              : "transparent",
+                      color:
+                          (pathname === "/admin/enterprise") ? colors.primary : colors.text,
+                    }}
                 >
-                  <Users
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
+                  <CircleDollarSign
+                      className="w-5 h-5 mr-3"
+                      style={{color: colors.primary}}
                   />
-                  Team Management
+                  Enterprise Management
                 </button>
               </li>
+              {user?.role?.rights?.includes("teams") &&
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/teams")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/teams")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/teams") ? colors.primary : colors.text,
+                        }}
+                    >
+                      <Users
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Team Management
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("users") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/users")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/users")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/users") ? colors.primary : colors.text,
-                  }}
-                >
-                  <Users
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  User Management
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/users")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/users")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/users") ? colors.primary : colors.text,
+                        }}
+                    >
+                      <Users
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      User Management
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("classes") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/classes")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/classes")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/classes")
-                        ? colors.primary
-                        : colors.text,
-                  }}
-                >
-                  <BookOpen
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Class Management
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/classes")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/classes")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/classes")
+                                  ? colors.primary
+                                  : colors.text,
+                        }}
+                    >
+                      <BookOpen
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Class Management
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("roles") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/roles")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/roles")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/roles")
-                        ? colors.primary
-                        : colors.text,
-                  }}
-                >
-                  <User
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Role Management
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/roles")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/roles")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/roles")
+                                  ? colors.primary
+                                  : colors.text,
+                        }}
+                    >
+                      <User
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Role Management
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("content") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/content")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/content")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/content")
-                        ? colors.primary
-                        : colors.text,
-                  }}
-                >
-                  <FileText
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Content Monitoring
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/content")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/content")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/content")
+                                  ? colors.primary
+                                  : colors.text,
+                        }}
+                    >
+                      <FileText
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Content Monitoring
+                    </button>
+                  </li>
               }
               {/* Add the blog management navigation item */}
               {user?.role?.rights?.includes("blogs") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/blogs")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/blogs")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/blogs") ? colors.primary : colors.text,
-                  }}
-                >
-                  <BookIcon
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Blog Management
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/blogs")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/blogs")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/blogs") ? colors.primary : colors.text,
+                        }}
+                    >
+                      <BookIcon
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Blog Management
+                    </button>
+                  </li>
               }
               <li>
                 <button
-                  onClick={() => navigate("/market")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/market")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/market") ? colors.primary : colors.text,
-                  }}
+                    onClick={() => navigate("/market")}
+                    className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                    style={{
+                      backgroundColor:
+                          (pathname === "/market")
+                              ? colors.navActiveBg
+                              : "transparent",
+                      color:
+                          (pathname === "/market") ? colors.primary : colors.text,
+                    }}
                 >
                   <CircleDollarSign
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
+                      className="w-5 h-5 mr-3"
+                      style={{color: colors.primary}}
                   />
                   MarketPlace
                 </button>
               </li>
               {user?.role?.rights?.includes("packages") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/packages")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/packages")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/packages") ? colors.primary : colors.text,
-                  }}
-                >
-                  <Package
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Package Management
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/packages")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/packages")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/packages") ? colors.primary : colors.text,
+                        }}
+                    >
+                      <Package
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Package Management
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("packages") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/packages-purchases")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/packages-purchases")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/packages-purchases") ? colors.primary : colors.text,
-                  }}
-                >
-                  <Package
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Package Purchases
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/packages-purchases")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/packages-purchases")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/packages-purchases") ? colors.primary : colors.text,
+                        }}
+                    >
+                      <Package
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Package Purchases
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("help") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/help")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/help")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/help") ? colors.primary : colors.text,
-                  }}
-                >
-                  <BookIcon
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Help Center
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/help")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/help")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/help") ? colors.primary : colors.text,
+                        }}
+                    >
+                      <BookIcon
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Help Center
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("reports") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/reports")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/reports")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/reports")
-                        ? colors.primary
-                        : colors.text,
-                  }}
-                >
-                  <BarChart2
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Reports & Analytics
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/reports")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/reports")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/reports")
+                                  ? colors.primary
+                                  : colors.text,
+                        }}
+                    >
+                      <BarChart2
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Reports & Analytics
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("settings") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/settings")}
-                  className="flex items-center px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/settings")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/settings")
-                        ? colors.primary
-                        : colors.text,
-                  }}
-                >
-                  <Settings
-                    className="w-5 h-5 mr-3"
-                    style={{ color: colors.primary }}
-                  />
-                  Platform Settings
-                </button>
-              </li>
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/settings")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/settings")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/settings")
+                                  ? colors.primary
+                                  : colors.text,
+                        }}
+                    >
+                      <Settings
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Platform Settings
+                    </button>
+                  </li>
               }
               {user?.role?.rights?.includes("audit") &&
-              <li>
-                <button
-                  onClick={() => navigate("/admin/audit")}
-                  className="flex items-center justify-between px-3 py-2.5 rounded w-full text-left"
-                  style={{
-                    backgroundColor:
-                    (pathname === "/admin/audit")
-                        ? colors.navActiveBg
-                        : "transparent",
-                    color:
-                    (pathname === "/admin/audit") ? colors.primary : colors.text,
-                  }}
-                >
-                  <div className="flex items-center">
-                    <Shield
-                      className="w-5 h-5 mr-3"
-                      style={{ color: colors.primary }}
-                    />
-                    Audit Log
-                  </div>
-                  {alerts > 0 && (
-                    <span
-                      className="px-1.5 py-0.5 rounded-full text-xs"
-                      style={{
-                        backgroundColor: colors.accentSecondary,
-                        color: "#FFFFFF",
-                      }}
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/audit")}
+                        className="flex items-center justify-between px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/audit")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/audit") ? colors.primary : colors.text,
+                        }}
                     >
+                      <div className="flex items-center">
+                        <Shield
+                            className="w-5 h-5 mr-3"
+                            style={{color: colors.primary}}
+                        />
+                        Audit Log
+                      </div>
+                      {alerts > 0 && (
+                          <span
+                              className="px-1.5 py-0.5 rounded-full text-xs"
+                              style={{
+                                backgroundColor: colors.accentSecondary,
+                                color: "#FFFFFF",
+                              }}
+                          >
                       {alerts}
                     </span>
-                  )}
-                </button>
-              </li>
+                      )}
+                    </button>
+                  </li>
               }
             </ul>
           </nav>
@@ -461,22 +482,22 @@ const Sidebar = ({
 
         {/* Platform Status */}
         <div
-          className="p-4 mx-4 mt-8 rounded-lg"
-          style={{
-            backgroundColor: colors.cardBg,
-            border: `1px solid ${colors.borderColor}`,
-          }}
+            className="p-4 mx-4 mt-8 rounded-lg"
+            style={{
+              backgroundColor: colors.cardBg,
+              border: `1px solid ${colors.borderColor}`,
+            }}
         >
           <div className="flex items-center justify-between mb-2">
             <span
-              className="text-sm font-medium"
-              style={{ color: colors.text }}
+                className="text-sm font-medium"
+                style={{color: colors.text}}
             >
               Platform Status
             </span>
             <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: colors.success }}
+                className="w-2 h-2 rounded-full"
+                style={{backgroundColor: colors.success}}
             ></div>
           </div>
           <div className="space-y-2">
