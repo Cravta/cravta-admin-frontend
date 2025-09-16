@@ -15,6 +15,7 @@ import TeamManagement from "../pages/Admin/Teams/TeamManagement";
 import HelpCenter from "../pages/Admin/Help/HelpCenterManagement"
 import PackageManagement from "../pages/Admin/Package/PackageManagement";
 import PackagePurchases from "../pages/Admin/Package/PackagePurchases"
+import EnterpriseManagement from "../pages/Admin/Enterprise/EnterpriseManagment.jsx";
 
 export default function AdminRoutes() {
   return (
@@ -26,6 +27,7 @@ export default function AdminRoutes() {
         <Route path="users"    element={<UserManagement />} />
         <Route path="roles"    element={<RoleManagement />} />
         <Route path="classes"  element={<ClassManagement />} />
+        <Route path="/enterprise" element={<EnterpriseManagement />} />
         <Route path="content"  element={<ContentMonitoring />} />
         <Route path="blogs"    element={<BlogManagement />} />
         <Route path="packages" element={<PackageManagement />} />

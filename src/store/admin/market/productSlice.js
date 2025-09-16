@@ -7,7 +7,29 @@ const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/market`;
 
 const getAuthToken = () => localStorage.getItem("token");
 
-// Fetch all Questions
+
+export const updateProductFeatured = createAsyncThunk(
+    'product/updateProductFeatured',
+    async ({ id, featured }, { rejectWithValue }) => {
+        try {
+
+            const token = getAuthToken();
+
+            const response = await api.patch(`${API_BASE_URL}/featured/${id}`, {
+                featured
+            },{
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to update featured status');
+        }
+    }
+);
+
+// Fetch all Products
 export const fetchAllMarketProducts = createAsyncThunk(
     "market/allProducts",
     async (queryParams = {}, { rejectWithValue }) => {
@@ -274,6 +296,17 @@ const productSlice = createSlice({
                 state.loading = true;
                 state.error = null;
                 state.success = null;
+            })
+
+            .addCase(updateProductFeatured.fulfilled, (state, action) => {
+                const updatedProduct = action.payload.data;
+                const index = state.products.findIndex(p => p.id === updatedProduct.id);
+                if (index !== -1) {
+                    state.products[index] = updatedProduct;
+                }
+            })
+            .addCase(updateProductFeatured.rejected, (state, action) => {
+                state.error = action.payload;
             })
             .addCase(createProduct.fulfilled, (state, action) => {
                 state.loading = false;
