@@ -361,7 +361,7 @@ const UserManagement = () => {
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                   style={{ color: colors.textMuted }}
                 >
-                  Last Active
+                  Last Updated
                 </th>
                 {activeTab !== "admins" ? (
                   <th
@@ -524,7 +524,7 @@ const UserManagement = () => {
                         ) : (
                           <XCircle className="w-3 h-3 mr-1" />
                         )}
-                        {user.status === "active" ? "Active" : "Inactive"}
+                        {user.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
