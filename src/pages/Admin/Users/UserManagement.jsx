@@ -510,16 +510,16 @@ const UserManagement = () => {
                         className="px-2 py-1 text-xs rounded-full flex items-center w-min"
                         style={{
                           backgroundColor:
-                            user.status === "active"
+                            user.isActive
                               ? `${colors.success}20`
                               : `${colors.error}20`,
                           color:
-                            user.status === "active"
+                            user.isActive
                               ? colors.success
                               : colors.error,
                         }}
                       >
-                        {user.status === "active" ? (
+                        {user.isActive  ? (
                           <CheckCircle className="w-3 h-3 mr-1" />
                         ) : (
                           <XCircle className="w-3 h-3 mr-1" />
