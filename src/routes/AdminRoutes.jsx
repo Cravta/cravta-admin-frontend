@@ -16,6 +16,7 @@ import HelpCenter from "../pages/Admin/Help/HelpCenterManagement"
 import PackageManagement from "../pages/Admin/Package/PackageManagement";
 import PackagePurchases from "../pages/Admin/Package/PackagePurchases"
 import EnterpriseManagement from "../pages/Admin/Enterprise/EnterpriseManagment.jsx";
+import PromoCodeManagement from "../pages/Admin/PromoCodes/PromoCodeManagement.jsx";
 
 export default function AdminRoutes() {
   return (
@@ -25,6 +26,7 @@ export default function AdminRoutes() {
         <Route path="overview" element={<OverviewDashboard />} />
         <Route path="teams"    element={<TeamManagement />} />
         <Route path="users"    element={<UserManagement />} />
+        <Route path="promo-codes"    element={<PromoCodeManagement />} />
         <Route path="roles"    element={<RoleManagement />} />
         <Route path="classes"  element={<ClassManagement />} />
         <Route path="/enterprise" element={<EnterpriseManagement />} />

@@ -212,6 +212,28 @@ const Sidebar = ({
                     </button>
                   </li>
               }
+              {user?.role?.rights?.includes("users") &&
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/promo-codes")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/promo-codes")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/promo-codes") ? colors.primary : colors.text,
+                        }}
+                    >
+                      <Users
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Promo Codes Management
+                    </button>
+                  </li>
+              }
               {user?.role?.rights?.includes("classes") &&
                   <li>
                     <button
