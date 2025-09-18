@@ -103,7 +103,7 @@ const Header = ({
       <div className="flex items-center">
         <h2 className="text-xl font-medium" style={{ color: colors.primary }}>
           <span>
-            {activeSection === "Overview" ? "Admin Dashboard" : activeSection == "help"? "help center": activeSection}
+            {activeSection === "overview" ? "Admin Dashboard" : activeSection === "help"? "help center" : activeSection ==="promo-codes"?"Promo Codes":activeSection}
           </span>
         </h2>
       </div>
