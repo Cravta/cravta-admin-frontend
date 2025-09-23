@@ -16,6 +16,7 @@ import {
   User,
   Package,
   CircleDollarSign,
+    Folder
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import Logo1 from "../../assets/LOGO-01.png";
@@ -303,6 +304,30 @@ const Sidebar = ({
                           style={{color: colors.primary}}
                       />
                       Content Monitoring
+                    </button>
+                  </li>
+              }
+              {user?.role?.rights?.includes("content") &&
+                  <li>
+                    <button
+                        onClick={() => navigate("/admin/content-types")}
+                        className="flex items-center px-3 py-2.5 rounded w-full text-left"
+                        style={{
+                          backgroundColor:
+                              (pathname === "/admin/content-types")
+                                  ? colors.navActiveBg
+                                  : "transparent",
+                          color:
+                              (pathname === "/admin/content-types")
+                                  ? colors.primary
+                                  : colors.text,
+                        }}
+                    >
+                      <Folder
+                          className="w-5 h-5 mr-3"
+                          style={{color: colors.primary}}
+                      />
+                      Content Types
                     </button>
                   </li>
               }

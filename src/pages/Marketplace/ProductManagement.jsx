@@ -589,6 +589,9 @@ const AdminProductManagement = () => {
                 Teacher
               </th>
               <th className="p-4 text-left" style={{ color: colors.primary }}>
+                Target Audience
+              </th>
+              <th className="p-4 text-left" style={{ color: colors.primary }}>
                 Subject/Grade
               </th>
               <th className="p-4 text-left" style={{ color: colors.primary }}>
@@ -644,6 +647,9 @@ const AdminProductManagement = () => {
                 </td>
                 <td className="p-4">
                   <p style={{ color: colors.text }}>{product.isAdmin ? "Cravta" : product.uploader_name}</p>
+                </td>
+                <td className="p-4">
+                  <p style={{ color: colors.text }}>{product.isAdmin ? "Cravta" : product.target_audience}</p>
                 </td>
                 <td className="p-4">
                   <p style={{ color: colors.text }}>{product.subject}</p>

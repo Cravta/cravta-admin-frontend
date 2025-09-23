@@ -17,6 +17,8 @@ import PackageManagement from "../pages/Admin/Package/PackageManagement";
 import PackagePurchases from "../pages/Admin/Package/PackagePurchases"
 import EnterpriseManagement from "../pages/Admin/Enterprise/EnterpriseManagment.jsx";
 import PromoCodeManagement from "../pages/Admin/PromoCodes/PromoCodeManagement.jsx";
+import ContentTypes from "../pages/Admin/Content/ContentTypes.jsx";
+import ContentTypeManagement from "../pages/Admin/Content/ContentTypes.jsx";
 
 export default function AdminRoutes() {
   return (
@@ -30,6 +32,7 @@ export default function AdminRoutes() {
         <Route path="roles"    element={<RoleManagement />} />
         <Route path="classes"  element={<ClassManagement />} />
         <Route path="/enterprise" element={<EnterpriseManagement />} />
+        <Route path="content-types"  element={<ContentTypeManagement />} />
         <Route path="content"  element={<ContentMonitoring />} />
         <Route path="blogs"    element={<BlogManagement />} />
         <Route path="packages" element={<PackageManagement />} />
