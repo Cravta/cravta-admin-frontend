@@ -15,6 +15,7 @@ import {
   Info,
   HelpCircle,
   Clock,
+    Currency,
   DollarSign,
   Sparkles,
   Plus
@@ -25,16 +26,20 @@ import { createProduct, createProductSignedUrl, clearError, clearSuccess } from 
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../contexts/ThemeContext";
+import {fetchContentTypes} from "../../store/admin/contentTypesSlice.js";
+import {useTranslation} from "react-i18next";
 
 const ContentUpload = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(true);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const {t,i18n} = useTranslation();
   const [scheduleLater, setScheduleLater] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [productPreviewImages, setProductPreviewImages] = useState([]);
+  const [tagInput, setTagInput] = useState("");
   // Form state
   const [formData, setFormData] = useState({
     title: "",
@@ -43,15 +48,21 @@ const ContentUpload = () => {
     grade: "",
     content_type: "",
     price: "",
+    tags: [],
+    target_audience: "",
   });
 
   // Get loading and error states from Redux
   const { loading, error, success } = useSelector((state) => state.product);
+  const { contentTypesList } = useSelector((state) => state.contentTypes || {});
 
   // Clear errors and success messages on component mount
   useEffect(() => {
+
     dispatch(clearError());
     dispatch(clearSuccess());
+    dispatch(fetchContentTypes({page:1, limit:10, is_active:true}));
+    console.log(contentTypesList);
   }, [dispatch]);
 
   // Show success toast when product is created
@@ -69,9 +80,26 @@ const ContentUpload = () => {
       toast.error(error);
     }
   }, [error]);
-
+  const handleTagInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (newTag && !formData.tags.includes(newTag)) {
+        setFormData(prev => ({
+          ...prev,
+          tags: [...prev.tags, newTag]
+        }));
+        setTagInput("");
+      }
+    }
+  };
   // Colors for dark mode
   const { colors } = useTheme();
+
+  // Handle tag input
+  const handleTagInputChange = (e) => {
+    setTagInput(e.target.value);
+  };
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -79,6 +107,13 @@ const ContentUpload = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+  // Remove tag
+  const removeTag = (tagToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
   };
 
@@ -273,7 +308,7 @@ const ContentUpload = () => {
 
   // Validate form data
   const validateForm = () => {
-    const requiredFields = ['title', 'description', 'subject', 'grade', 'content_type', 'price'];
+    const requiredFields = ['title', 'description', 'subject', 'grade', 'content_type', 'price',"target_audience",];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
@@ -367,6 +402,8 @@ const ContentUpload = () => {
         subject: formData.subject,
         content_type: formData.content_type,
         status: isDraft ? 'draft' : 'published',
+        tags: formData.tags,
+        target_audience: formData.target_audience,
         ...(productId && { product_id: productId }),
         ...(previewImage?.imageId && { image_array: [previewImage.imageId] }),
         ...(productPreviewImages.length > 0 && { 
@@ -451,15 +488,15 @@ const ContentUpload = () => {
             {/* Left Column - Upload Form */}
             <div className="col-span-2">
               <div
-                className="rounded-lg shadow-md p-6 mb-6"
-                style={{
-                  backgroundColor: colors.cardBgAlt,
-                  border: `1px solid ${colors.borderColor}`,
-                }}
+                  className="rounded-lg shadow-md p-6 mb-6"
+                  style={{
+                    backgroundColor: colors.cardBgAlt,
+                    border: `1px solid ${colors.borderColor}`,
+                  }}
               >
                 <h3
-                  className="text-lg font-medium mb-6"
-                  style={{ color: colors.primary }}
+                    className="text-lg font-medium mb-6"
+                    style={{color: colors.primary}}
                 >
                   Content Information
                 </h3>
@@ -467,46 +504,46 @@ const ContentUpload = () => {
                 {/* Title */}
                 <div className="mb-5">
                   <label
-                    className="block mb-2 font-medium"
-                    style={{ color: colors.text }}
+                      className="block mb-2 font-medium"
+                      style={{color: colors.text}}
                   >
                     Title *
                   </label>
                   <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    placeholder="Enter content title"
-                    className="w-full p-3 rounded-lg"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      color: colors.text,
-                      border: `1px solid ${colors.borderColor}`,
-                    }}
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      placeholder="Enter content title"
+                      className="w-full p-3 rounded-lg"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        color: colors.text,
+                        border: `1px solid ${colors.borderColor}`,
+                      }}
                   />
                 </div>
 
                 {/* Description */}
                 <div className="mb-5">
                   <label
-                    className="block mb-2 font-medium"
-                    style={{ color: colors.text }}
+                      className="block mb-2 font-medium"
+                      style={{color: colors.text}}
                   >
                     Description *
                   </label>
                   <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Enter detailed description of your content"
-                    rows="4"
-                    className="w-full p-3 rounded-lg"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      color: colors.text,
-                      border: `1px solid ${colors.borderColor}`,
-                    }}
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      placeholder="Enter detailed description of your content"
+                      rows="4"
+                      className="w-full p-3 rounded-lg"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        color: colors.text,
+                        border: `1px solid ${colors.borderColor}`,
+                      }}
                   />
                 </div>
 
@@ -514,21 +551,21 @@ const ContentUpload = () => {
                 <div className="grid grid-cols-2 gap-5 mb-5">
                   <div>
                     <label
-                      className="block mb-2 font-medium"
-                      style={{ color: colors.text }}
+                        className="block mb-2 font-medium"
+                        style={{color: colors.text}}
                     >
                       Subject *
                     </label>
                     <select
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg appearance-none"
-                      style={{
-                        backgroundColor: colors.inputBg,
-                        color: colors.text,
-                        border: `1px solid ${colors.borderColor}`,
-                      }}
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                        className="w-full p-3 rounded-lg appearance-none"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          color: colors.text,
+                          border: `1px solid ${colors.borderColor}`,
+                        }}
                     >
                       <option value="">Select Subject</option>
                       <option value="Mathematics">Mathematics</option>
@@ -541,21 +578,21 @@ const ContentUpload = () => {
                   </div>
                   <div>
                     <label
-                      className="block mb-2 font-medium"
-                      style={{ color: colors.text }}
+                        className="block mb-2 font-medium"
+                        style={{color: colors.text}}
                     >
                       Class/Grade Level *
                     </label>
                     <select
-                      name="grade"
-                      value={formData.grade}
-                      onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg appearance-none"
-                      style={{
-                        backgroundColor: colors.inputBg,
-                        color: colors.text,
-                        border: `1px solid ${colors.borderColor}`,
-                      }}
+                        name="grade"
+                        value={formData.grade}
+                        onChange={handleInputChange}
+                        className="w-full p-3 rounded-lg appearance-none"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          color: colors.text,
+                          border: `1px solid ${colors.borderColor}`,
+                        }}
                     >
                       <option value="">Select Grade Level</option>
                       <option value="7">Grade 7</option>
@@ -568,66 +605,84 @@ const ContentUpload = () => {
                   </div>
                 </div>
 
-                {/* Content Type and Price */}
+
                 <div className="grid grid-cols-2 gap-5 mb-5">
                   <div>
                     <label
-                      className="block mb-2 font-medium"
-                      style={{ color: colors.text }}
+                        className="block mb-2 font-medium"
+                        style={{ color: colors.text }}
                     >
-                      Content Type *
+                      {t("contentType")} *
                     </label>
-                    <select
-                      name="content_type"
-                      value={formData.content_type}
-                      onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg appearance-none"
-                      style={{
-                        backgroundColor: colors.inputBg,
-                        color: colors.text,
-                        border: `1px solid ${colors.borderColor}`,
-                      }}
-                    >
-                      <option value="">Select Content Type</option>
-                      <option value="Textbook">Textbook</option>
-                      <option value="Workbook">Workbook</option>
-                      <option value="Study Guide">Study Guide</option>
-                      <option value="Practice Test">Practice Test</option>
-                      <option value="Lecture Notes">Lecture Notes</option>
-                      <option value="Reference Material">Reference Material</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                          name="content_type"
+                          value={formData.content_type}
+                          onChange={handleInputChange}
+                          className="w-full p-3 pr-10 rounded-lg appearance-none"
+                          style={{
+                            backgroundColor: colors.inputBg,
+                            color: colors.text,
+                            border: `1px solid ${colors.borderColor}`,
+                          }}
+                      >
+                        {/*<option value="">{t("selectContentType")}</option>*/}
+                        {/*<option value="Textbook">{t("textbook")}</option>*/}
+                        {/*<option value="Workbook">{t("workbook")}</option>*/}
+                        {/*<option value="Study Guide">{t("studyGuide")}</option>*/}
+                        {/*<option value="Practice Test">{t("practiceTest")}</option>*/}
+                        {/*<option value="Lecture Notes">{t("lectureNotes")}</option>*/}
+                        {/*<option value="Reference Material">{t("referenceMaterial")}</option>*/}
+                        <option value="">{t("selectContentType")}</option>
+                        {
+                          contentTypesList?.map((type, index) => {
+                            return (<option key={index}
+                                            value={type.name}>{i18n.language === "en" ? type.name : type.ar_name}</option>)
+                          })
+                        }
+                      </select>
+
+                      {/* Chevron Icon */}
+                      <ChevronDown
+                          size={18}
+                          className={`absolute ${
+                              i18n.language === "ar" ? "left-3" : "right-3"
+                          } top-1/2 transform -translate-y-1/2 pointer-events-none`}
+                          style={{ color: colors.text }}
+                      />
+                    </div>
                   </div>
                   <div>
                     <label
-                      className="block mb-2 font-medium"
-                      style={{ color: colors.text }}
+                        className="block mb-2 font-medium"
+                        style={{ color: colors.text }}
                     >
-                      Price (Sparks) *
+                      {t("price")}
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
-                        name="price"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        placeholder="Enter price in Sparks"
-                        className="w-full p-3 pl-10 rounded-lg"
-                        style={{
-                          backgroundColor: colors.inputBg,
-                          color: colors.text,
-                          border: `1px solid ${colors.borderColor}`,
-                        }}
+                          type="number"
+                          name="price"
+                          value={formData.price}
+                          onChange={handleInputChange}
+                          placeholder={t("enterPrice")}
+                          className="w-full p-3 pl-10 rounded-lg"
+                          style={{
+                            backgroundColor: colors.inputBg,
+                            color: colors.text,
+                            border: `1px solid ${colors.borderColor}`,
+                          }}
                       />
-                      <Sparkles
-                        className="absolute left-3 top-3.5 w-4 h-4"
-                        style={{ color: colors.accent }}
+                      <Currency
+                          className="absolute left-3 top-3.5 w-4 h-4"
+                          style={{ color: colors.accent }}
                       />
                     </div>
                     <p
-                      className="text-xs mt-1"
-                      style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                        className="text-xs mt-1"
+                        style={{ color:colors.text }}
                     >
-                      Platform commission: 10% of sales
+                      {t("platformCommission")}
                     </p>
                   </div>
                 </div>
@@ -705,100 +760,135 @@ const ContentUpload = () => {
                   )}
                 </div> */}
 
+                <div className="mb-5">
+                  <label
+                      className="block mb-2 font-medium"
+                      style={{color: colors.text}}
+                  >
+                    {t("targetAudience")} *
+                  </label>
+                  <div className="relative">
+                    <select
+                        name="target_audience"
+                        value={formData.target_audience}
+                        onChange={handleInputChange}
+                        className="w-full p-3 pr-10 rounded-lg appearance-none"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          color: colors.text,
+                          border: `1px solid ${colors.borderColor}`,
+                        }}
+                    >
+                      <option value="">{t("selectTargetAudience")}</option>
+                      <option value="students">{t("students")}</option>
+                      <option value="teachers">{t("teachers")}</option>
+                      <option value="all">{t("all")}</option>
+                    </select>
+
+                    {/* Chevron Icon */}
+                    <ChevronDown
+                        size={18}
+                        className={`absolute ${
+                            i18n.language === "ar" ? "left-3" : "right-3"
+                        } top-1/2 transform -translate-y-1/2 pointer-events-none`}
+                        style={{color: colors.text}}
+                    />
+                  </div>
+                </div>
                 {/* Preview Image */}
                 <div className="mb-5">
                   <label
-                    className="block mb-2 font-medium"
-                    style={{ color: colors.text }}
+                      className="block mb-2 font-medium"
+                      style={{color: colors.text}}
                   >
                     Preview Image (Optional)
                   </label>
                   <div
-                    className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center"
-                    style={{ 
-                      borderColor: previewImage 
-                        ? colors.primary 
-                        : "rgba(224, 224, 224, 0.3)",
-                      backgroundColor: previewImage
-                        ? "rgba(187, 134, 252, 0.05)"
-                        : "transparent",
-                    }}
+                      className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center"
+                      style={{
+                        borderColor: previewImage
+                            ? colors.primary
+                            : "rgba(224, 224, 224, 0.3)",
+                        backgroundColor: previewImage
+                            ? "rgba(187, 134, 252, 0.05)"
+                            : "transparent",
+                      }}
                   >
                     {!previewImage ? (
-                      <>
-                        <Upload
-                          className="w-10 h-10 mb-3"
-                          style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                        />
-                        <p
-                          className="text-center mb-2"
-                          style={{ color: colors.text }}
-                        >
-                          Drag and drop an image file here, or click to browse
-                        </p>
-                        <p
-                          className="text-xs text-center"
-                          style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                        >
-                          Recommended size: 800x600px, Max size: 2MB
-                        </p>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          id="preview-image"
-                          onChange={handlePreviewImageUpload}
-                        />
-                        <button
-                          onClick={() =>
-                            document.getElementById("preview-image").click()
-                          }
-                          className="mt-4 px-4 py-2 rounded-lg"
-                          style={{
-                            backgroundColor: "rgba(187, 134, 252, 0.1)",
-                            color: colors.primary,
-                            border: `1px solid ${colors.primary}`,
-                          }}
-                        >
-                          Select Image
-                        </button>
-                      </>
-                    ) : (
-                      <div className="w-full">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            <img
-                              src={previewImage.url}
-                              alt="Preview"
-                              className="w-16 h-16 object-cover rounded mr-3"
-                            />
-                            <div>
-                              <p
-                                className="font-medium"
-                                style={{ color: colors.lightText }}
-                              >
-                                {previewImage.name}
-                              </p>
-                              <p
-                                className="text-xs"
-                                style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                              >
-                                {previewImage.size}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setPreviewImage(null)}
-                            className="p-1 rounded-full"
-                            style={{
-                              backgroundColor: "rgba(207, 102, 121, 0.1)",
-                              color: colors.accentSecondary,
-                            }}
+                        <>
+                          <Upload
+                              className="w-10 h-10 mb-3"
+                              style={{color: "rgba(224, 224, 224, 0.5)"}}
+                          />
+                          <p
+                              className="text-center mb-2"
+                              style={{color: colors.text}}
                           >
-                            <X className="w-5 h-5" />
+                            Drag and drop an image file here, or click to browse
+                          </p>
+                          <p
+                              className="text-xs text-center"
+                              style={{color: "rgba(224, 224, 224, 0.5)"}}
+                          >
+                            Recommended size: 800x600px, Max size: 2MB
+                          </p>
+                          <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              id="preview-image"
+                              onChange={handlePreviewImageUpload}
+                          />
+                          <button
+                              onClick={() =>
+                                  document.getElementById("preview-image").click()
+                              }
+                              className="mt-4 px-4 py-2 rounded-lg"
+                              style={{
+                                backgroundColor: "rgba(187, 134, 252, 0.1)",
+                                color: colors.primary,
+                                border: `1px solid ${colors.primary}`,
+                              }}
+                          >
+                            Select Image
                           </button>
-                        </div>
-                        {/* <button
+                        </>
+                    ) : (
+                        <div className="w-full">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center">
+                              <img
+                                  src={previewImage.url}
+                                  alt="Preview"
+                                  className="w-16 h-16 object-cover rounded mr-3"
+                              />
+                              <div>
+                                <p
+                                    className="font-medium"
+                                    style={{color: colors.lightText}}
+                                >
+                                  {previewImage.name}
+                                </p>
+                                <p
+                                    className="text-xs"
+                                    style={{color: "rgba(224, 224, 224, 0.5)"}}
+                                >
+                                  {previewImage.size}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                                onClick={() => setPreviewImage(null)}
+                                className="p-1 rounded-full"
+                                style={{
+                                  backgroundColor: "rgba(207, 102, 121, 0.1)",
+                                  color: colors.accentSecondary,
+                                }}
+                            >
+                              <X className="w-5 h-5"/>
+                            </button>
+                          </div>
+                          {/* <button
                           onClick={() => document.getElementById("preview-image").click()}
                           className="w-full px-4 py-2 rounded-lg text-sm"
                           style={{
@@ -809,7 +899,7 @@ const ContentUpload = () => {
                         >
                           Change Image
                         </button> */}
-                      </div>
+                        </div>
                     )}
                   </div>
                 </div>
@@ -817,150 +907,205 @@ const ContentUpload = () => {
                 {/* Product Preview Images */}
                 <div className="mb-5">
                   <label
-                    className="block mb-2 font-medium"
-                    style={{ color: colors.text }}
+                      className="block mb-2 font-medium"
+                      style={{color: colors.text}}
                   >
                     Product Preview Images (Optional)
                   </label>
                   <p
-                    className="text-xs mb-3"
-                    style={{ color: "rgba(224, 224, 224, 0.5)" }}
+                      className="text-xs mb-3"
+                      style={{color: "rgba(224, 224, 224, 0.5)"}}
                   >
                     Upload up to 5 images to showcase your content. These will be displayed in the product gallery.
                   </p>
 
                   {/* Upload Area */}
                   {productPreviewImages.length < 5 && (
-                    <div
-                      className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center mb-4"
-                      style={{
-                        borderColor: "rgba(224, 224, 224, 0.3)",
-                        backgroundColor: "transparent",
-                      }}
-                    >
-                      <Upload
-                        className="w-8 h-8 mb-2"
-                        style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                      />
-                      <p
-                        className="text-center mb-2 text-sm"
-                        style={{ color: colors.text }}
+                      <div
+                          className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center mb-4"
+                          style={{
+                            borderColor: "rgba(224, 224, 224, 0.3)",
+                            backgroundColor: "transparent",
+                          }}
                       >
-                        Click to add more images
-                      </p>
-                      <p
-                        className="text-xs text-center mb-3"
-                        style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                      >
-                        JPEG, PNG, GIF up to 2MB each
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        id="product-preview-images"
-                        onChange={handleProductPreviewImagesUpload}
-                      />
-                      <button
-                        onClick={() =>
-                          document.getElementById("product-preview-images").click()
-                        }
-                        className="px-4 py-2 rounded-lg text-sm"
-                        style={{
-                          backgroundColor: "rgba(187, 134, 252, 0.1)",
-                          color: colors.primary,
-                          border: `1px solid ${colors.primary}`,
-                        }}
-                      >
-                        <Plus className="w-4 h-4 inline mr-1" />
-                        Add Images
-                      </button>
-                    </div>
+                        <Upload
+                            className="w-8 h-8 mb-2"
+                            style={{color: "rgba(224, 224, 224, 0.5)"}}
+                        />
+                        <p
+                            className="text-center mb-2 text-sm"
+                            style={{color: colors.text}}
+                        >
+                          Click to add more images
+                        </p>
+                        <p
+                            className="text-xs text-center mb-3"
+                            style={{color: "rgba(224, 224, 224, 0.5)"}}
+                        >
+                          JPEG, PNG, GIF up to 2MB each
+                        </p>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            id="product-preview-images"
+                            onChange={handleProductPreviewImagesUpload}
+                        />
+                        <button
+                            onClick={() =>
+                                document.getElementById("product-preview-images").click()
+                            }
+                            className="px-4 py-2 rounded-lg text-sm"
+                            style={{
+                              backgroundColor: "rgba(187, 134, 252, 0.1)",
+                              color: colors.primary,
+                              border: `1px solid ${colors.primary}`,
+                            }}
+                        >
+                          <Plus className="w-4 h-4 inline mr-1"/>
+                          Add Images
+                        </button>
+                      </div>
                   )}
 
                   {/* Display Uploaded Images */}
                   {productPreviewImages.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
                         <span
-                          className="text-sm font-medium"
-                          style={{ color: colors.text }}
+                            className="text-sm font-medium"
+                            style={{color: colors.text}}
                         >
                           Uploaded Images ({productPreviewImages.length}/5)
                         </span>
-                        {productPreviewImages.length >= 5 && (
-                          <span
-                            className="text-xs"
-                            style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                          >
+                          {productPreviewImages.length >= 5 && (
+                              <span
+                                  className="text-xs"
+                                  style={{color: "rgba(224, 224, 224, 0.5)"}}
+                              >
                             Maximum images reached
                           </span>
-                        )}
-                      </div>
+                          )}
+                        </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        {productPreviewImages.map((image, index) => (
-                          <div
-                            key={index}
-                            className="relative border rounded-lg p-3"
-                            style={{
-                              backgroundColor: colors.cardBg,
-                              borderColor: colors.borderColor,
-                            }}
-                          >
-                            <div className="flex items-center justify-between mb-2">
+                        <div className="grid grid-cols-2 gap-3">
+                          {productPreviewImages.map((image, index) => (
+                              <div
+                                  key={index}
+                                  className="relative border rounded-lg p-3"
+                                  style={{
+                                    backgroundColor: colors.cardBg,
+                                    borderColor: colors.borderColor,
+                                  }}
+                              >
+                                <div className="flex items-center justify-between mb-2">
                               <span
-                                className="text-xs font-medium truncate"
-                                style={{ color: colors.text }}
-                                title={image.name}
+                                  className="text-xs font-medium truncate"
+                                  style={{color: colors.text}}
+                                  title={image.name}
                               >
                                 {image.name}
                               </span>
-                              <button
-                                onClick={() => removeProductPreviewImage(index)}
-                                className="p-1 rounded-full hover:bg-red-500/10"
-                                style={{ color: colors.accentSecondary }}
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                            <img
-                              src={image.url}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-24 object-cover rounded"
-                            />
-                            <p
-                              className="text-xs mt-1"
-                              style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                            >
-                              {image.size}
-                            </p>
-                          </div>
-                        ))}
+                                  <button
+                                      onClick={() => removeProductPreviewImage(index)}
+                                      className="p-1 rounded-full hover:bg-red-500/10"
+                                      style={{color: colors.accentSecondary}}
+                                  >
+                                    <X className="w-4 h-4"/>
+                                  </button>
+                                </div>
+                                <img
+                                    src={image.url}
+                                    alt={`Preview ${index + 1}`}
+                                    className="w-full h-24 object-cover rounded"
+                                />
+                                <p
+                                    className="text-xs mt-1"
+                                    style={{color: "rgba(224, 224, 224, 0.5)"}}
+                                >
+                                  {image.size}
+                                </p>
+                              </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
                   )}
                 </div>
 
                 {/* Tags */}
                 <div className="mb-8">
                   <label
-                    className="block mb-2 font-medium"
-                    style={{ color: colors.text }}
+                      className="block mb-2 font-medium"
+                      style={{color: colors.text}}
                   >
                     Tags (Optional)
                   </label>
                   <input
-                    type="text"
-                    placeholder="Add tags separated by commas (e.g., algebra, equations, homework)"
-                    className="w-full p-3 rounded-lg"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      color: colors.text,
-                      border: `1px solid ${colors.borderColor}`,
-                    }}
+                      type="text"
+                      placeholder="Add tags separated by commas (e.g., algebra, equations, homework)"
+                      className="w-full p-3 rounded-lg"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        color: colors.text,
+                        border: `1px solid ${colors.borderColor}`,
+                      }}
                   />
+                </div>
+                <div className="mb-8">
+                  <label
+                      className="block mb-2 font-medium"
+                      style={{color: colors.text}}
+                  >
+                    {t("tags")}
+                  </label>
+
+                  {/* Display existing tags */}
+                  {formData.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {formData.tags.map((tag, index) => (
+                            <span
+                                key={index}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-sm"
+                                style={{
+                                  backgroundColor: "rgba(187, 134, 252, 0.1)",
+                                  color: colors.primary,
+                                  border: `1px solid ${colors.primary}`,
+                                }}
+                            >
+                          {tag}
+                              <button
+                                  onClick={() => removeTag(tag)}
+                                  className="ml-2 hover:bg-red-500/10 rounded-full p-0.5"
+                                  style={{color: colors.accentSecondary}}
+                              >
+                            <X className="w-3 h-3"/>
+                          </button>
+                        </span>
+                        ))}
+                      </div>
+                  )}
+
+                  {/* Tag input */}
+                  <input
+                      type="text"
+                      value={tagInput}
+                      onChange={handleTagInputChange}
+                      onKeyPress={handleTagInputKeyPress}
+                      placeholder={t("addTagsInstruction")}
+                      className="w-full p-3 rounded-lg"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        color: colors.text,
+                        border: `1px solid ${colors.borderColor}`,
+                      }}
+                  />
+                  <p
+                      className="text-xs mt-1"
+                      style={{color: colors.text}}
+                  >
+                    {t("tagInputHelp")}
+                  </p>
                 </div>
 
                 {/* Submit Buttons */}
@@ -979,13 +1124,13 @@ const ContentUpload = () => {
                   </button> */}
 
                   <button
-                    onClick={handlePublishNow}
-                    disabled={isSubmitting || loading}
-                    className="px-6 py-2 rounded-lg font-medium disabled:opacity-50"
-                    style={{
-                      backgroundColor: colors.primary,
-                      color: "#000",
-                    }}
+                      onClick={handlePublishNow}
+                      disabled={isSubmitting || loading}
+                      className="px-6 py-2 rounded-lg font-medium disabled:opacity-50"
+                      style={{
+                        backgroundColor: colors.primary,
+                        color: "#000",
+                      }}
                   >
                     {isSubmitting ? "Publishing..." : (scheduleLater ? "Schedule Upload" : "Publish Now")}
                   </button>
@@ -993,9 +1138,9 @@ const ContentUpload = () => {
 
                 {/* Error Display */}
                 {error && (
-                  <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: "rgba(207, 102, 121, 0.1)" }}>
-                    <p style={{ color: colors.accentSecondary }}>{error}</p>
-                  </div>
+                    <div className="mt-4 p-3 rounded-lg" style={{backgroundColor: "rgba(207, 102, 121, 0.1)"}}>
+                      <p style={{color: colors.accentSecondary}}>{error}</p>
+                    </div>
                 )}
               </div>
             </div>
@@ -1004,63 +1149,63 @@ const ContentUpload = () => {
             <div className="col-span-1">
               {/* File Upload */}
               <div
-                className="rounded-lg shadow-md p-6 mb-6"
-                style={{
-                  backgroundColor: colors.cardBgAlt,
-                  border: `1px solid ${colors.borderColor}`,
-                }}
+                  className="rounded-lg shadow-md p-6 mb-6"
+                  style={{
+                    backgroundColor: colors.cardBgAlt,
+                    border: `1px solid ${colors.borderColor}`,
+                  }}
               >
                 <h3
-                  className="text-lg font-medium mb-4"
-                  style={{ color: colors.primary }}
+                    className="text-lg font-medium mb-4"
+                    style={{color: colors.primary}}
                 >
                   Upload Content File *
                 </h3>
 
                 <div
-                  className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center mb-4"
-                  style={{
-                    borderColor: uploadedFile
-                      ? colors.primary
-                      : "rgba(224, 224, 224, 0.3)",
-                    backgroundColor: uploadedFile
-                      ? "rgba(187, 134, 252, 0.05)"
-                      : "transparent",
-                  }}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
+                    className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center mb-4"
+                    style={{
+                      borderColor: uploadedFile
+                          ? colors.primary
+                          : "rgba(224, 224, 224, 0.3)",
+                      backgroundColor: uploadedFile
+                          ? "rgba(187, 134, 252, 0.05)"
+                          : "transparent",
+                    }}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
                 >
                   {!uploadedFile ? (
-                    <>
-                      <Upload
-                        className="w-12 h-12 mb-3"
-                        style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                      />
-                      <p
-                        className="text-center mb-2"
-                        style={{ color: colors.text }}
-                      >
+                      <>
+                        <Upload
+                            className="w-12 h-12 mb-3"
+                            style={{color: "rgba(224, 224, 224, 0.5)"}}
+                        />
+                        <p
+                            className="text-center mb-2"
+                            style={{color: colors.text}}
+                        >
                         Drag and drop your file here
-                      </p>
-                      <p
-                        className="text-xs text-center mb-4"
-                        style={{ color: "rgba(224, 224, 224, 0.5)" }}
-                      >
-                        Supported formats: PDF, DOCX, PPTX, ZIP
-                        <br />
-                        Maximum file size: 50MB
-                      </p>
-                      <input
-                        type="file"
-                        className="hidden"
-                        id="content-file"
-                        onChange={handleFileUpload}
-                      />
-                      <button
-                        onClick={() =>
-                          document.getElementById("content-file").click()
-                        }
-                        className="px-4 py-2 rounded-lg"
+                        </p>
+                        <p
+                            className="text-xs text-center mb-4"
+                            style={{color: "rgba(224, 224, 224, 0.5)"}}
+                        >
+                          Supported formats: PDF, DOCX, PPTX, ZIP
+                          <br/>
+                          Maximum file size: 50MB
+                        </p>
+                        <input
+                            type="file"
+                            className="hidden"
+                            id="content-file"
+                            onChange={handleFileUpload}
+                        />
+                        <button
+                            onClick={() =>
+                                document.getElementById("content-file").click()
+                            }
+                            className="px-4 py-2 rounded-lg"
                         style={{
                           backgroundColor: "rgba(187, 134, 252, 0.1)",
                           color: colors.primary,

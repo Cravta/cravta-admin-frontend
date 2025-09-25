@@ -6,8 +6,9 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/content-types`;
 // Fetch all content types with pagination and filtering
 export const fetchContentTypes = createAsyncThunk(
     "contentTypes/fetchContentTypes",
-    async ({ page = 1, limit = 10, is_active }, { rejectWithValue }) => {
+    async ({ page = 1, limit = 10, is_active= true }, { rejectWithValue }) => {
         try {
+            console.log("JUST HITT");
             const token = localStorage.getItem("token");
             if (!token) throw new Error("No auth token found");
 
@@ -23,6 +24,7 @@ export const fetchContentTypes = createAsyncThunk(
                 },
             });
 
+            console.log(response.data);
             return response.data;
         } catch (error) {
             console.error("API Error:", error.response?.data);

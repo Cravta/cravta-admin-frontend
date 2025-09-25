@@ -624,7 +624,7 @@ const CommissionManagement = () => {
                       className="py-3 px-4 text-right"
                       style={{ color: "rgba(224, 224, 224, 0.7)" }}
                     >
-                      Commission (10%)
+                      Commission (25%)
                     </th>
                     <th
                       className="py-3 px-4 text-left"
