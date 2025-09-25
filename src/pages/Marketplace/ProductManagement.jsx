@@ -595,7 +595,7 @@ const AdminProductManagement = () => {
                 Subject/Grade
               </th>
               <th className="p-4 text-left" style={{ color: colors.primary }}>
-                Price
+                SAR Price
               </th>
               <th className="p-4 text-left" style={{ color: colors.primary }}>
                 Status
@@ -662,7 +662,7 @@ const AdminProductManagement = () => {
                 </td>
                 <td className="p-4">
                   <p className="font-medium" style={{ color: colors.accent }}>
-                    {product.price} Sparks
+                    {product.price}
                   </p>
                 </td>
                 <td className="p-4">
