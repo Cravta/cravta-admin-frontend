@@ -649,7 +649,7 @@ const AdminProductManagement = () => {
                   <p style={{ color: colors.text }}>{product.isAdmin ? "Cravta" : product.uploader_name}</p>
                 </td>
                 <td className="p-4">
-                  <p style={{ color: colors.text }}>{product.isAdmin ? "Cravta" : product.target_audience}</p>
+                  <p style={{ color: colors.text }}>{product.target_audience}</p>
                 </td>
                 <td className="p-4">
                   <p style={{ color: colors.text }}>{product.subject}</p>
