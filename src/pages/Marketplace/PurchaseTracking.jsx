@@ -37,6 +37,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { useTheme } from "../../contexts/ThemeContext";
+import {useTranslation} from "react-i18next";
 
 const PurchaseTracking = () => {
   const dispatch = useDispatch();
@@ -46,7 +47,7 @@ const PurchaseTracking = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [salesType, setSalesType] = useState("admin"); // "all" or "admin"
   const { salesSummary, sales } = useSelector((state) => state.sales);
-  
+  const {i18n,t} = useTranslation();
   useEffect(() => {
     dispatch(fetchSalesSummary(salesType))
     dispatch(fetchSales(salesType));
@@ -344,27 +345,91 @@ const PurchaseTracking = () => {
                 className="text-sm mb-2"
                 style={{ color: "rgba(224, 224, 224, 0.7)" }}
               >
-                Total Revenue
+                Net Revenue
               </p>
               <div className="flex items-center mb-2">
-                <Sparkles
-                  className="w-5 h-5 mr-2"
-                  style={{ color: colors.accent }}
-                />
                 <span
-                  className="text-2xl font-bold"
-                  style={{ color: colors.lightText }}
+                    className="text-2xl font-bold mr-2"
+                    style={{color: colors.lightText}}
                 >
-                  {salesSummary?.total_revenue??0}
+                 SAR
+                </span>
+                <span
+                    className="text-2xl font-bold"
+                    style={{color: colors.lightText}}
+                >
+                  {salesSummary?.final_revenue ?? 0}
                 </span>
               </div>
               <p className="text-xs" style={{ color: colors.accent }}>
                 +8.5% from previous period
               </p>
             </div>
+            <div
+              className="rounded-lg shadow-md p-5"
+              style={{
+                backgroundColor: colors.cardBgAlt,
+                border: `1px solid ${colors.borderColor}`,
+              }}
+            >
+              <p
+                className="text-sm mb-2"
+                style={{ color: "rgba(224, 224, 224, 0.7)" }}
+              >
+               Total Discount
+              </p>
+              <div className="flex items-center mb-2">
+                <span
+                    className="text-2xl font-bold mr-2"
+                    style={{color: colors.lightText}}
+                >
+                 SAR
+                </span>
+                <span
+                    className="text-2xl font-bold"
+                    style={{color: colors.lightText}}
+                >
+                  {salesSummary?.total_discount ?? 0}
+                </span>
+              </div>
+              <p className="text-xs" style={{ color: colors.accent }}>
+                +8.5% from previous period
+              </p>
+            </div>
+            <div
+              className="rounded-lg shadow-md p-5"
+              style={{
+                backgroundColor: colors.cardBgAlt,
+                border: `1px solid ${colors.borderColor}`,
+              }}
+            >
+              <p
+                className="text-sm mb-2"
+                style={{ color: "rgba(224, 224, 224, 0.7)" }}
+              >
+                Total Revenue
+              </p>
+              <div className="flex items-center mb-2">
+               <span
+                   className="text-2xl font-bold mr-2"
+                   style={{color: colors.lightText}}
+               >
+                 SAR
+                </span>
+                <span
+                    className="text-2xl font-bold"
+                    style={{color: colors.lightText}}
+                >
+                  {salesSummary?.total_revenue ?? 0}
+                </span>
+              </div>
+              <p className="text-xs" style={{color: colors.accent}}>
+                +8.5% from previous period
+              </p>
+            </div>
 
-            {salesType ==="overall" && 
-              <div
+            {salesType === "overall" &&
+                <div
               className="rounded-lg shadow-md p-5"
               style={{
                 backgroundColor: colors.cardBgAlt,
@@ -400,41 +465,41 @@ const PurchaseTracking = () => {
               </p>
             </div>}
 
-            <div
-              className="rounded-lg shadow-md p-5"
-              style={{
-                backgroundColor: colors.cardBgAlt,
-                border: `1px solid ${colors.borderColor}`,
-              }}
-            >
-              <p
-                className="text-sm mb-2"
-                style={{ color: "rgba(224, 224, 224, 0.7)" }}
-              >
-                Total Revenue in Sparks
-              </p>
-              <div className="flex items-center mb-2">
-                <Sparkles
-                  className="w-5 h-5 mr-2"
-                  style={{ color: colors.accent }}
-                />
-                <span
-                  className="text-2xl font-bold"
-                  style={{ color: colors.lightText }}
-                >
-                  {salesSummary?.spark_balance??0}
-                </span>
-              </div>
-              {/* <button
-                className="text-xs px-2 py-1 rounded"
-                style={{
-                  backgroundColor: "rgba(3, 218, 198, 0.1)",
-                  color: colors.accent,
-                }}
-              >
-                Exchange for Riyals
-              </button> */}
-            </div>
+            {/*<div*/}
+            {/*  className="rounded-lg shadow-md p-5"*/}
+            {/*  style={{*/}
+            {/*    backgroundColor: colors.cardBgAlt,*/}
+            {/*    border: `1px solid ${colors.borderColor}`,*/}
+            {/*  }}*/}
+            {/*>*/}
+            {/*  <p*/}
+            {/*    className="text-sm mb-2"*/}
+            {/*    style={{ color: "rgba(224, 224, 224, 0.7)" }}*/}
+            {/*  >*/}
+            {/*    Total Revenue in Sparks*/}
+            {/*  </p>*/}
+            {/*  <div className="flex items-center mb-2">*/}
+            {/*    <Sparkles*/}
+            {/*      className="w-5 h-5 mr-2"*/}
+            {/*      style={{ color: colors.accent }}*/}
+            {/*    />*/}
+            {/*    <span*/}
+            {/*      className="text-2xl font-bold"*/}
+            {/*      style={{ color: colors.lightText }}*/}
+            {/*    >*/}
+            {/*      {salesSummary?.spark_balance??0}*/}
+            {/*    </span>*/}
+            {/*  </div>*/}
+            {/*  /!* <button*/}
+            {/*    className="text-xs px-2 py-1 rounded"*/}
+            {/*    style={{*/}
+            {/*      backgroundColor: "rgba(3, 218, 198, 0.1)",*/}
+            {/*      color: colors.accent,*/}
+            {/*    }}*/}
+            {/*  >*/}
+            {/*    Exchange for Riyals*/}
+            {/*  </button> *!/*/}
+            {/*</div>*/}
           </div>
 
           {/* Sales Chart and Product Performance */}
@@ -533,13 +598,13 @@ const PurchaseTracking = () => {
                           {product.total_quantity} sales
                         </p>
                         <div className="flex items-center">
-                          <Sparkles
-                            className="w-3 h-3 mr-1"
-                            style={{ color: colors.accent }}
-                          />
                           <span
-                            className="text-xs"
-                            style={{ color: colors.primary }}
+                              className="text-xs"
+                              style={{color: colors.primary}}
+                          >SAR</span>
+                          <span
+                              className="text-xs"
+                              style={{color: colors.primary}}
                           >
                             {product.total_sales_amount}
                           </span>
@@ -547,7 +612,7 @@ const PurchaseTracking = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                  ))}
               </div>
 
               <button
@@ -601,89 +666,196 @@ const PurchaseTracking = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ backgroundColor: colors.cardBg }}>
-                    <th
+                <tr style={{backgroundColor: colors.cardBg}}>
+                  <th
                       className="py-3 px-4 text-left"
-                      style={{ color: "rgba(224, 224, 224, 0.7)" }}
-                    >
-                      ID
-                    </th>
-                    <th
+                      style={{color: "rgba(224, 224, 224, 0.7)"}}
+                  >
+                    ID
+                  </th>
+                  <th
                       className="py-3 px-4 text-left"
-                      style={{ color: "rgba(224, 224, 224, 0.7)" }}
-                    >
-                      Buyer
-                    </th>
-                    <th
+                      style={{color: "rgba(224, 224, 224, 0.7)"}}
+                  >
+                    Buyer
+                  </th>
+                  <th
+                      className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-right' : "text-left"}`}
+                      style={{color: colors.text}}
+                  >
+                    {t("paymentMethod")}
+                  </th>
+                  <th
+                      className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-right' : "text-left"}`}
+                      style={{color: colors.text}}
+                  >
+                    {t("product")}
+                  </th>
+                  <th
+                      className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-right' : "text-left"}`}
+                      style={{color: colors.text}}
+                  >
+                    {t("promoCode")}
+                  </th>
+                  <th
+                      className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-left' : "text-right"}`}
+                      style={{color: colors.text}}
+                  >
+                    {t("originalAmount")}
+                  </th>
+                  <th
+                      className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-left' : "text-right"}`}
+                      style={{color: colors.text}}
+                  >
+                    {t("discount")}
+                  </th>
+                  <th
+                      className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-left' : "text-right"}`}
+                      style={{color: colors.text}}
+                  >
+                    {t("finalAmount")}
+                  </th>
+                  <th
                       className="py-3 px-4 text-left"
-                      style={{ color: "rgba(224, 224, 224, 0.7)" }}
-                    >
-                      Product
-                    </th>
-                    <th
-                      className="py-3 px-4 text-right"
-                      style={{ color: "rgba(224, 224, 224, 0.7)" }}
-                    >
-                      Amount
-                    </th>
-                    <th
-                      className="py-3 px-4 text-left"
-                      style={{ color: "rgba(224, 224, 224, 0.7)" }}
-                    >
-                      Date
-                    </th>
-                  </tr>
+                      style={{color: "rgba(224, 224, 224, 0.7)"}}
+                  >
+                    Date
+                  </th>
+                </tr>
                 </thead>
                 <tbody>
-                  {sales?.map((sale) => (
+                {sales?.map((sale) => (
                     <tr
-                      key={sale.transaction_id}
-                      className="border-t"
-                      style={{ borderColor: colors.borderColor }}
+                        key={sale.transaction_id}
+                        className="border-t"
+                        style={{borderColor: colors.borderColor}}
                     >
-                      <td className="py-3 px-4" style={{ color: colors.text }}>
+                      <td className="py-3 px-4" style={{color: colors.text}}>
                         #{sale.transaction_id}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
                           <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center mr-2"
-                            style={{
-                              backgroundColor: "rgba(187, 134, 252, 0.1)",
-                            }}
+                              className="w-8 h-8 rounded-full flex items-center justify-center mr-2"
+                              style={{
+                                backgroundColor: "rgba(187, 134, 252, 0.1)",
+                              }}
                           >
                             <User
-                              className="w-4 h-4"
-                              style={{ color: colors.primary }}
+                                className="w-4 h-4"
+                                style={{color: colors.primary}}
                             />
                           </div>
-                          <span style={{ color: colors.lightText }}>
+                          <span style={{color: colors.lightText}}>
                             {sale.buyer.name}
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-4" style={{ color: colors.text }}>
+                      <td className="py-3 px-4" style={{color: colors.text}}>
+                        {sale?.payment_method}
+                      </td>
+                      <td className="py-3 px-4" style={{color: colors.text}}>
                         {sale.product.title}
                       </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end">
-                          <Sparkles
-                            className="w-4 h-4 mr-1"
-                            style={{ color: colors.primary }}
-                          />
-                          <span style={{ color: colors.lightText }}>
-                            {sale.sale_details.total_amount}
-                          </span>
+                      <td className="py-3 px-4">
+                        {sale?.promo_code ? (
+                            <span
+                                className="px-2 py-1 text-xs rounded-full font-mono"
+                                style={{
+                                  backgroundColor: `${colors.primary}20`,
+                                  color: colors.primary,
+                                }}
+                            >
+                                  {sale.promo_code.code}
+                                </span>
+                        ) : (
+                            <span className="text-xs" style={{color: colors.textMuted}}>
+                                  {t("none")}
+                                </span>
+                        )}
+                      </td>
+                      {/* Original Amount */}
+                      <td className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-left' : "text-right"}`}>
+                        <div
+                            className={`flex items-center ${i18n.language === 'ar' ? 'justify-start' : "justify-end"}`}>
+                          {sale?.sale_details?.payment_method === "sparks" ? (
+                              <Sparkles
+                                  className={`w-4 h-4 ${i18n.language === 'ar' ? 'ml-1' : "mr-1"}`}
+                                  style={{color: colors.accent}}
+                              />
+                          ) : (
+                              <span className={i18n.language === 'ar' ? 'ml-2' : 'mr-2'}>SAR</span>
+                          )}
+                          <span style={{color: colors.text}}>
+                                  {Number(sale?.product?.price).toFixed(2)}
+                                </span>
+                        </div>
+                      </td>
+                      {/* Discount Amount */}
+                      <td className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-left' : "text-right"}`}>
+                        {sale?.promo_code?.discount_percentage > 0 ? (
+                            <div
+                                className={`flex items-center ${i18n.language === 'ar' ? 'justify-start' : "justify-end"}`}>
+                              {sale?.sale_details?.payment_method === "sparks" ? (
+                                  <Sparkles
+                                      className={`w-4 h-4 ${i18n.language === 'ar' ? 'ml-1' : "mr-1"}`}
+                                      style={{color: colors.success}}
+                                  />
+                              ) : (
+                                  <span className={i18n.language === 'ar' ? 'ml-2' : 'mr-2'}>SAR</span>
+                              )}
+                              <span style={{color: colors.success}}>
+                                    -{Number((sale?.product?.price * sale?.promo_code?.discount_percentage / 100) || 0).toFixed(2)}
+                                  </span>
+                              <span
+                                  className={`text-xs ${i18n.language === 'ar' ? 'mr-1' : 'ml-1'}`}
+                                  style={{color: colors.textMuted}}
+                              >
+                                    ({sale.promo_code.discount_percentage}%)
+                                  </span>
+                            </div>
+                        ) : (
+                            <span
+                                className={`text-xs ${i18n.language === 'ar' ? 'text-left' : "text-right"}`}
+                                style={{color: colors.textMuted}}
+                            >
+                                  {t("none")}
+                                </span>
+                        )}
+                      </td>
+                      {/* Final Amount */}
+                      <td className={`py-3 px-4 ${i18n.language === 'ar' ? 'text-left' : "text-right"}`}>
+                        <div
+                            className={`flex items-center ${i18n.language === 'ar' ? 'justify-start' : "justify-end"}`}>
+                          {sale?.sale_details?.payment_method === "sparks" ? (
+                              <Sparkles
+                                  className={`w-4 h-4 ${i18n.language === 'ar' ? 'ml-1' : "mr-1"}`}
+                                  style={{color: colors.primary}}
+                              />
+                          ) : (
+                              <span className={i18n.language === 'ar' ? 'ml-2' : 'mr-2'}>SAR</span>
+                          )}
+                          <span
+                              className="font-medium"
+                              style={{color: colors.primary}}
+                          >
+                                  {Number(
+                                      sale?.product?.price -
+                                      (sale?.promo_code?.discount_percentage > 0
+                                          ? (sale?.product?.price * sale?.promo_code?.discount_percentage / 100)
+                                          : 0)
+                                  ).toFixed(2)}
+                                </span>
                         </div>
                       </td>
                       <td
-                        className="py-3 px-4"
-                        style={{ color: "rgba(224, 224, 224, 0.7)" }}
+                          className="py-3 px-4"
+                          style={{color: "rgba(224, 224, 224, 0.7)"}}
                       >
                         {new Date(sale.sale_details.sold_at).toLocaleDateString()}
                       </td>
                     </tr>
-                  ))}
+                ))}
                 </tbody>
               </table>
             </div>
