@@ -624,6 +624,12 @@ const CommissionManagement = () => {
                       className="py-3 px-4 text-right"
                       style={{ color: "rgba(224, 224, 224, 0.7)" }}
                     >
+                      Discounted Amount
+                    </th>
+                    <th
+                      className="py-3 px-4 text-right"
+                      style={{ color: "rgba(224, 224, 224, 0.7)" }}
+                    >
                       Commission (25%)
                     </th>
                     <th
@@ -636,64 +642,75 @@ const CommissionManagement = () => {
                 </thead>
                 <tbody>
                   {recentTransactions?.transactions?.map((transaction) => (
-                    <tr
-                      key={transaction.id}
-                      className="border-t"
-                      style={{ borderColor: colors.borderColor }}
-                    >
-                      <td className="py-3 px-4" style={{ color: colors.text }}>
-                        #{transaction.transaction_id}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center mr-2"
-                            style={{
-                              backgroundColor: "rgba(187, 134, 252, 0.1)",
-                            }}
-                          >
-                            <User
-                              className="w-4 h-4"
-                              style={{ color: colors.primary }}
-                            />
-                          </div>
-                          <span style={{ color: colors.lightText }}>
+                      <tr
+                          key={transaction.id}
+                          className="border-t"
+                          style={{borderColor: colors.borderColor}}
+                      >
+                        <td className="py-3 px-4" style={{color: colors.text}}>
+                          #{transaction.transaction_id}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center">
+                            <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center mr-2"
+                                style={{
+                                  backgroundColor: "rgba(187, 134, 252, 0.1)",
+                                }}
+                            >
+                              <User
+                                  className="w-4 h-4"
+                                  style={{color: colors.primary}}
+                              />
+                            </div>
+                            <span style={{color: colors.lightText}}>
                             {transaction.seller}
                           </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4" style={{ color: colors.text }}>
-                        {transaction.product}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end">
-                          <Sparkles
-                            className="w-4 h-4 mr-1"
-                            style={{ color: colors.primary }}
-                          />
-                          <span style={{ color: colors.lightText }}>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4" style={{color: colors.text}}>
+                          {transaction.product}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end">
+                            <Sparkles
+                                className="w-4 h-4 mr-1"
+                                style={{color: colors.primary}}
+                            />
+                            <span style={{color: colors.lightText}}>
                             {transaction.sale_amount}
                           </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end">
-                          <Sparkles
-                            className="w-4 h-4 mr-1"
-                            style={{ color: colors.accent }}
-                          />
-                          <span style={{ color: colors.accent }}>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end">
+                            <Sparkles
+                                className="w-4 h-4 mr-1"
+                                style={{color: colors.accent}}
+                            />
+                            <span style={{color: colors.accent}}>
+                            {transaction.discount_amount}
+                          </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end">
+                            <Sparkles
+                                className="w-4 h-4 mr-1"
+                                style={{color: colors.accent}}
+                            />
+                            <span style={{color: colors.accent}}>
                             {transaction.commission}
                           </span>
-                        </div>
-                      </td>
-                      <td
-                        className="py-3 px-4"
-                        style={{ color: "rgba(224, 224, 224, 0.7)" }}
-                      >
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </td>
-                    </tr>
+                          </div>
+                        </td>
+                        <td
+                            className="py-3 px-4"
+                            style={{color: "rgba(224, 224, 224, 0.7)"}}
+                        >
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </td>
+                      </tr>
                   ))}
                 </tbody>
               </table>
