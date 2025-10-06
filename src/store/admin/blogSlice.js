@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/axiosInstance.js";
+import axios from "axios";
 
 const PUBLIC_BLOG_URL = `${import.meta.env.VITE_API_BASE_URL}/blogs`;
 const PRIVATE_BLOG_URL = `${import.meta.env.VITE_API_BASE_URL}/admin-blogs`;
@@ -83,12 +84,33 @@ export const deleteBlog = createAsyncThunk(
     }
 );
 
+// Fetch blog image presigned URL by image ID
+export const fetchBlogImage = createAsyncThunk(
+    "blogs/fetchBlogImage",
+    async (imageId, { rejectWithValue }) => {
+        try {
+            const token = getAuthToken();
+            const response = await axios.get(`${PUBLIC_BLOG_URL}/images/${imageId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+            });
+            return response.data.data;
+        } catch (error) {
+            console.error('Error fetching blog image:', error.response?.data || error.message);
+            return rejectWithValue(error.response?.data?.message || "Error fetching blog image");
+        }
+    }
+);
+
 // Blog Slice
 const blogSlice = createSlice({
     name: "blogs",
     initialState: {
         blogs: [],
         blogDetails: null,
+        blogImageUrl: null,
         loading: false,
         error: null,
         success: null,
@@ -98,6 +120,7 @@ const blogSlice = createSlice({
             state.blogDetails = null;
             state.success = null;
             state.error = null;
+            state.blogImageUrl = null;
         },
     },
     extraReducers: (builder) => {
@@ -167,6 +190,18 @@ const blogSlice = createSlice({
                 state.blogs.body = state.blogs.body.filter((blog) => blog.id !== action.payload.id);
             })
             .addCase(deleteBlog.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(fetchBlogImage.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchBlogImage.fulfilled, (state, action) => {
+                state.loading = false;
+                state.blogImageUrl = action.payload;
+            })
+            .addCase(fetchBlogImage.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });

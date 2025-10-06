@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   X,
   Save,
@@ -28,6 +28,8 @@ import {
   fetchBlogById,
   fetchBlogs,
   updateBlog,
+  fetchBlogImage,
+  clearBlogState,
 } from "../../../store/admin/blogSlice";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -328,6 +330,7 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
+  const currentUploadIndexRef = useRef(null);
   const featuredImageInputRef = useRef(null);
   const [uploadProgress, setUploadProgress] = useState({});
   const [hyperlinkModal, setHyperlinkModal] = useState({
@@ -345,6 +348,8 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
     metaDescription: [],
     urlSlug: "",
     featuredImage: null,
+    oldFeaturedImage: null, // Store the original image URL
+    oldFeaturedImageId: null, // Store the original image_id
     content: [
       {
         position: 0,
@@ -387,7 +392,7 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
 
       // Make API call to get signed URL
       const response = await fetch(
-        "https://cravta.com/api/v1/admin-blogs/images",
+        `${import.meta.env.VITE_API_BASE_URL}/admin-blogs/images`,
         {
           method: "POST",
           headers: {
@@ -441,14 +446,25 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
     return true;
   };
 
+  const initializedBlogRef = useRef(null);
+  const imagesLoadedRef = useRef(null);
+
+  // Fetch blog details - only once when component mounts or blog.id changes
   useEffect(() => {
     if (blog?.id && blog.id !== blogDetails?.id) {
       dispatch(fetchBlogById(blog.id));
+      initializedBlogRef.current = null; // Reset so form reinitializes with new data
+      imagesLoadedRef.current = null; // Reset images loaded tracker
     }
   }, [blog?.id, blogDetails?.id, dispatch]);
 
+  // Initialize form data - only runs once per blog ID
   useEffect(() => {
-    if (blogDetails && blog) {
+    console.log('🔹 Init effect - blogDetails?.id:', blogDetails?.id, 'ref:', initializedBlogRef.current);
+
+    if (blogDetails?.id && initializedBlogRef.current !== blogDetails.id) {
+      initializedBlogRef.current = blogDetails.id;
+
       setFormData({
         title: blogDetails.title || "",
         documentTitle: blogDetails.documentTitle || "",
@@ -456,6 +472,8 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
         metaDescription: blogDetails.metaDescription || [],
         urlSlug: blogDetails.urlSlug || "",
         featuredImage: blogDetails.featuredImage || null,
+        oldFeaturedImage: blogDetails.featuredImage || null,
+        oldFeaturedImageId: blogDetails.image_id || null,
         content: blogDetails.content || [
           {
             position: 0,
@@ -468,7 +486,108 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
         language: blogDetails.language || "English",
       });
     }
-  }, [blogDetails, blog]);
+  }, [blogDetails]);
+
+  // Separate effect for loading images - runs only once per blog
+  useEffect(() => {
+    const loadImages = async () => {
+      console.log('🔷 loadImages - blogDetails.id:', blogDetails.id, 'initializedBlogRef:', initializedBlogRef.current, 'imagesLoadedRef:', imagesLoadedRef.current);
+
+      // Check if we've already loaded images for this blog
+      if (imagesLoadedRef.current === blogDetails.id) {
+        console.log('⏭️ Skipping - already fetched images for this blog');
+        return;
+      }
+
+      imagesLoadedRef.current = blogDetails.id;
+      const token = localStorage.getItem("token");
+      const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
+      // Fetch featured image using direct API call
+      if (blogDetails.image_id) {
+        try {
+          const response = await fetch(`${API_BASE}/blogs/images/${blogDetails.image_id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const imageUrl = typeof data.data === 'string' ? data.data : data.data?.uploadImageURL;
+            if (imageUrl) {
+              setFormData(prev => ({
+                ...prev,
+                oldFeaturedImage: imageUrl,
+                featuredImage: imageUrl,
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch featured image:', error);
+        }
+      }
+
+      // Fetch images from content sections using direct API call
+      if (blogDetails.content && Array.isArray(blogDetails.content)) {
+        console.log('🖼️ Fetching content images, found', blogDetails.content.filter(s => s.type === 'image').length, 'image sections');
+
+        const updatedContent = await Promise.all(
+          blogDetails.content.map(async (section) => {
+            if (section.type === 'image' && section.content?.imageId) {
+              console.log('📥 Fetching image for imageId:', section.content.imageId);
+              try {
+                const response = await fetch(`${API_BASE}/blogs/images/${section.content.imageId}`, {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  },
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  const imageUrl = typeof data.data === 'string' ? data.data : data.data?.uploadImageURL;
+                  console.log('✅ Fetched image URL:', imageUrl);
+                  if (imageUrl) {
+                    return {
+                      ...section,
+                      content: {
+                        ...section.content,
+                        url: imageUrl,
+                      }
+                    };
+                  }
+                }
+              } catch (error) {
+                console.error(`Failed to fetch content image ${section.content.imageId}:`, error);
+              }
+            }
+            return section;
+          })
+        );
+
+        console.log('🔄 Updating formData with fetched content images');
+        console.log('📋 Updated content array:', JSON.stringify(updatedContent, null, 2));
+        setFormData(prev => {
+          const newData = {
+            ...prev,
+            content: updatedContent,
+          };
+          console.log('💾 New formData after image fetch:', JSON.stringify(newData.content, null, 2));
+          return newData;
+        });
+      }
+    };
+
+    if (blogDetails?.id && initializedBlogRef.current === blogDetails.id) {
+      console.log('✨ Calling loadImages()');
+      loadImages();
+    } else {
+      console.log('❌ NOT calling loadImages - blogDetails.id:', blogDetails?.id, 'initializedBlogRef:', initializedBlogRef.current);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blogDetails?.id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -534,14 +653,16 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
   };
 
   const updateContentSection = (index, newContent) => {
-    const newContentArray = [...formData.content];
-    newContentArray[index] = {
-      ...newContentArray[index],
-      content: newContent,
-    };
-    setFormData({
-      ...formData,
-      content: newContentArray,
+    setFormData(prev => {
+      const newContentArray = [...prev.content];
+      newContentArray[index] = {
+        ...newContentArray[index],
+        content: newContent,
+      };
+      return {
+        ...prev,
+        content: newContentArray,
+      };
     });
   };
 
@@ -661,21 +782,23 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
     setHyperlinkModal({ isOpen: false, sectionIndex: null, selectedText: '', selectionStart: 0, selectionEnd: 0 });
   };
   const handleImageUpload = async (index, file) => {
+    console.log('🔵 handleImageUpload called with index:', index, 'file:', file.name);
     try {
       // Update UI to show loading state
       const uploadId = `content-${index}`;
-      setUploadProgress({
-        ...uploadProgress,
+      setUploadProgress(prev => ({
+        ...prev,
         [uploadId]: { status: "loading", progress: 0 },
-      });
+      }));
 
       // Get signed URL
       const imageData = await getSignedImageUploadUrl(file);
+      console.log('📤 Got imageId:', imageData.id.id, 'for index:', index);
 
-      setUploadProgress({
-        ...uploadProgress,
+      setUploadProgress(prev => ({
+        ...prev,
         [uploadId]: { status: "loading", progress: 50 },
-      });
+      }));
 
       // Upload to S3
       await uploadImageToS3(file, imageData.uploadImageURL);
@@ -683,26 +806,42 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
       // Create URL for preview
       const imageUrl = URL.createObjectURL(file);
 
-      // Update content with ID and URL
-      const newContent = {
-        ...formData.content[index].content,
-        url: imageUrl,
-        file: file,
-        imageId: imageData.id.id,
-      };
+      // Update content with ID and URL using functional update to get latest state
+      setFormData(prev => {
+        console.log('📝 Updating index:', index, 'in content array of length:', prev.content.length);
+        console.log('📝 Content before update:', JSON.stringify(prev.content.map((c, i) => ({ index: i, type: c.type, imageId: c.content?.imageId }))));
 
-      updateContentSection(index, newContent);
+        const newContentArray = [...prev.content];
+        newContentArray[index] = {
+          ...newContentArray[index],
+          content: {
+            ...newContentArray[index].content,
+            url: imageUrl,
+            file: file,
+            imageId: imageData.id.id,
+          },
+        };
 
-      setUploadProgress({
-        ...uploadProgress,
-        [uploadId]: { status: "success", progress: 100 },
+        console.log('✅ Updated index:', index, 'with imageId:', imageData.id.id);
+        console.log('📝 Content after update:', JSON.stringify(newContentArray.map((c, i) => ({ index: i, type: c.type, imageId: c.content?.imageId }))));
+
+        return {
+          ...prev,
+          content: newContentArray,
+        };
       });
+
+      setUploadProgress(prev => ({
+        ...prev,
+        [uploadId]: { status: "success", progress: 100 },
+      }));
     } catch (error) {
       console.error("Failed to upload image:", error);
-      setUploadProgress({
-        ...uploadProgress,
+      const uploadId = `content-${index}`;
+      setUploadProgress(prev => ({
+        ...prev,
         [uploadId]: { status: "error", error: error.message },
-      });
+      }));
     }
   };
 
@@ -1268,9 +1407,12 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
         );
 
       case "image":
+        const hasExistingImage = content.imageId; // Check for imageId, not url
+        const isNewImageUploaded = content.file;
+
         return (
             <div className="space-y-4">
-              {/* Image Upload Area */}
+              {/* Image Upload Area - Always show current image if it exists */}
               <div
                   className="border-2 border-dashed rounded-lg p-4 text-center"
                   style={{ borderColor: colors.borderColor }}
@@ -1292,6 +1434,7 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                     e.currentTarget.classList.remove("bg-opacity-10");
                     e.currentTarget.style.backgroundColor = "";
 
+                    console.log('🎯 Drag and drop for index:', index);
                     const files = e.dataTransfer.files;
                     if (
                         files &&
@@ -1302,31 +1445,73 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                     }
                   }}
               >
-                {content.url ? (
-                    <div className="relative">
-                      <img
-                          src={content.url}
-                          alt={content.alt || "Preview"}
-                          className="max-w-full max-h-48 object-contain rounded mx-auto"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                      />
+                {/* Show existing or new image */}
+                {(hasExistingImage && content.url) || (isNewImageUploaded && content.url) ? (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <img
+                            src={content.url}
+                            alt={content.alt || "Image"}
+                            className="max-w-full max-h-48 object-contain rounded mx-auto"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
+                        />
+                        {isNewImageUploaded && (
+                          <button
+                              type="button"
+                              onClick={() => {
+                                updateContentSection(index, {
+                                  ...content,
+                                  file: null,
+                                });
+                              }}
+                              className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                              style={{ transform: "translate(50%, -50%)" }}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Show status */}
+                      <p className="text-xs" style={{ color: colors.textMuted }}>
+                        {isNewImageUploaded
+                          ? "New image (will replace current)"
+                          : `Current Image (ID: ${content.imageId})`}
+                      </p>
+
+                      {/* Upload new button */}
                       <button
                           type="button"
-                          onClick={() => {
-                            updateContentSection(index, {
-                              ...content,
-                              url: "",
-                              file: null,
-                              imageId: null,
-                            });
+                          className="px-4 py-2 rounded-lg text-sm"
+                          style={{
+                            backgroundColor: colors.primary,
+                            color: colors.lightText,
                           }}
-                          className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                          style={{ transform: "translate(50%, -50%)" }}
+                          onClick={() => {
+                            console.log('🔘 Button clicked for index:', index);
+                            currentUploadIndexRef.current = index;
+                            if (fileInputRef.current) {
+                              fileInputRef.current.click();
+                            }
+                          }}
                       >
-                        <X className="w-3 h-3" />
+                        {isNewImageUploaded ? "Choose Different Image" : "Upload New Image"}
                       </button>
+                      <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            console.log('📁 File selected, using stored index:', currentUploadIndexRef.current);
+                            if (e.target.files && e.target.files[0]) {
+                              handleImageUpload(currentUploadIndexRef.current, e.target.files[0]);
+                              e.target.value = "";
+                            }
+                          }}
+                      />
                     </div>
                 ) : (
                     <>
@@ -1341,6 +1526,8 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                             className="font-medium"
                             style={{ color: colors.primary }}
                             onClick={() => {
+                              console.log('🔘 Browse button clicked for index:', index);
+                              currentUploadIndexRef.current = index;
                               if (fileInputRef.current) {
                                 fileInputRef.current.click();
                               }
@@ -1354,8 +1541,9 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                             accept="image/*"
                             className="hidden"
                             onChange={(e) => {
+                              console.log('📁 File selected (no existing image), using stored index:', currentUploadIndexRef.current);
                               if (e.target.files && e.target.files[0]) {
-                                handleImageUpload(index, e.target.files[0]);
+                                handleImageUpload(currentUploadIndexRef.current, e.target.files[0]);
                                 e.target.value = "";
                               }
                             }}
@@ -1392,35 +1580,29 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
 
               {/* Image Details */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
+                {/* Show Image ID if available (read-only) */}
+                {content.imageId && (
+                  <div>
                     <label
                         className="block text-xs mb-1"
                         style={{ color: colors.textMuted }}
                     >
-                      Image URL
+                      Image ID (S3)
                     </label>
                     <input
                         type="text"
-                        value={content.url || ""}
-                        onChange={(e) => {
-                          updateContentSection(index, {
-                            ...content,
-                            url: e.target.value,
-                            file: null,
-                            imageId: null,
-                          });
-                        }}
-                        placeholder="Image URL..."
+                        value={content.imageId || ""}
+                        readOnly
                         className="w-full px-4 py-2 rounded-lg focus:outline-none"
                         style={{
-                          backgroundColor: colors.inputBg,
+                          backgroundColor: `${colors.inputBg}80`,
                           border: `1px solid ${colors.borderColor}`,
-                          color: colors.text,
+                          color: colors.textMuted,
+                          cursor: 'not-allowed',
                         }}
                     />
                   </div>
-                </div>
+                )}
 
                 <div>
                   <label
@@ -1473,28 +1655,6 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                       }}
                   />
                 </div>
-
-                {content.imageId && (
-                    <div>
-                      <label
-                          className="block text-xs mb-1"
-                          style={{ color: colors.textMuted }}
-                      >
-                        Image ID
-                      </label>
-                      <input
-                          type="text"
-                          value={content.imageId || ""}
-                          readOnly
-                          className="w-full px-4 py-2 rounded-lg focus:outline-none bg-gray-100"
-                          style={{
-                            backgroundColor: `${colors.inputBg}80`,
-                            border: `1px solid ${colors.borderColor}`,
-                            color: colors.textMuted,
-                          }}
-                      />
-                    </div>
-                )}
               </div>
             </div>
         );
@@ -1510,19 +1670,20 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
     setError(null);
 
     try {
-      // Prepare the data with image IDs
+      // Prepare the data with image IDs and remove URLs to prevent S3 URL leaking
       const preparedData = {
         ...formData,
-        featuredImageId: formData.featuredImage?.imageId,
+        image_id: formData.featuredImage?.imageId,
         // Map through content to extract imageIds from image sections
         content: formData.content.map((section) => {
           if (section.type === "image" && section.content.imageId) {
-            // Keep the imageId for the API
+            // Only keep imageId, alt, and caption - remove url and file to prevent S3 URL leaking
             return {
               ...section,
               content: {
-                ...section.content,
                 imageId: section.content.imageId,
+                alt: section.content.alt || "",
+                caption: section.content.caption || "",
               },
             };
           }
@@ -1531,12 +1692,16 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
       };
 
       if (blog) {
-        dispatch(updateBlog({ id: blog.id, blogData: preparedData }));
-        onSaved();
+        await dispatch(updateBlog({ id: blog.id, blogData: preparedData }));
+        // Clear state and reset ref to force refetch of updated data
+        dispatch(clearBlogState());
+        initializedBlogRef.current = null;
+        // Refetch the updated blog data
+        dispatch(fetchBlogById(blog.id));
       } else {
-        dispatch(createBlog(preparedData));
-        onSaved();
+        await dispatch(createBlog(preparedData));
       }
+      onSaved();
     } catch (err) {
       console.error("Failed to save blog:", err);
       setError(
@@ -1865,6 +2030,48 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                   >
                     Featured Image
                   </label>
+
+                  {/* Show old image if editing and has old image */}
+                  {blog && formData.oldFeaturedImage && (typeof formData.oldFeaturedImage === 'string' && formData.oldFeaturedImage.startsWith('http')) && (
+                      <div className="mb-4">
+                        {/*<label*/}
+                        {/*    className="block text-xs font-medium mb-2"*/}
+                        {/*    style={{color: colors.textMuted}}*/}
+                        {/*>*/}
+                        {/*  Current Image*/}
+                        {/*</label>*/}
+                        <div
+                            className="border rounded-lg p-4"
+                            style={{
+                              borderColor: colors.borderColor,
+                              backgroundColor: colors.cardBgAlt,
+                            }}
+                        >
+                          <img
+
+                              src={formData.oldFeaturedImage}
+                              alt="Current Featured"
+                              className="max-w-full h-32 object-cover rounded mx-auto"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
+                          />
+                        </div>
+                      </div>
+                  )}
+
+                  {/* Show new image upload section */}
+                  {blog && formData.featuredImage && formData.featuredImage !== formData.oldFeaturedImage && (
+                      <div className="mb-4">
+                        <label
+                            className="block text-xs font-medium mb-2"
+                            style={{color: colors.primary}}
+                        >
+                          New Image (Will replace current image)
+                        </label>
+                      </div>
+                  )}
+
                   <div
                       className="border-2 border-dashed rounded-lg p-4 text-center"
                       style={{borderColor: colors.borderColor}}
@@ -1908,7 +2115,7 @@ const BlogForm = ({ blog = null, onCancel, onSaved }) => {
                               onClick={() => {
                                 setFormData({
                                   ...formData,
-                                  featuredImage: null,
+                                  featuredImage: blog && formData.oldFeaturedImage ? formData.oldFeaturedImage : null,
                                 });
                               }}
                               className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"

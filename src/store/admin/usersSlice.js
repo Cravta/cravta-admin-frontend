@@ -7,12 +7,22 @@ const getAuthToken = () => localStorage.getItem("token");
 
 export const fetchUsersAdmin = createAsyncThunk(
     "users/fetchUsersAdmin",
-    async (_, { rejectWithValue }) => {
+    async (params = {}, { rejectWithValue }) => {
         try {
             const token = getAuthToken();
             if (!token) throw new Error("No auth token found");
 
-            const response = await api.get(`${BASE_URL}`, {
+            // Build query string from params
+            const queryParams = new URLSearchParams();
+            if (params.searchable) {
+                queryParams.append('searchable', params.searchable);
+            }
+
+            const url = queryParams.toString()
+                ? `${BASE_URL}?${queryParams.toString()}`
+                : BASE_URL;
+
+            const response = await api.get(url, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",

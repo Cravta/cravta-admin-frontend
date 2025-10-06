@@ -1,9 +1,9 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, useCallback, useMemo} from "react";
 import {useTheme} from "../../../contexts/ThemeContext.jsx";
 import BlogList from "./BlogList";
 import BlogForm from "./BlogForm";
 import BlogView from "./BlogView";
-import {fetchBlogs} from "../../../store/admin/blogSlice.js";
+import {fetchBlogs, clearBlogState} from "../../../store/admin/blogSlice.js";
 import {useDispatch, useSelector} from "react-redux";
 import ScreenLoader from "../../../components/loader/ScreenLoader.jsx";
 import Pagination from "../../../components/pagination/Pagination.jsx";
@@ -20,6 +20,9 @@ const BlogManagement = () => {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const totalItems = blogs?.pagination?.total;
+
+    // Use stable blog ID for key - only changes when actually switching blogs
+    const blogFormKey = useMemo(() => selectedBlog?.id || 'new', [selectedBlog?.id]);
     useEffect(()=> {
         dispatch(fetchBlogs({page, limit}));
 
@@ -34,7 +37,7 @@ const BlogManagement = () => {
         setPage(1); // reset to first page when limit changes
     };
     // Function to load blogs from API
-    const loadBlogs = async () => {
+    const loadBlogs = useCallback(async () => {
         setIsLoading(true);
         try {
             await dispatch(fetchBlogs({}));
@@ -45,20 +48,24 @@ const BlogManagement = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [dispatch]);
 
     // Function to handle view changes
-    const handleViewChange = (view, blog = null) => {
+    const handleViewChange = useCallback((view, blog = null) => {
         console.log(blog);
+        // Clear blog state when navigating away from form to ensure fresh data on next edit
+        if (activeView === 'form' && view !== 'form') {
+            dispatch(clearBlogState());
+        }
         setSelectedBlog(blog);
         setActiveView(view);
-    };
+    }, [activeView, dispatch]);
 
     // Function to handle blog updates (refresh list after changes)
-    const handleBlogUpdated = () => {
-        void loadBlogs();
-        setActiveView("list");
-    };
+    const handleBlogUpdated = useCallback(() => {
+        // void loadBlogs();
+        // setActiveView("list");
+    }, [loadBlogs]);
 
     return (<>
             {loading ? (<ScreenLoader/>) : <div className="p-6 overflow-auto">
@@ -98,6 +105,7 @@ const BlogManagement = () => {
                     /></div>
                    )}
                 {activeView === "form" && (<BlogForm
+                        key={blogFormKey}
                         blog={selectedBlog}
                         onCancel={() => handleViewChange("list")}
                         onSaved={handleBlogUpdated}

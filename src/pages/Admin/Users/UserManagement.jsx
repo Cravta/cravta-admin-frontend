@@ -39,14 +39,21 @@ const UserManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+
+  // Debounce search
   useEffect(() => {
-        dispatch(fetchUsersAdmin({}));
-    }, [dispatch]);
+    const timer = setTimeout(() => {
+      dispatch(fetchUsersAdmin({ searchable: searchTerm || undefined }));
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, dispatch]);
+
   const { usersList, loading } = useSelector((state) => state.adminUsers);
   // Items per page
   const itemsPerPage = 10;
 
-  // Get data based on active tab
+  // Get data based on active tab (search is now handled by backend)
   const getData = () => {
     let data;
 
@@ -64,16 +71,7 @@ const UserManagement = () => {
         data = [];
     }
 
-    // Apply search filter
-    if (searchTerm) {
-      data = data.filter(
-        (item) =>
-          item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item?.email_address?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply status filter
+    // Apply status filter (if needed)
     if (statusFilter !== "all") {
       data = data.filter((item) => item.status === statusFilter);
     }
@@ -105,7 +103,7 @@ const UserManagement = () => {
 
   // Handle refresh
   const handleRefresh = () => {
-    dispatch(fetchUsersAdmin({}));
+    dispatch(fetchUsersAdmin({ searchable: searchTerm || undefined }));
   };
   const handleDeleteUser = (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
