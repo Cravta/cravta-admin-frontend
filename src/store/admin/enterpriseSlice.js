@@ -18,7 +18,7 @@ export const fetchEnterprisesAdmin = createAsyncThunk(
             const token = localStorage.getItem("token");
             if (!token) throw new Error("No auth token found");
 
-            const response = await api.get(`${BASE_URL}?page=${page}&searchTerm=${search}`, {
+            const response = await api.get(`${BASE_URL}/all?page=${page}&searchTerm=${search}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -157,14 +157,13 @@ const AdminEnterpriseSlice = createSlice({
             // 2. Update the fulfilled case
             .addCase(fetchEnterprisesAdmin.fulfilled, (state, action) => {
                 state.loading = false;
-                state.enterpriseList = Array.isArray(action?.payload?.data) ? action?.payload?.data : [];
-                // Fix: Use 'count' instead of 'totalItems'
-                state.totalEnterprises = action?.payload?.count || 0;
-                // Calculate pages based on count (assuming 10 items per page)
-                const itemsPerPage = 10;
-                state.totalPages = Math.ceil((action?.payload?.count || 0) / itemsPerPage);
-                // Set current page from the request
-                state.currentPage = action.payload.requestedPage || 1;
+                state.enterpriseList = Array.isArray(action?.payload?.data?.enterprises)
+                    ? action?.payload?.data?.enterprises
+                    : [];
+                const pagination = action?.payload?.data?.pagination || {};
+                state.totalEnterprises = pagination.totalItems || 0;
+                state.totalPages = pagination.totalPages || 1;
+                state.currentPage = pagination.currentPage || action.payload.requestedPage || 1;
             })
             .addCase(fetchEnterprisesAdmin.rejected, (state, action) => {
                 state.loading = false;
