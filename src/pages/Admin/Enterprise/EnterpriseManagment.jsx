@@ -11,10 +11,13 @@ import {
     Trash,
     Download,
     ChevronDown,
+    ChevronUp,
     DollarSign,
     Users,
     Clock,
     Plus,
+    BookOpen,
+    GraduationCap,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useDispatch, useSelector } from "react-redux";
@@ -48,6 +51,9 @@ const EnterpriseManagement = () => {
     const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [enterpriseInfo, setEnterpriseInfo] = useState(null);
+    const [expandedEnterprise, setExpandedEnterprise] = useState(null);
+    const [selectedTab, setSelectedTab] = useState("teachers");
+    const [enterpriseData, setEnterpriseData] = useState({});
     const debounceRef = React.useRef(null);
     const isFirstSearch = React.useRef(true);
     const dispatch = useDispatch();
@@ -146,6 +152,64 @@ const EnterpriseManagement = () => {
                 toast.error(`Failed to load enterprise details: ${error || "Unknown error"}`);
             });
     };
+
+    // Handle enterprise expansion and fetch data
+    const handleEnterpriseToggle = async (enterpriseId) => {
+        if (expandedEnterprise === enterpriseId) {
+            setExpandedEnterprise(null);
+        } else {
+            setExpandedEnterprise(enterpriseId);
+            setSelectedTab("teachers");
+
+            // Fetch teachers and courses for this enterprise
+            if (!enterpriseData[enterpriseId]) {
+                try {
+                    // Fetch teachers
+                    const teachersResponse = await fetch(
+                        `${import.meta.env.VITE_API_BASE_URL}/enterprise/teacher/${enterpriseId}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                            },
+                        }
+                    );
+                    const teachersData = await teachersResponse.json();
+
+                    // Fetch courses
+                    const coursesResponse = await fetch(
+                        `${import.meta.env.VITE_API_BASE_URL}/enterprise/courses?enterprise_id=${enterpriseId}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                            },
+                        }
+                    );
+                    const coursesData = await coursesResponse.json();
+
+                    setEnterpriseData((prev) => ({
+                        ...prev,
+                        [enterpriseId]: {
+                            teachers: teachersData.data || [],
+                            courses: coursesData.data || [],
+                            loading: false,
+                        },
+                    }));
+                } catch (error) {
+                    console.error("Error fetching enterprise data:", error);
+                    toast.error("Failed to load enterprise details");
+                    setEnterpriseData((prev) => ({
+                        ...prev,
+                        [enterpriseId]: {
+                            teachers: [],
+                            courses: [],
+                            loading: false,
+                        },
+                    }));
+                }
+            }
+        }
+    };
+
     useEffect(() => {
         console.log('Enterprise state:', enterpriseState);
         console.log('Filtered data:', filteredData);
@@ -368,8 +432,8 @@ const EnterpriseManagement = () => {
                             </tr>
                         ) : (
                             filteredData?.map((enterprise, index) => (
+                                <React.Fragment key={enterprise.id}>
                                 <tr
-                                    key={enterprise.id}
                                     style={{
                                         borderTop:
                                             index !== 0
@@ -400,7 +464,7 @@ const EnterpriseManagement = () => {
                                     <td
                                         className="px-6 py-4 whitespace-nowrap text-sm"
                                         style={{color: colors.text}}
-                                    >3
+                                    >
                                         <div className="flex items-center">
                                             <MapPin
                                                 className="w-3 h-3 mr-1"
@@ -413,38 +477,34 @@ const EnterpriseManagement = () => {
                                         className="px-6 py-4 whitespace-nowrap text-sm"
                                         style={{color: colors.text}}
                                     >
+                                        <span
+                                            className="px-2 py-1 text-xs rounded-full"
+                                            style={{
+                                                backgroundColor: `${colors.primary}20`,
+                                                color: colors.primary,
+                                            }}
+                                        >
+                                            {enterprise.default_token_price || 0} sparks
+                                        </span>
+                                    </td>
+                                    <td
+                                        className="px-6 py-4 whitespace-nowrap text-sm"
+                                        style={{color: colors.text}}
+                                    >
                                         <div className="flex items-center">
-                                            <DollarSign
+                                            <Users
                                                 className="w-3 h-3 mr-1"
                                                 style={{color: colors.textMuted}}
                                             />
                                             <span
                                                 className="px-2 py-1 text-xs rounded-full"
                                                 style={{
-                                                    backgroundColor: `${colors.primary}20`,
-                                                    color: colors.primary,
+                                                    backgroundColor: `${colors.accent}20`,
+                                                    color: colors.accent,
                                                 }}
                                             >
-                                                {enterprise.default_token_price || 0} sparks
+                                                {enterprise.user_id ? '1' : '0'}
                                             </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center">
-                                            <div
-                                                className="w-8 h-8 px-2 rounded-lg flex items-center justify-center text-white text-sm font-bold mr-3"
-                                                style={{
-                                                    backgroundColor: enterprise.theme?.colour || colors.primary,
-                                                }}
-                                            >
-                                                <Building2 className="w-4 h-4"/>
-                                            </div>
-                                            <div
-                                                className="font-medium"
-                                                style={{color: colors.text}}
-                                            >
-                                                {enterprise?.users}
-                                            </div>
                                         </div>
                                     </td>
                                     <td
@@ -457,7 +517,7 @@ const EnterpriseManagement = () => {
                                                 style={{color: colors.textMuted}}
                                             />
                                             {enterprise.default_freemium_period ?
-                                                `${Math.floor(enterprise.default_freemium_period / 3600)} hours` :
+                                                `${enterprise.default_freemium_period} hours` :
                                                 'N/A'
                                             }
                                         </div>
@@ -479,10 +539,14 @@ const EnterpriseManagement = () => {
                                             <button
                                                 className="p-1 rounded"
                                                 style={{color: colors.primary}}
-                                                title="View Enterprise"
-                                                onClick={() => handleViewEnterprise(enterprise.id)}
+                                                title="View Details"
+                                                onClick={() => handleEnterpriseToggle(enterprise.id)}
                                             >
-                                                <Eye className="w-4 h-4"/>
+                                                {expandedEnterprise === enterprise.id ? (
+                                                    <ChevronUp className="w-4 h-4"/>
+                                                ) : (
+                                                    <ChevronDown className="w-4 h-4"/>
+                                                )}
                                             </button>
                                             <button
                                                 className="p-1 rounded"
@@ -506,6 +570,135 @@ const EnterpriseManagement = () => {
                                         </div>
                                     </td>
                                 </tr>
+                                {/* Expanded Content Row */}
+                                {expandedEnterprise === enterprise.id && (
+                                    <tr>
+                                        <td colSpan="7" className="px-6 py-4" style={{backgroundColor: colors.cardBgAlt}}>
+                                            {/* Tabs */}
+                                            <div className="flex space-x-4 mb-4 border-b" style={{borderColor: colors.borderColor}}>
+                                                <button
+                                                    onClick={() => setSelectedTab("teachers")}
+                                                    className="px-4 py-2 font-medium transition-colors"
+                                                    style={{
+                                                        color: selectedTab === "teachers" ? colors.primary : colors.text,
+                                                        borderBottom: selectedTab === "teachers" ? `2px solid ${colors.primary}` : "none",
+                                                    }}
+                                                >
+                                                    <Users className="w-4 h-4 inline mr-2"/>
+                                                    Teachers ({enterpriseData[enterprise.id]?.teachers?.length || 0})
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedTab("courses")}
+                                                    className="px-4 py-2 font-medium transition-colors"
+                                                    style={{
+                                                        color: selectedTab === "courses" ? colors.primary : colors.text,
+                                                        borderBottom: selectedTab === "courses" ? `2px solid ${colors.primary}` : "none",
+                                                    }}
+                                                >
+                                                    <BookOpen className="w-4 h-4 inline mr-2"/>
+                                                    Courses ({enterpriseData[enterprise.id]?.courses?.length || 0})
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedTab("students")}
+                                                    className="px-4 py-2 font-medium transition-colors"
+                                                    style={{
+                                                        color: selectedTab === "students" ? colors.primary : colors.text,
+                                                        borderBottom: selectedTab === "students" ? `2px solid ${colors.primary}` : "none",
+                                                    }}
+                                                >
+                                                    <GraduationCap className="w-4 h-4 inline mr-2"/>
+                                                    Students (N/A)
+                                                </button>
+                                            </div>
+
+                                            {/* Tab Content */}
+                                            <div className="min-h-[200px]">
+                                                {/* Teachers Tab */}
+                                                {selectedTab === "teachers" && (
+                                                    <div>
+                                                        {enterpriseData[enterprise.id]?.loading ? (
+                                                            <div className="flex justify-center py-8">
+                                                                <RefreshCw className="w-6 h-6 animate-spin" style={{color: colors.primary}}/>
+                                                            </div>
+                                                        ) : enterpriseData[enterprise.id]?.teachers?.length > 0 ? (
+                                                            <div className="space-y-2">
+                                                                {enterpriseData[enterprise.id].teachers.map((teacher) => (
+                                                                    <div
+                                                                        key={teacher.id}
+                                                                        className="flex items-center justify-between p-3 rounded-lg"
+                                                                        style={{backgroundColor: colors.cardBg}}
+                                                                    >
+                                                                        <div>
+                                                                            <p className="font-medium" style={{color: colors.text}}>
+                                                                                {teacher.name}
+                                                                            </p>
+                                                                            <p className="text-sm" style={{color: colors.textMuted}}>
+                                                                                {teacher.email_address}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="text-sm" style={{color: colors.textMuted}}>
+                                                                            {teacher.organization || "N/A"}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-center py-8" style={{color: colors.textMuted}}>
+                                                                No teachers found
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Courses Tab */}
+                                                {selectedTab === "courses" && (
+                                                    <div>
+                                                        {enterpriseData[enterprise.id]?.loading ? (
+                                                            <div className="flex justify-center py-8">
+                                                                <RefreshCw className="w-6 h-6 animate-spin" style={{color: colors.primary}}/>
+                                                            </div>
+                                                        ) : enterpriseData[enterprise.id]?.courses?.length > 0 ? (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {enterpriseData[enterprise.id].courses.map((course) => (
+                                                                    <div
+                                                                        key={course.id}
+                                                                        className="p-4 rounded-lg"
+                                                                        style={{backgroundColor: colors.cardBg}}
+                                                                    >
+                                                                        <h4 className="font-medium mb-2" style={{color: colors.text}}>
+                                                                            {course.title}
+                                                                        </h4>
+                                                                        <p className="text-sm mb-2" style={{color: colors.textMuted}}>
+                                                                            {course.description}
+                                                                        </p>
+                                                                        <div className="flex items-center justify-between text-xs" style={{color: colors.textMuted}}>
+                                                                            <span>Status: {course.status}</span>
+                                                                            <span>Category: {course.category}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-center py-8" style={{color: colors.textMuted}}>
+                                                                No courses found
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Students Tab */}
+                                                {selectedTab === "students" && (
+                                                    <div>
+                                                        <p className="text-center py-8" style={{color: colors.textMuted}}>
+                                                            Student data endpoint not yet implemented
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                                </React.Fragment>
                             ))
                         )}
                         </tbody>
