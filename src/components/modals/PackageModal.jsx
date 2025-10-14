@@ -6,7 +6,7 @@ import { useAppSettings } from "../../contexts/AppSettingsProvider";
 import { createPackage, editPackage } from "../../store/admin/packageSlice"; // Make sure to create these actions
 
 const userTypes = ["teacher", "student", "school"];
-const packageTypes = ["monthly", "annual"]; // Adjust as needed
+const packageTypes = ["monthly", "annual","one-time"]; // Adjust as needed
 
 const CreatePackageModal = ({ showModal, setShowModal, setPackageInfo, packageInfo = {} }) => {
   const { colors } = useAppSettings();
