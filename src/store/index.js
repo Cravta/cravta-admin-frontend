@@ -17,6 +17,9 @@ import dashboardReducer from './admin/dashboardSlice';
 import packagesReducer from './admin/packageSlice';
 import productReducer from './admin/market/productSlice'
 import salesReducer from './admin/market/salesSlice'
+import enterpriseReducer from './admin/enterpriseSlice'
+import promocodeReducer from './admin/promoCodesSlice'
+import contentTypeReducer from './admin/contentTypesSlice'
 // Redux Persist Configuration
 const persistConfig = {
   key: "root",
@@ -39,7 +42,10 @@ const rootReducer = combineReducers({
   dashboard: dashboardReducer,
   package: packagesReducer,
   product: productReducer,
-  sales: salesReducer
+  sales: salesReducer,
+  adminEnterprise:enterpriseReducer,
+  adminPromoCodes:promocodeReducer,
+  contentTypes:contentTypeReducer
 });
 
 // Apply Persist Reducer

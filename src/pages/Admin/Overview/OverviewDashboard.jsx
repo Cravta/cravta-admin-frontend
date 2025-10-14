@@ -134,7 +134,7 @@ const OverviewDashboard = () => {
           role="group"
           style={{ backgroundColor: colors.cardBg }}
         >
-          {["today", "7days", "30days", "quarter"].map((period) => (
+          {["today", "7days", "30days", "quarter", "all"].map((period) => (
             <button
               key={period}
               onClick={() => setTimeFilter(period)}
@@ -147,12 +147,16 @@ const OverviewDashboard = () => {
               }}
             >
               {period === "today"
-                ? "Today"
-                : period === "7days"
-                ? "Last 7 Days"
-                : period === "30days"
-                ? "Last 30 Days"
-                : "This Quarter"}
+                  ? "Today"
+                  : period === "7days"
+                      ? "Last 7 Days"
+                      : period === "30days"
+                          ? "Last 30 Days"
+                          : period === "quarter"
+                              ? "This Quarter"
+                              : "All"
+              }
+
             </button>
           ))}
         </div>
